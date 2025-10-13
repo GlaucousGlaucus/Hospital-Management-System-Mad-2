@@ -21,18 +21,8 @@ function initBrowserSync(cb) {
             'static/**/*.js',
             '**/*.py'
         ],
-        reloadDebounce: 500,  // short delay between changes
-        reloadDelay: 0,       // start reloading immediately
-        reloadThrottle: 0,    // don’t throttle reloads
     });
     cb();
 }
-
-gulp.task('sass', function() {
-    return gulp.src("app/scss/*.scss")
-        .pipe(sass())                      // compile SASS → CSS
-        .pipe(gulp.dest("app/css"))        // write to disk
-        .pipe(browserSync.stream({match: '**/*.css'})); // inject updated CSS live
-});
 
 exports.default = gulp.series(initBrowserSync);
