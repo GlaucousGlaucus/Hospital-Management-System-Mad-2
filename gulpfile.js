@@ -1,11 +1,5 @@
 const gulp = require('gulp');
 const browserSync = require('browser-sync').create();
-const paths = {
-    python: ['**/*.py'],
-    html: ['templates/**/*.html'],
-    css: ['static/**/*.css'],
-    js: ['static/**/*.js']
-};
 
 function initBrowserSync(cb) {
     browserSync.init({
