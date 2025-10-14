@@ -1,0 +1,116 @@
+/* Base Style */
+
+:root {
+    --primary-color: #134686;
+    --secondary-color: #FEB21A;
+    --text-color: #ED3F27;
+    --bg-color: #FDF4E3;
+    --font-family: "Poppins", sans-serif;
+    --max-width: 1200px;
+    --navbar-height: 10vh;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family), serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Navbar */
+
+.navbar {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    padding: 1rem 2rem;
+}
+
+.navbar .logo {
+    width: 3rem;
+    height: 3rem;
+}
+
+.navbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: var(--max-width);
+    margin: 0 auto;
+}
+
+.navbar-logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.navbar-menu {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+}
+
+.navbar-menu a {
+    text-decoration: none;
+    color: var(--secondary-color);
+    transition: color 0.3s ease;
+}
+
+.navbar-menu a:hover {
+    color: #dcdcdc;
+}
+
+/* Hero */
+
+.hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 4rem 1rem;
+
+    background: linear-gradient(
+            to bottom right,
+            rgba(0, 74, 173, 0.1),
+            rgba(0, 74, 173, 0.05)
+    );
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: bold;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.hero-subtitle {
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin-top: 10px;
+    color: #555;
+}
+
+
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.2rem;
+    }
+}
+
+/* Footer */
+
+.footer {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.9rem;
+}
