@@ -130,3 +130,5 @@ dmypy.json
 .pyre/
 .pytype/
 cython_debug/
+identifier.sqlite
+*test*.db
