@@ -249,3 +249,10 @@ body {
         padding: 1.5rem;
     }
 }
+
+.collapsable-input-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}

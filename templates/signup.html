@@ -12,9 +12,27 @@
         <label>Password</label>
         <input type="password" name="password" required>
 
+        <div id="doctor-fields" class="collapsable-input-field">
+            <label>Specialization</label>
+            <input type="text" name="specialization">
+
+            <label>Department</label>
+            <select id="department" name="specialization">
+                <option value="">Select Department</option>
+            </select>
+        </div>
+
+        <div id="patient-fields" class="collapsable-input-field">
+            <label>Age</label>
+            <input type="number" name="age">
+
+            <label>Contact</label>
+            <input type="text" name="contact">
+        </div>
+
         <label>Role</label>
-        <select name="role" required>
-            <option value="">Select Role</option>
+        <select id="role" name="role" required>
+            <option value="" selected>Select Role</option>
             <option value="doctor">Doctor</option>
             <option value="patient">Patient</option>
         </select>
@@ -27,4 +45,26 @@
         </p>
     </form>
 </section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const roleSelect = document.getElementById("role");
+        const docFields = document.getElementById("doctor-fields");
+        const patientFields = document.getElementById("patient-fields");
+
+        function toggleSpecialization() {
+            const is_doctor = roleSelect.value === "doctor";
+            const is_patient = roleSelect.value === "patient";
+
+            docFields.style.visibility = is_doctor ? "visible" : "collapse";
+            docFields.querySelector("input").required = is_doctor;
+
+            patientFields.style.visibility = is_patient ? "visible" : "collapse";
+            patientFields.querySelector("input").required = is_patient;
+        }
+
+        toggleSpecialization();
+        roleSelect.addEventListener("change", toggleSpecialization);
+    });
+</script>
 {% endblock %}
