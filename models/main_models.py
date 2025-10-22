@@ -1,9 +1,12 @@
 from __future__ import annotations
+
+import enum
 from datetime import date, time
 from typing import List, Optional
-from sqlalchemy import String, Integer, Text, Enum, ForeignKey
+
+from sqlalchemy import Enum, ForeignKey, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-import enum
+
 
 class Base(DeclarativeBase):
     pass
