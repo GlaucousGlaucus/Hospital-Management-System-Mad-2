@@ -64,12 +64,14 @@
             btnDoctor.classList.toggle("active", isDoctor);
             btnPatient.classList.toggle("active", isPatient);
 
-            docFields.classList.toggle("visible", isDoctor);
-            patientFields.classList.toggle("visible", isPatient);
+            docFields.classList.toggle("hidden", !isDoctor);
+            patientFields.classList.toggle("hidden", !isPatient);
 
             docFields.querySelectorAll("input, select").forEach(el => el.required = isDoctor);
             patientFields.querySelectorAll("input").forEach(el => el.required = isPatient);
         }
+
+        selectRole("patient");
 
         btnDoctor.addEventListener("click", () => selectRole("doctor"));
         btnPatient.addEventListener("click", () => selectRole("patient"));

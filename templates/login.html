@@ -6,6 +6,7 @@
     <div class="role-selector">
         <button type="button" id="btn-doctor" class="role-btn">As a Doctor</button>
         <button type="button" id="btn-patient" class="role-btn">As a Patient</button>
+        <button type="button" id="btn-admin" class="role-btn">As an Admin</button>
     </div>
 
     <form action="{{ url_for('login') }}" method="POST" class="auth-form">
@@ -29,17 +30,23 @@
     document.addEventListener("DOMContentLoaded", function () {
         const btnDoctor = document.getElementById("btn-doctor");
         const btnPatient = document.getElementById("btn-patient");
+        const btnAdmin = document.getElementById("btn-admin");
 
         function selectRole(role) {
             const isDoctor = role === "doctor";
             const isPatient = role === "patient";
+            const isAdmin = role === "admin";
 
             btnDoctor.classList.toggle("active", isDoctor);
             btnPatient.classList.toggle("active", isPatient);
+            btnAdmin.classList.toggle("active", isAdmin);
         }
+
+        selectRole("patient");
 
         btnDoctor.addEventListener("click", () => selectRole("doctor"));
         btnPatient.addEventListener("click", () => selectRole("patient"));
+        btnAdmin.addEventListener("click", () => selectRole("admin"));
     });
 </script>
 
