@@ -2,7 +2,15 @@
 {% block content %}
 <section class="auth-section">
     <h2>Sign Up</h2>
+
+    <div class="role-selector">
+        <button type="button" id="btn-doctor" class="role-btn">As a Doctor</button>
+        <button type="button" id="btn-patient" class="role-btn">As a Patient</button>
+    </div>
+
     <form action="{{ url_for('signup') }}" method="POST" class="auth-form">
+        <input type="hidden" id="role" name="role" value="">
+
         <label>Full Name</label>
         <input type="text" name="name" required>
 
@@ -17,7 +25,7 @@
             <input type="text" name="specialization">
 
             <label>Department</label>
-            <select id="department" name="specialization">
+            <select id="department" name="department">
                 <option value="">Select Department</option>
             </select>
         </div>
@@ -30,13 +38,6 @@
             <input type="text" name="contact">
         </div>
 
-        <label>Role</label>
-        <select id="role" name="role" required>
-            <option value="" selected>Select Role</option>
-            <option value="doctor">Doctor</option>
-            <option value="patient">Patient</option>
-        </select>
-
         <button type="submit" class="btn btn-filled">Create Account</button>
 
         <p class="alt-link">
@@ -48,23 +49,34 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const roleSelect = document.getElementById("role");
+        const btnDoctor = document.getElementById("btn-doctor");
+        const btnPatient = document.getElementById("btn-patient");
         const docFields = document.getElementById("doctor-fields");
         const patientFields = document.getElementById("patient-fields");
+        const roleInput = document.getElementById("role");
 
-        function toggleSpecialization() {
-            const is_doctor = roleSelect.value === "doctor";
-            const is_patient = roleSelect.value === "patient";
+        function selectRole(role) {
+            roleInput.value = role;
 
-            docFields.style.visibility = is_doctor ? "visible" : "collapse";
-            docFields.querySelector("input").required = is_doctor;
+            const isDoctor = role === "doctor";
+            const isPatient = role === "patient";
 
-            patientFields.style.visibility = is_patient ? "visible" : "collapse";
-            patientFields.querySelector("input").required = is_patient;
+            // Toggle active button styling
+            btnDoctor.classList.toggle("active", isDoctor);
+            btnPatient.classList.toggle("active", isPatient);
+
+            // Toggle visible sections
+            docFields.classList.toggle("visible", isDoctor);
+            patientFields.classList.toggle("visible", isPatient);
+
+            // Set required fields
+            docFields.querySelectorAll("input, select").forEach(el => el.required = isDoctor);
+            patientFields.querySelectorAll("input").forEach(el => el.required = isPatient);
         }
 
-        toggleSpecialization();
-        roleSelect.addEventListener("change", toggleSpecialization);
+        // Event listeners
+        btnDoctor.addEventListener("click", () => selectRole("doctor"));
+        btnPatient.addEventListener("click", () => selectRole("patient"));
     });
 </script>
 {% endblock %}

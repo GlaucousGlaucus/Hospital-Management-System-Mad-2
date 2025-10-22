@@ -256,3 +256,45 @@ body {
     gap: 0.5rem;
     transition: all 0.3s ease;
 }
+
+.collapsable-input-field.visible {
+    display: none;
+}
+
+
+.role-selector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.role-btn {
+    flex: 1;
+    text-align: center;
+    padding: 0.7rem 1.2rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    cursor: pointer;
+    border: 2px solid var(--primary-color);
+    background-color: var(--primary-color);
+    color: #fff;
+    transition: all 0.25s ease;
+    font-size: 1rem;
+}
+
+.role-btn:hover {
+    background-color: #0e3668;
+}
+
+.role-btn.active {
+    background-color: #e8f0fa;
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(19, 70, 134, 0.2);
+}
+
+.role-btn:active {
+    transform: scale(0.98);
+}
