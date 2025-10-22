@@ -1,20 +1,5 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="hero">
-    <h1 class="hero-title">Therapeia dia Oikonomia<br></h1>
-    <h2 class="hero-subtitle">Healthcare Through Management</h2>
-</div>
 
-<script>
-    function adjustHeroHeight() {
-        const navbar = document.querySelector('.navbar');
-        const hero = document.querySelector('.hero');
-        const navbarHeight = navbar.offsetHeight;
-        hero.style.minHeight = `calc(100vh - ${navbarHeight}px)`;
-    }
-
-    window.addEventListener('load', adjustHeroHeight);
-    window.addEventListener('resize', adjustHeroHeight);
-</script>
 {% endblock %}

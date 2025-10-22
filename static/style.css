@@ -67,6 +67,18 @@ body {
     color: #dcdcdc;
 }
 
+.container {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 1rem;
+
+    background: linear-gradient(
+            to bottom right,
+            rgba(0, 74, 173, 0.1),
+            rgba(0, 74, 173, 0.05)
+    );
+}
+
 /* Hero */
 
 .hero {
@@ -76,12 +88,7 @@ body {
     align-items: center;
     text-align: center;
     padding: 4rem 1rem;
-
-    background: linear-gradient(
-            to bottom right,
-            rgba(0, 74, 173, 0.1),
-            rgba(0, 74, 173, 0.05)
-    );
+    flex: 1;
 }
 
 .hero-title {
