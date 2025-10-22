@@ -61,20 +61,16 @@
             const isDoctor = role === "doctor";
             const isPatient = role === "patient";
 
-            // Toggle active button styling
             btnDoctor.classList.toggle("active", isDoctor);
             btnPatient.classList.toggle("active", isPatient);
 
-            // Toggle visible sections
             docFields.classList.toggle("visible", isDoctor);
             patientFields.classList.toggle("visible", isPatient);
 
-            // Set required fields
             docFields.querySelectorAll("input, select").forEach(el => el.required = isDoctor);
             patientFields.querySelectorAll("input").forEach(el => el.required = isPatient);
         }
 
-        // Event listeners
         btnDoctor.addEventListener("click", () => selectRole("doctor"));
         btnPatient.addEventListener("click", () => selectRole("patient"));
     });

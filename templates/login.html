@@ -2,19 +2,18 @@
 {% block content %}
 <section class="auth-section">
     <h2>Login</h2>
+
+    <div class="role-selector">
+        <button type="button" id="btn-doctor" class="role-btn">As a Doctor</button>
+        <button type="button" id="btn-patient" class="role-btn">As a Patient</button>
+    </div>
+
     <form action="{{ url_for('login') }}" method="POST" class="auth-form">
         <label>Email</label>
         <input type="email" name="email" required>
 
         <label>Password</label>
         <input type="password" name="password" required>
-
-        <label>Role</label>
-        <select name="role" required>
-            <option value="">Select Role</option>
-            <option value="doctor">Doctor</option>
-            <option value="patient">Patient</option>
-        </select>
 
         <button type="submit" class="btn btn-filled">Login</button>
 
@@ -24,4 +23,24 @@
         </p>
     </form>
 </section>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const btnDoctor = document.getElementById("btn-doctor");
+        const btnPatient = document.getElementById("btn-patient");
+
+        function selectRole(role) {
+            const isDoctor = role === "doctor";
+            const isPatient = role === "patient";
+
+            btnDoctor.classList.toggle("active", isDoctor);
+            btnPatient.classList.toggle("active", isPatient);
+        }
+
+        btnDoctor.addEventListener("click", () => selectRole("doctor"));
+        btnPatient.addEventListener("click", () => selectRole("patient"));
+    });
+</script>
+
 {% endblock %}
