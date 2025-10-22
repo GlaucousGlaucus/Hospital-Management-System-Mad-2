@@ -159,13 +159,6 @@ body {
     justify-content: center;
 }
 
-
-@media (max-width: 768px) {
-    .hero-title {
-        font-size: 2.2rem;
-    }
-}
-
 /* Footer */
 
 .footer {
@@ -174,4 +167,85 @@ body {
     text-align: center;
     padding: 1rem;
     font-size: 0.9rem;
+}
+
+
+/* Auth Pages (Login & Signup) */
+
+.auth-section {
+    width: 45%;
+    margin: 4rem auto;
+    background-color: #fff;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    color: #333;
+}
+
+.auth-section h2 {
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.auth-form label {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.auth-form input,
+.auth-form select {
+    padding: 0.6rem 0.8rem;
+    border: 1.5px solid rgba(0, 0, 0, 0.2);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-form input:focus,
+.auth-form select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(19, 70, 134, 0.2);
+    outline: none;
+}
+
+.auth-form button {
+    margin-top: 0.5rem;
+}
+
+.alt-link {
+    text-align: center;
+    font-size: 0.95rem;
+    margin-top: 1rem;
+    color: #444;
+}
+
+.alt-link a {
+    color: var(--text-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.alt-link a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.2rem;
+    }
+    .auth-section {
+        margin: 2rem 1rem;
+        padding: 1.5rem;
+    }
 }
