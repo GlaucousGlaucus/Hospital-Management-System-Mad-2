@@ -16,7 +16,7 @@
         <label>Password</label>
         <input type="password" name="password" required>
 
-        <button type="submit" class="btn btn-filled">Login</button>
+        <button id="btn-submit" type="submit" class="btn btn-filled">Login</button>
 
         <p class="alt-link">
             Don’t have an account?
@@ -31,6 +31,7 @@
         const btnDoctor = document.getElementById("btn-doctor");
         const btnPatient = document.getElementById("btn-patient");
         const btnAdmin = document.getElementById("btn-admin");
+        const submitBtn = document.getElementById("btn-submit");
 
         function selectRole(role) {
             const isDoctor = role === "doctor";
@@ -40,6 +41,8 @@
             btnDoctor.classList.toggle("active", isDoctor);
             btnPatient.classList.toggle("active", isPatient);
             btnAdmin.classList.toggle("active", isAdmin);
+
+            submitBtn.textContent = `Login as ${role.charAt(0).toUpperCase() + role.slice(1)}`;
         }
 
         selectRole("patient");

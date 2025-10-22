@@ -38,7 +38,7 @@
             <input type="text" name="contact">
         </div>
 
-        <button type="submit" class="btn btn-filled">Create Account</button>
+        <button id="btn-submit" type="submit" class="btn btn-filled">Create Account</button>
 
         <p class="alt-link">
             Already have an account?
@@ -54,6 +54,7 @@
         const docFields = document.getElementById("doctor-fields");
         const patientFields = document.getElementById("patient-fields");
         const roleInput = document.getElementById("role");
+        const submitBtn = document.getElementById("btn-submit");
 
         function selectRole(role) {
             roleInput.value = role;
@@ -69,6 +70,8 @@
 
             docFields.querySelectorAll("input, select").forEach(el => el.required = isDoctor);
             patientFields.querySelectorAll("input").forEach(el => el.required = isPatient);
+
+            submitBtn.textContent = `Create Account as ${role.charAt(0).toUpperCase() + role.slice(1)}`;
         }
 
         selectRole("patient");
