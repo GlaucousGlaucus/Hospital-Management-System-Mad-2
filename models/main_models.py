@@ -11,6 +11,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 class Base(DeclarativeBase):
     pass
 
+# TODO: Rescheduling
 class AppointmentStatus(enum.Enum):
     BOOKED = "Booked"
     COMPLETED = "Completed"
@@ -30,8 +31,6 @@ class Department(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
     description: Mapped[Optional[str]]
-
-    # one-to-many: Department → Doctors
     doctors: Mapped[List[Doctor]] = relationship(back_populates="department")
 
 class Doctor(Base):
@@ -39,8 +38,8 @@ class Doctor(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
-    specialization: Mapped[Optional[str]] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(120), unique=True)
+    specialization: Mapped[Optional[str]] = mapped_column(String(100))
 
     department_id: Mapped[Optional[int]] = mapped_column(ForeignKey("departments.id"))
     department: Mapped[Optional[Department]] = relationship(back_populates="doctors")
@@ -70,6 +69,7 @@ class Appointment(Base):
 
     patient: Mapped[Patient] = relationship(back_populates="appointments")
     doctor: Mapped[Doctor] = relationship(back_populates="appointments")
+    # TODO: There might be multiple treatments given to a single patient during a single appointment
     treatment: Mapped[Optional[Treatment]] = relationship(back_populates="appointment", uselist=False)
 
 class Treatment(Base):
