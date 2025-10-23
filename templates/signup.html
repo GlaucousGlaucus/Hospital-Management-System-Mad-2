@@ -1,51 +1,52 @@
-{% extends "base.html" %}
-{% block content %}
-<section class="auth-section">
-    <h2>Sign Up</h2>
+{% extends "base_account_login.html" %}
+{% block auth_section %}
+<h2>Sign Up</h2>
 
-    <div class="role-selector">
-        <button type="button" id="btn-doctor" class="role-btn">As a Doctor</button>
-        <button type="button" id="btn-patient" class="role-btn">As a Patient</button>
+<div class="role-selector">
+    <button type="button" id="btn-doctor" class="role-btn">As a Doctor</button>
+    <button type="button" id="btn-patient" class="role-btn">As a Patient</button>
+</div>
+
+<form action="{{ url_for('signup') }}" method="POST" class="auth-form">
+    <input type="hidden" id="role" name="role" value="">
+
+    <label>Full Name</label>
+    <input type="text" name="name" required>
+
+    <label>Email</label>
+    <input type="email" name="email" required>
+
+    <label>Password</label>
+    <input type="password" name="password" required>
+
+    <div id="doctor-fields" class="collapsable-input-field">
+        <label>Specialization</label>
+        <input type="text" name="specialization">
+
+        <label>Department</label>
+        <select id="department" name="department">
+            <option value="">Select Department</option>
+            {% for dept in departments %}
+                <option value="{{ dept.id }}">{{ dept.name }}</option>
+            {% endfor %}
+        </select>
     </div>
 
-    <form action="{{ url_for('signup') }}" method="POST" class="auth-form">
-        <input type="hidden" id="role" name="role" value="">
+    <div id="patient-fields" class="collapsable-input-field">
+        <label>Age</label>
+        <input type="number" name="age">
 
-        <label>Full Name</label>
-        <input type="text" name="name" required>
+        <label>Contact</label>
+        <input type="text" name="contact">
+    </div>
 
-        <label>Email</label>
-        <input type="email" name="email" required>
+    <button id="btn-submit" type="submit" class="btn btn-filled">Create Account</button>
 
-        <label>Password</label>
-        <input type="password" name="password" required>
-
-        <div id="doctor-fields" class="collapsable-input-field">
-            <label>Specialization</label>
-            <input type="text" name="specialization">
-
-            <label>Department</label>
-            <select id="department" name="department">
-                <option value="">Select Department</option>
-            </select>
-        </div>
-
-        <div id="patient-fields" class="collapsable-input-field">
-            <label>Age</label>
-            <input type="number" name="age">
-
-            <label>Contact</label>
-            <input type="text" name="contact">
-        </div>
-
-        <button id="btn-submit" type="submit" class="btn btn-filled">Create Account</button>
-
-        <p class="alt-link">
-            Already have an account?
-            <a href="{{ url_for('login') }}">Login</a>
-        </p>
-    </form>
-</section>
+    <p class="alt-link">
+        Already have an account?
+        <a href="{{ url_for('login') }}">Login</a>
+    </p>
+</form>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {

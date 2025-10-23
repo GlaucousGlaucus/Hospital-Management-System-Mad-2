@@ -39,12 +39,17 @@ class Doctor(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(120), unique=True)
+    password: Mapped[str] = mapped_column(String(128))
     specialization: Mapped[Optional[str]] = mapped_column(String(100))
 
     department_id: Mapped[Optional[int]] = mapped_column(ForeignKey("departments.id"))
     department: Mapped[Optional[Department]] = relationship(back_populates="doctors")
 
     appointments: Mapped[List[Appointment]] = relationship(back_populates="doctor")
+
+    def __repr__(self):
+        return f"{self.name} {self.email} ({self.specialization})"
+
 
 class Patient(Base):
     __tablename__ = "patients"
@@ -54,6 +59,7 @@ class Patient(Base):
     age: Mapped[Optional[int]]
     contact: Mapped[Optional[str]] = mapped_column(String(50))
     email: Mapped[Optional[str]] = mapped_column(String(120), unique=True)
+    password: Mapped[str] = mapped_column(String(128))
 
     appointments: Mapped[List[Appointment]] = relationship(back_populates="patient")
 

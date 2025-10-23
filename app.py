@@ -1,3 +1,4 @@
+import os
 from typing import Any, Optional
 
 from flask import Flask, flash, redirect, render_template, request, session, url_for
@@ -5,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from models.main_models import Admin, Base, Doctor, Patient
+from models.main_models import Admin, Base, Department, Doctor, Patient
 from logging import getLogger
 
 from utils.constants import DB_PATH
@@ -13,17 +14,23 @@ from utils.constants import DB_PATH
 logger = getLogger(__name__)
 
 app = Flask(__name__)
+app.secret_key = "SECRET"
 
 engine = create_engine(f"sqlite:///{DB_PATH}", echo=False)
 
-if not DB_PATH.exists():
-    Base.metadata.create_all(engine)
-    logger.info(f"DB created at {DB_PATH}")
-else:
-    logger.info(f"DB already exists at {DB_PATH}")
-
 # Session factory
 SessionLocal = scoped_session(sessionmaker(bind=engine))
+
+if DB_PATH.exists():
+    logger.info(f"DB already exists at {DB_PATH}")
+else:
+    Base.metadata.create_all(engine)
+    admin = Admin(name="Admin", email="admin@nodomain.com", password="")
+    with SessionLocal() as session:
+        session.add_all([Department(name=f"D{i}", description=f"Description {i}") for i in range(10)])
+        session.add(admin)
+        session.commit()
+    logger.info(f"DB created at {DB_PATH}")
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
@@ -85,12 +92,19 @@ def signup():
                         password=hashed_pw,
                     )
 
-            if new_user:
-                with SessionLocal() as db_session:
+            if not new_user:
+                flash("Please select a valid account type!", "error")
+                return redirect(url_for("signup"))
+            with SessionLocal() as db_session:
+                email_exists = db_session.query(Doctor.email).filter_by(email=new_user.email).first()
+                if not email_exists:
                     db_session.add(new_user)
                     db_session.commit()
-                flash("Account created successfully! Please login.", "success")
-                return redirect(url_for("login"))
-            else:
-                flash("Account already exists!", "error")
-    return render_template('signup.html')
+                    flash("Account created successfully! Please login.", "success")
+                    return redirect(url_for("login"))
+                else:
+                    flash(f"Account with email {new_user.email} already exists!", "error")
+                    return redirect(url_for("signup"))
+    with SessionLocal() as db_session:
+        deps = db_session.query(Department).all()
+    return render_template('signup.html', departments=deps)
