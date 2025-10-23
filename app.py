@@ -86,9 +86,16 @@ def signup():
             new_user = None
             match role:
                 case "doctor":
+                    dep_id: Optional[str] = request.form["department"]
+                    if not dep_id.isdigit():
+                        flash("Invalid department ID", "error")
+                        return redirect(url_for("signup"))
+                    dep_id: int = int(dep_id)
                     new_user = Doctor(
                         name=request.form["name"],
                         email=request.form["email"],
+                        specialization=request.form["specialization"],
+                        department_id=dep_id,
                         password=hashed_pw,
                     )
 
@@ -97,14 +104,17 @@ def signup():
                 return redirect(url_for("signup"))
             with SessionLocal() as db_session:
                 email_exists = db_session.query(Doctor.email).filter_by(email=new_user.email).first()
-                if not email_exists:
-                    db_session.add(new_user)
-                    db_session.commit()
-                    flash("Account created successfully! Please login.", "success")
-                    return redirect(url_for("login"))
-                else:
+                dp_exists = db_session.query(Department.id).filter_by(id=new_user.department_id).first()
+                if email_exists:
                     flash(f"Account with email {new_user.email} already exists!", "error")
                     return redirect(url_for("signup"))
+                if not dp_exists:
+                    flash("This department does not exist", "error")
+                    return redirect(url_for("signup"))
+                db_session.add(new_user)
+                db_session.commit()
+                flash("Account created successfully! Please login.", "success")
+                return redirect(url_for("login"))
     with SessionLocal() as db_session:
         deps = db_session.query(Department).all()
     return render_template('signup.html', departments=deps)
