@@ -3,10 +3,28 @@ from __future__ import annotations
 import enum
 from datetime import date, time
 from typing import List, Optional
+from logging import getLogger
 
-from sqlalchemy import Enum, ForeignKey, String, Text
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import Enum, ForeignKey, String, Text, create_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, scoped_session, sessionmaker
 
+from utils.constants import DB_PATH
+
+logger = getLogger(__name__)
+engine = create_engine(f"sqlite:///{DB_PATH}", echo=False)
+SessionLocal = scoped_session(sessionmaker(bind=engine))
+
+def setup_db():
+    if DB_PATH.exists():
+        logger.info(f"DB already exists at {DB_PATH}")
+    else:
+        Base.metadata.create_all(engine)
+        admin = Admin(name="Admin", email="admin@nodomain.com", password="")
+        with SessionLocal() as session:
+            session.add_all([Department(name=f"D{i}", description=f"Description {i}") for i in range(10)])
+            session.add(admin)
+            session.commit()
+        logger.info(f"DB created at {DB_PATH}")
 
 class Base(DeclarativeBase):
     pass

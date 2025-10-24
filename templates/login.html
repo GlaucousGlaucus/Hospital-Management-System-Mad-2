@@ -8,7 +8,7 @@
     <button type="button" id="btn-admin" class="role-btn">As an Admin</button>
 </div>
 
-<form action="{{ url_for('login') }}" method="POST" class="auth-form">
+<form action="{{ url_for('auth_login.login') }}" method="POST" class="auth-form">
     <label>Email</label>
     <input type="email" name="email" required>
 
@@ -19,7 +19,7 @@
 
     <p class="alt-link">
         Don’t have an account?
-        <a href="{{ url_for('signup') }}">Sign up</a>
+        <a href="{{ url_for('auth_signup.signup') }}">Sign up</a>
     </p>
 </form>
 
