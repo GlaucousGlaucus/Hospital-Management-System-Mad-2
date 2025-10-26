@@ -7,7 +7,7 @@ from logging import getLogger
 
 from sqlalchemy import Enum, ForeignKey, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, scoped_session, sessionmaker
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from utils.constants import DB_PATH
 
@@ -20,7 +20,7 @@ def setup_db():
         logger.info(f"DB already exists at {DB_PATH}")
     else:
         Base.metadata.create_all(engine)
-        admin = Admin(name="Admin", email="admin@nodomain.com", password="")
+        admin = Admin(name="Admin", email="admin@nodomain.com", password=generate_password_hash("123"))
         with SessionLocal() as session:
             session.add_all([Department(name=f"D{i}", description=f"Description {i}") for i in range(10)])
             session.add(admin)

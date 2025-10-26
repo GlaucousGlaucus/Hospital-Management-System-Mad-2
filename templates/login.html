@@ -9,6 +9,8 @@
 </div>
 
 <form action="{{ url_for('auth_login.login') }}" method="POST" class="auth-form">
+    <input type="hidden" id="role" name="user_type" value="patient">
+
     <label>Email</label>
     <input type="email" name="email" required>
 
@@ -29,6 +31,7 @@
         const btnPatient = document.getElementById("btn-patient");
         const btnAdmin = document.getElementById("btn-admin");
         const submitBtn = document.getElementById("btn-submit");
+        const roleInput = document.getElementById("role");
 
         function selectRole(role) {
             const isDoctor = role === "doctor";
@@ -39,6 +42,7 @@
             btnPatient.classList.toggle("active", isPatient);
             btnAdmin.classList.toggle("active", isAdmin);
 
+            roleInput.value = role;
             submitBtn.textContent = `Login as ${role.charAt(0).toUpperCase() + role.slice(1)}`;
         }
 

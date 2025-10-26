@@ -73,10 +73,23 @@ body {
     color: #dcdcdc;
 }
 
+.navbar-username {
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1rem;
+    color: var(--secondary-color);
+    text-align: center;
+
+    padding: 0 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
 /* Navbar right side menu */
 
 .navbar-actions {
     display: flex;
+    align-items: center;
     gap: 1rem;
 }
 

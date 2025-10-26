@@ -2,15 +2,19 @@ from logging import getLogger
 from typing import Any, Optional
 
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
-from sqlalchemy.orm.decl_api import DCTransformDeclarative
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from models.main_models import Admin, Department, Doctor, Patient, SessionLocal
-from utils.constants import Routes
+from utils.constants import Routes, UserTypes
 
 logger = getLogger(__name__)
 auth_signup_bp = Blueprint("auth_signup", __name__, url_prefix="/signup")
 auth_login_bp = Blueprint("auth_login", __name__, url_prefix="/login")
+
+@auth_login_bp.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("auth_login.login"))
 
 # TODO: Improve UI for login and signup pages
 @auth_login_bp.route('/', methods=['GET', 'POST'])
@@ -21,19 +25,22 @@ def login():
             password: str = request.form["password"]
             user_type: str = request.form["user_type"]
             user: Optional[Any] = None
-            if user_type == "doctor":
-                user = Doctor.query.filter_by(email=email).first()
-            elif user_type == "patient":
-                user = Patient.query.filter_by(email=email).first()
-            elif user_type == "admin":
-                user = Admin.query.filter_by(email=email).first()
-            else:
-                flash("Invalid user type")
-
+            with SessionLocal() as db_session:
+                match user_type:
+                    case UserTypes.DOCTOR:
+                        user = db_session.query(Doctor).filter_by(email=email).first()
+                    case UserTypes.PATIENT:
+                        user = db_session.query(Patient).filter_by(email=email).first()
+                    case UserTypes.ADMIN:
+                        user = db_session.query(Admin).filter_by(email=email).first()
+                    case _:
+                        flash("Invalid user type")
             if user and check_password_hash(user.password, password):
                 session["user_id"] = user.id
-                session["role"] = user.role
-                return redirect(url_for("dashboard"))
+                session["user_name"] = user.name
+                session["user_email"] = user.email
+                session["user_type"] = user_type
+                return redirect(url_for(Routes.DASHBOARD_ROUTE))
             flash("Invalid credentials", "error")
     return render_template('login.html')
 

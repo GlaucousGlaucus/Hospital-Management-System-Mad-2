@@ -16,9 +16,15 @@
             </ul>
 
             <div class="navbar-actions">
-                <a href="{{ url_for('auth_login.login') }}" class="btn btn-outline">Login</a>
-                <a href="{{ url_for('auth_signup.signup') }}" class="btn btn-filled">Sign Up</a>
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('auth_login.logout') }}" class="navbar-username" >{{ session['user_name'] }}</a>
+                    <a href="{{ url_for('auth_login.logout') }}" class="btn btn-outline">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('auth_login.login') }}" class="btn btn-outline">Login</a>
+                    <a href="{{ url_for('auth_signup.signup') }}" class="btn btn-filled">Sign Up</a>
+                {% endif %}
             </div>
+
         </div>
     </nav>
 
