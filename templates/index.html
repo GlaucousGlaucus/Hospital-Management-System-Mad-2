@@ -6,8 +6,12 @@
     <h2 class="hero-subtitle">Healthcare Through Management</h2>
 
     <div class="hero-actions">
+        {% if session.get('user_id') %}
+        <h2 class="hero-subtitle">Hello {{ session['user_name'] }}</h2>
+        {% else %}
         <a href="/login" class="btn btn-outline">Login</a>
         <a href="/signup" class="btn btn-filled">Sign Up</a>
+        {% endif %}
     </div>
 </div>
 
