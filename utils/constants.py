@@ -4,3 +4,7 @@ __content_root_path__ = Path(__file__).parent
 TEMPLATES_PATH = __content_root_path__ / 'templates'
 STATIC_PATH = __content_root_path__ / 'static'
 DB_PATH = __content_root_path__.parent / "hospital.db"
+
+class Routes:
+    LOGIN_ROUTE = "auth_login.login"
+    SIGNUP_ROUTE = "auth_signup.signup"

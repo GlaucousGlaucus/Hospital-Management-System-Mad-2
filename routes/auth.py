@@ -2,9 +2,11 @@ from logging import getLogger
 from typing import Any, Optional
 
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from sqlalchemy.orm.decl_api import DCTransformDeclarative
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from models.main_models import Admin, Department, Doctor, Patient, SessionLocal
+from utils.constants import Routes
 
 logger = getLogger(__name__)
 auth_signup_bp = Blueprint("auth_signup", __name__, url_prefix="/signup")
@@ -44,38 +46,55 @@ def signup():
                 flash("Invalid role", "error")
                 return redirect(url_for("signup"))
 
-            hashed_pw = generate_password_hash(request.form["password"])
-            new_user = None
-            match role:
-                case "doctor":
-                    dep_id: Optional[str] = request.form["department"]
-                    if not dep_id.isdigit():
-                        flash("Invalid department ID", "error")
-                        return redirect(url_for("signup"))
-                    dep_id: int = int(dep_id)
-                    new_user = Doctor(
-                        name=request.form["name"],
-                        email=request.form["email"],
-                        specialization=request.form["specialization"],
-                        department_id=dep_id,
-                        password=hashed_pw,
-                    )
-                    with SessionLocal() as db_session:
-                        email_exists = db_session.query(Doctor.email).filter_by(email=new_user.email).first()
-                        dp_exists = db_session.query(Department.id).filter_by(id=new_user.department_id).first()
-                        if email_exists:
-                            flash(f"Account with email {new_user.email} already exists!", "error")
+            name: str = request.form["name"]
+            email: str = request.form["email"]
+            password = generate_password_hash(request.form["password"])
+            age: int = int(request.form["age"])
+            contact: str = request.form["contact"]
+
+            with SessionLocal() as db_session:
+                email_exists = db_session.query(Doctor.email).filter_by(email=email).first()
+                if email_exists:
+                    flash(f"Account with email {email} already exists!", "error")
+                    return redirect(url_for("signup"))
+
+                match role:
+                    case "doctor":
+                        dep_id: Optional[str] = request.form["department"]
+                        if not dep_id.isdigit():
+                            flash("Invalid department ID", "error")
                             return redirect(url_for("signup"))
+                        dep_id: int = int(dep_id)
+                        dp_exists = db_session.query(Department.id).filter_by(id=dep_id).first()
                         if not dp_exists:
                             flash("This department does not exist", "error")
                             return redirect(url_for("signup"))
-                        db_session.add(new_user)
-                        db_session.commit()
+
+                        Doctor.create_user(
+                            db_session,
+                            name=name,
+                            email=email,
+                            password=password,
+                            age=age,
+                            contact=contact,
+                            specialization=request.form["specialization"],
+                            department_id=dep_id,
+                        )
                         flash("Account created successfully! Please login.", "success")
-                        return redirect(url_for("login"))
-            if not new_user:
-                flash("Please select a valid account type!", "error")
-                return redirect(url_for("signup"))
+                        return redirect(url_for(Routes.LOGIN_ROUTE))
+                    case "patient":
+                        Patient.create_user(
+                            db_session,
+                            name=name,
+                            email=email,
+                            password=password,
+                            age=age,
+                            contact=contact,
+                        )
+                        flash("Account created successfully! Please login.", "success")
+                        return redirect(url_for(Routes.LOGIN_ROUTE))
+            flash("Please select a valid account type!", "error")
+            return redirect(url_for(Routes.SIGNUP_ROUTE))
     with SessionLocal() as db_session:
         deps = db_session.query(Department).all()
     return render_template('signup.html', departments=deps)

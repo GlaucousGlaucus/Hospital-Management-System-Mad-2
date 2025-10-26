@@ -7,6 +7,7 @@ from logging import getLogger
 
 from sqlalchemy import Enum, ForeignKey, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, scoped_session, sessionmaker
+from werkzeug.security import check_password_hash
 
 from utils.constants import DB_PATH
 
@@ -35,13 +36,26 @@ class AppointmentStatus(enum.Enum):
     COMPLETED = "Completed"
     CANCELLED = "Cancelled"
 
-class Admin(Base):
-    __tablename__ = "admins"
-
+class UserMixin:
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(120), unique=True)
     password: Mapped[str] = mapped_column(String(128))
+    age: Mapped[Optional[int]]
+    contact: Mapped[Optional[str]] = mapped_column(String(50))
+
+    @classmethod
+    def create_user(cls, session: SessionLocal, **kwargs):
+        user = cls(**kwargs)
+        session.add(user)
+        session.commit()
+        return user
+
+    def check_password(self, plain: str) -> bool:
+        return check_password_hash(self.password, plain)
+
+class Admin(UserMixin, Base):
+    __tablename__ = "admins"
 
 class Department(Base):
     __tablename__ = "departments"
@@ -51,13 +65,9 @@ class Department(Base):
     description: Mapped[Optional[str]]
     doctors: Mapped[List[Doctor]] = relationship(back_populates="department")
 
-class Doctor(Base):
+class Doctor(UserMixin, Base):
     __tablename__ = "doctors"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(100))
-    email: Mapped[str] = mapped_column(String(120), unique=True)
-    password: Mapped[str] = mapped_column(String(128))
     specialization: Mapped[Optional[str]] = mapped_column(String(100))
 
     department_id: Mapped[Optional[int]] = mapped_column(ForeignKey("departments.id"))
@@ -69,15 +79,8 @@ class Doctor(Base):
         return f"{self.name} {self.email} ({self.specialization})"
 
 
-class Patient(Base):
+class Patient(UserMixin, Base):
     __tablename__ = "patients"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(100))
-    age: Mapped[Optional[int]]
-    contact: Mapped[Optional[str]] = mapped_column(String(50))
-    email: Mapped[Optional[str]] = mapped_column(String(120), unique=True)
-    password: Mapped[str] = mapped_column(String(128))
 
     appointments: Mapped[List[Appointment]] = relationship(back_populates="patient")
 
