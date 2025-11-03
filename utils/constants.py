@@ -14,3 +14,9 @@ class UserTypes:
     ADMIN = "admin"
     DOCTOR = "doctor"
     PATIENT = "patient"
+
+class SessionInfo:
+    USER_ID = "user_id"
+    USER_NAME = "user_name"
+    USER_EMAIL = "user_email"
+    USER_TYPE = "user_type"

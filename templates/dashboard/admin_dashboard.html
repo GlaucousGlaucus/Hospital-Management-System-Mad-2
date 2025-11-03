@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="dashboard">
+
+    <h2 class="dashboard-title">Welcome {{ session['user_name'] or 'Admin' }}</h2>
+
+    <!-- Search + Create -->
+    <div class="dashboard-actions">
+        <input type="text"
+               class="dashboard-search"
+               placeholder="Search for doctor, patients, departments, etc.">
+        <button class="btn btn-filled">Search</button>
+        <button class="btn btn-outline">Create</button>
+    </div>
+
+    <!-- Registered Doctors -->
+    <section class="dashboard-section">
+        <h3>Registered Doctors</h3>
+        <div class="card-list">
+            {% for doctor in doctors %}
+            <div class="card-item">
+                <span>Dr. {{ doctor.name }}</span>
+
+                <div class="profile-picture">
+                    <!--TODO: Replace this with an actual profile image-->
+                    <img src="../../static/Resources/logo.png" height="200" width="200" style="border-radius: 50%;"/>
+                </div>
+
+                <div class="card-buttons">
+                    <button class="btn btn-icon">
+                        <span class="material-symbols-outlined">edit</span>
+                    </button>
+                    <button class="btn btn-icon">
+                        <span class="material-symbols-outlined">person_remove</span>
+                    </button>
+                    <button class="btn btn-icon">
+                        <span class="material-symbols-outlined">block</span>
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <p class="empty-text">No doctors registered.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Registered Patients -->
+    <section class="dashboard-section">
+        <h3>Registered Patients</h3>
+        <div class="card-list">
+            {% for patient in patients %}
+            <div class="card-item">
+                <span>{{ patient.name }}</span>
+
+                <div class="profile-picture">
+                    <img src="../../static/Resources/logo.png" height="200" width="200" style="border-radius: 50%;"/>
+                </div>
+
+                <div class="card-buttons">
+                    <button class="btn btn-icon">
+                        <span class="material-symbols-outlined">edit</span>
+                    </button>
+                    <button class="btn btn-icon">
+                        <span class="material-symbols-outlined">person_remove</span>
+                    </button>
+                    <button class="btn btn-icon">
+                        <span class="material-symbols-outlined">block</span>
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <p class="empty-text">No patients registered.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Upcoming Appointments -->
+    <section class="dashboard-section">
+        <h3>Upcoming Appointments</h3>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Sr No.</th>
+                    <th>Patient Name</th>
+                    <th>Doctor Name</th>
+                    <th>Department</th>
+                    <th>Patient History</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for appt in appointments %}
+                <tr>
+                    <td>{{ appt.id }}</td>
+                    <td>{{ appt.patient.name }}</td>
+                    <td>Dr. {{ appt.doctor.name }}</td>
+                    <td>{{ appt.doctor.department.name if appt.doctor.department else "N/A" }}</td>
+                    <td>
+                        <a href="{{ url_for('view_patient_history', patient_id=appt.patient.id) }}"
+                           class="btn btn-filled btn-view">View</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="empty-text">No upcoming appointments.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+{% endblock %}

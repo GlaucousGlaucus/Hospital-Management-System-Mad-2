@@ -5,7 +5,7 @@ from flask import Blueprint, flash, redirect, render_template, request, session,
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from models.main_models import Admin, Department, Doctor, Patient, SessionLocal
-from utils.constants import Routes, UserTypes
+from utils.constants import Routes, UserTypes, SessionInfo
 
 logger = getLogger(__name__)
 auth_signup_bp = Blueprint("auth_signup", __name__, url_prefix="/signup")
@@ -36,10 +36,10 @@ def login():
                     case _:
                         flash("Invalid user type")
             if user and check_password_hash(user.password, password):
-                session["user_id"] = user.id
-                session["user_name"] = user.name
-                session["user_email"] = user.email
-                session["user_type"] = user_type
+                session[SessionInfo.USER_ID] = user.id
+                session[SessionInfo.USER_NAME] = user.name
+                session[SessionInfo.USER_EMAIL] = user.email
+                session[SessionInfo.USER_TYPE] = user_type
                 return redirect(url_for(Routes.DASHBOARD_ROUTE))
             flash("Invalid credentials", "error")
     return render_template('login.html')
@@ -51,7 +51,7 @@ def signup():
             role = request.form["role"]
             if role not in ("doctor", "patient"):
                 flash("Invalid role", "error")
-                return redirect(url_for("signup"))
+                return redirect(url_for(Routes.SIGNUP_ROUTE))
 
             name: str = request.form["name"]
             email: str = request.form["email"]
@@ -63,19 +63,19 @@ def signup():
                 email_exists = db_session.query(Doctor.email).filter_by(email=email).first()
                 if email_exists:
                     flash(f"Account with email {email} already exists!", "error")
-                    return redirect(url_for("signup"))
+                    return redirect(url_for(Routes.SIGNUP_ROUTE))
 
                 match role:
                     case "doctor":
                         dep_id: Optional[str] = request.form["department"]
                         if not dep_id.isdigit():
                             flash("Invalid department ID", "error")
-                            return redirect(url_for("signup"))
+                            return redirect(url_for(Routes.SIGNUP_ROUTE))
                         dep_id: int = int(dep_id)
                         dp_exists = db_session.query(Department.id).filter_by(id=dep_id).first()
                         if not dp_exists:
                             flash("This department does not exist", "error")
-                            return redirect(url_for("signup"))
+                            return redirect(url_for(Routes.SIGNUP_ROUTE))
 
                         Doctor.create_user(
                             db_session,
