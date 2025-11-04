@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 
+<script type="module" src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
 <div class="dashboard">
 
     <h2 class="dashboard-title">Welcome {{ session['user_name'] or 'Admin' }}</h2>
@@ -17,61 +19,14 @@
     <!-- Registered Doctors -->
     <section class="dashboard-section">
         <h3>Registered Doctors</h3>
-        <div class="card-list">
-            {% for doctor in doctors %}
-            <div class="card-item">
-                <span>Dr. {{ doctor.name }}</span>
-
-                <div class="profile-picture">
-                    <!--TODO: Replace this with an actual profile image-->
-                    <img src="../../static/Resources/logo.png" height="200" width="200" style="border-radius: 50%;"/>
-                </div>
-
-                <div class="card-buttons">
-                    <button class="btn btn-icon">
-                        <span class="material-symbols-outlined">edit</span>
-                    </button>
-                    <button class="btn btn-icon">
-                        <span class="material-symbols-outlined">person_remove</span>
-                    </button>
-                    <button class="btn btn-icon">
-                        <span class="material-symbols-outlined">block</span>
-                    </button>
-                </div>
-            </div>
-            {% else %}
-            <p class="empty-text">No doctors registered.</p>
-            {% endfor %}
+        <div id="doctor-list" class="card-list">
         </div>
     </section>
 
     <!-- Registered Patients -->
     <section class="dashboard-section">
         <h3>Registered Patients</h3>
-        <div class="card-list">
-            {% for patient in patients %}
-            <div class="card-item">
-                <span>{{ patient.name }}</span>
-
-                <div class="profile-picture">
-                    <img src="../../static/Resources/logo.png" height="200" width="200" style="border-radius: 50%;"/>
-                </div>
-
-                <div class="card-buttons">
-                    <button class="btn btn-icon">
-                        <span class="material-symbols-outlined">edit</span>
-                    </button>
-                    <button class="btn btn-icon">
-                        <span class="material-symbols-outlined">person_remove</span>
-                    </button>
-                    <button class="btn btn-icon">
-                        <span class="material-symbols-outlined">block</span>
-                    </button>
-                </div>
-            </div>
-            {% else %}
-            <p class="empty-text">No patients registered.</p>
-            {% endfor %}
+        <div id="patient-list" class="card-list">
         </div>
     </section>
 

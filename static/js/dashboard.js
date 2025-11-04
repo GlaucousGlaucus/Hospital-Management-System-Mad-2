@@ -1,0 +1,68 @@
+import {createPersonListCard} from "./components/person_list_cards.js";
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadDoctors().then(r => {});
+    loadPatients().then(r => {});
+
+    document.body.addEventListener("click", async (event) => {
+        const btn = event.target.closest("[data-action]");
+        if (!btn) return;
+
+        const { action, type, id } = btn.dataset;
+        console.log(`Action: ${action}, Type: ${type}, ID: ${id}`);
+
+        if (action === "delete") {
+            if (!confirm(`Delete this ${type}?`)) return;
+            const res = await fetch(`/api/${type}/${id}`, { method: "DELETE" });
+            const data = await res.json();
+            if (data.status === "deleted") {
+                switch (type) {
+                    case "doctor":
+                        loadDoctors().then(r => {});
+                        break
+                    case "patient":
+                        loadPatients().then(r => {});
+                }
+            } else {
+                alert(data.error || "Failed to delete");
+            }
+        }
+        else if (action === "edit") {
+            window.location.href = `/edit/${type}/${id}`;
+        }
+        else if (action === "blacklist") {
+            const res = await fetch(`/api/${type}/${id}/blacklist`, { method: "PATCH" });
+            const data = await res.json();
+            if (data.status === "updated") alert("User blacklisted!");
+        }
+    });
+});
+
+async function loadDoctors() {
+    const container = document.getElementById("doctor-list");
+    container.innerHTML = "<p>Loading...</p>";
+    const res = await fetch("/api/doctors/all", { method: "GET" });
+    const data = await res.json();
+
+    if (!data || !data.length) {
+        container.innerHTML = "<p class='empty-text'>No doctors registered.</p>";
+        return;
+    }
+
+    container.innerHTML = data.map(d => createPersonListCard(d, "doctor")).join("");
+}
+
+async function loadPatients() {
+    const container = document.getElementById("patient-list");
+    container.innerHTML = "<p>Loading...</p>";
+    const res = await fetch("/api/patients/all", { method: "GET" });
+    const data = await res.json();
+    console.log(data);
+
+    if (!data || !data.length) {
+        container.innerHTML = "<p class='empty-text'>No patients registered.</p>";
+        return;
+    }
+
+    container.innerHTML = data.map(d => createPersonListCard(d, "patient")).join("");
+}

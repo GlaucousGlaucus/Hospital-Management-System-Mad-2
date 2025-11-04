@@ -465,6 +465,11 @@ body {
     padding: 1rem 0;
 }
 
+.card-list > .empty-text {
+    /* Since we are using grid we need to span the text across the columns otherwise it appears squished */
+    grid-column: 1 / -1;
+}
+
 .material-symbols-outlined {
   font-variation-settings:
   'FILL' 0,

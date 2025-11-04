@@ -13,9 +13,11 @@ def create_app() -> Flask:
 
     from routes.auth import auth_login_bp, auth_signup_bp
     from routes.dashboard import dashboard_bp
+    from routes.api_routes import api_bp
     app.register_blueprint(auth_signup_bp)
     app.register_blueprint(auth_login_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(api_bp)
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):
