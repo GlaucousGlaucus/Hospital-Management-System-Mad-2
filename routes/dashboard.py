@@ -66,3 +66,46 @@ def edit_doctor(doctor_id):
 
         departments = db_session.query(Department).all()
     return render_template("admin/new_doctor.html", doctor=doctor, departments=departments)
+
+
+@admin_bp.route("/new/patient", methods=["GET", "POST"])
+def new_patient():
+    with SessionLocal() as db_session:
+        if request.method == "POST":
+            patient = Patient(
+                name=request.form["name"],
+                email=request.form["email"],
+                password=generate_password_hash(request.form["password"]),
+                age=int(request.form["age"]),
+                contact=request.form["contact"],
+            )
+            db_session.add(patient)
+            db_session.commit()
+            flash("Patient account created successfully!", "success")
+            return redirect(url_for("dashboard.dashboard"))
+        return render_template("admin/patient_update.html")
+
+
+@admin_bp.route("edit/patient/<int:patient_id>", methods=["GET", "POST"])
+def edit_patient(patient_id):
+    with SessionLocal() as db_session:
+        patient = db_session.query(Patient).get(patient_id)
+        if not patient:
+            flash("Patient not found", "error")
+            return redirect(url_for("dashboard.dashboard"))
+
+        if request.method == "POST":
+            patient.name = request.form["name"]
+            patient.email = request.form["email"]
+            patient.age = int(request.form["age"])
+            patient.contact = request.form["contact"]
+
+            new_password = request.form.get("password", "").strip()
+            if new_password:
+                patient.password = generate_password_hash(new_password)
+
+            db_session.commit()
+            flash("Patient details updated successfully!", "success")
+            return redirect(url_for("dashboard.dashboard"))
+
+        return render_template("admin/patient_update.html", patient=patient)

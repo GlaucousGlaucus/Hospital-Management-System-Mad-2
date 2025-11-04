@@ -17,7 +17,6 @@
          value="{{ doctor.email if doctor else '' }}" required>
 
   {% if not doctor %}
-  <!-- Hide password for edit mode -->
   <label>Password</label>
   <input type="password" name="password" placeholder="Enter password" required>
   {% endif %}
