@@ -1,5 +1,83 @@
 {% extends "base.html" %}
-
 {% block content %}
+
+<div class="dashboard">
+    <h2 class="dashboard-title">Welcome Dr. {{ doctor.name }}</h2>
+
+    <section class="dashboard-section">
+        <h3>Upcoming Appointments</h3>
+
+        {% if appointments %}
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Sr No.</th>
+                    <th>Patient Name</th>
+                    <th>Patient History</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for a in appointments %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ a.patient.name }}</td>
+                    <td>
+                        <a href="{{ url_for('api.patient_history', patient_id=a.patient.id) }}"
+                           class="btn btn-outline">Update</a>
+                    </td>
+                    <td>
+                        <div class="card-buttons">
+                            <form action="{{ url_for('api.mark_complete', appointment_id=a.id) }}"
+                                  method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-filled" style="background-color:#d4edda; color:#155724;">
+                                    Mark as Complete
+                                </button>
+                            </form>
+                            <form action="{{ url_for('api.cancel_appointment', appointment_id=a.id) }}"
+                                  method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-filled" style="background-color:#f8d7da; color:#721c24;">
+                                    Cancel
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="empty-text">No upcoming appointments.</p>
+        {% endif %}
+    </section>
+
+    <section class="dashboard-section">
+        <h3>Assigned Patients</h3>
+
+        {% if patients %}
+        <div class="card-list" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+            {% for p in patients %}
+            <div class="card-item">
+                <span style="font-weight:600; color:var(--primary-color);">{{ p.name }}</span>
+                <a href="{{ url_for('api.patient_history', patient_id=p.id) }}"
+                   class="btn btn-outline">View</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-text">No patients assigned yet.</p>
+        {% endif %}
+
+        <div style="text-align:right; margin-top:1.5rem;">
+            <a href="{{ url_for('dashboard.availability') }}"
+               class="btn btn-filled"
+               style="background-color:#d4edda; color:#155724;">
+                Provide Availability
+            </a>
+        </div>
+    </section>
+</div>
 
 {% endblock %}

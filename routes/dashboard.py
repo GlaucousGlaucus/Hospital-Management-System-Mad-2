@@ -20,7 +20,64 @@ def dashboard():
                 'dashboard/admin_dashboard.html'
             )
         case UserTypes.DOCTOR:
-            return render_template('dashboard/doctor_dashboard.html')
+            doctor_id = session.get(SessionInfo.USER_ID)
+            with SessionLocal() as db_session:
+                doctor = db_session.query(Doctor).get(doctor_id)
+
+                appointments = (
+                    db_session.query(Appointment)
+                    .filter(
+                        Appointment.doctor_id == doctor_id,
+                        Appointment.status == "BOOKED"
+                    )
+                    .join(Patient)
+                    .add_entity(Patient)
+                    .all()
+                )
+
+                patients = (
+                    db_session.query(Patient)
+                    .join(Appointment)
+                    .filter(Appointment.doctor_id == doctor_id)
+                    .distinct()
+                    .all()
+                )
+
+                doctor_data = {
+                    "id": doctor.id,
+                    "name": doctor.name,
+                    "email": doctor.email,
+                    "age": doctor.age,
+                }
+
+                appointment_data = []
+                for a, p in appointments:
+                    appointment_data.append({
+                        "id": a.id,
+                        "status": a.status,
+                        "date": getattr(a, "date", None),
+                        "time": getattr(a, "time", None),
+                        "patient": {
+                            "id": p.id,
+                            "name": p.name,
+                            "email": p.email,
+                            "age": p.age,
+                        }
+                    })
+
+                patient_data = [
+                    {"id": p.id, "name": p.name, "email": p.email, "age": p.age}
+                    for p in patients
+                ]
+
+            # Pass only plain dicts/lists
+            return render_template(
+                "dashboard/doctor_dashboard.html",
+                doctor=doctor_data,
+                appointments=appointment_data,
+                patients=patient_data
+            )
+
         case UserTypes.PATIENT:
             return render_template('dashboard/patient_dashboard.html')
     return redirect(url_for(Routes.LOGIN_ROUTE))
@@ -109,3 +166,7 @@ def edit_patient(patient_id):
             return redirect(url_for("dashboard.dashboard"))
 
         return render_template("admin/patient_update.html", patient=patient)
+
+@dashboard_bp.route("doctor/availability")
+def availability():
+    return render_template("availability_form.html")
