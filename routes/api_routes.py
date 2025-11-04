@@ -1,7 +1,8 @@
 from logging import getLogger
 from typing import List
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, abort, render_template
+from sqlalchemy.orm import joinedload
 
 from models.main_models import Doctor, Patient, SessionLocal, Appointment
 
@@ -43,6 +44,7 @@ def get_all_items(entity):
                         "patient_name": app.patient.name,
                         "doctor_name": app.doctor.name,
                         "doctor_dep": app.doctor.department.name,
+                        "patient_id": app.patient.id,
                     }
                     for app in entities
                 ]
@@ -64,3 +66,49 @@ def delete_item(entity, item_id):
         db_session.delete(item)
         db_session.commit()
     return jsonify({"status": "deleted"})
+
+
+@api_bp.route("patient/<int:patient_id>/history")
+def patient_history(patient_id: int):
+    """Show the patient history table."""
+    with SessionLocal() as session:
+        patient = (
+            session.query(Patient)
+            .options(
+                joinedload(Patient.appointments)
+                .joinedload(Appointment.treatment),
+                joinedload(Patient.appointments)
+                .joinedload(Appointment.doctor)
+                .joinedload(Doctor.department)
+            )
+            .filter(Patient.id == patient_id)
+            .first()
+        )
+
+        if not patient:
+            abort(404, description="Patient not found")
+
+        # For simplicity, assume all appointments are with the same doctor & department (like your example)
+        doctor = patient.appointments[0].doctor if patient.appointments else None
+        department = doctor.department if doctor and doctor.department else None
+
+        # Build visit history
+        visits = []
+        for idx, appt in enumerate(patient.appointments, start=1):
+            t = appt.treatment
+            visits.append({
+                "no": idx,
+                "visit_type": "In-person",  # could expand later to Online, etc.
+                "tests_done": "ECG",  # static for demo; could be dynamic later
+                "diagnosis": t.diagnosis if t else "N/A",
+                "prescription": t.prescription if t else "N/A",
+                "medicines": t.notes if t else "N/A",
+            })
+
+        return render_template(
+            "dashboard/patient_history.html",
+            patient=patient,
+            doctor=doctor,
+            department=department,
+            visits=visits,
+        )

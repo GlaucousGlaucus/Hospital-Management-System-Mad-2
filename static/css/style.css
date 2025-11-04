@@ -515,3 +515,28 @@ body {
     max-height: 100%;
     padding: 0.5rem;
 }
+
+
+.patient-info {
+    margin: 1rem 0 2rem 0;
+    background-color: #fff;
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    color: #333;
+    line-height: 1.6;
+}
+
+.patient-info p {
+    margin: 0.3rem 0;
+}
+
+.back-btn-container {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.dashboard-title {
+    margin-bottom: 1rem;
+}

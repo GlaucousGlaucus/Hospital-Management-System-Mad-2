@@ -24,7 +24,7 @@ export function createAppointmentRow(data) {
         <td>${data.doctor_name ?? "N/A"}</td>
         <td>${data.doctor_dep ?? "N/A"}</td>
         <td>
-            <a href="/view_patient_history/${data.patient?.id ?? ''}"
+            <a href="/api/patient/${data.patient_id}/history"
                class="btn btn-filled btn-view">View</a>
         </td>
     </tr>
