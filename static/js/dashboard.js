@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
         else if (action === "edit") {
-            window.location.href = `/edit/${type}/${id}`;
+            window.location.href = `/admin/edit/${type}/${id}`;
         }
         else if (action === "blacklist") {
             const res = await fetch(`/api/${type}/${id}/blacklist`, { method: "PATCH" });

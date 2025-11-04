@@ -1,39 +1,55 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2 class="auth-title">Add Doctor</h2>
+<h2 class="auth-title">
+  {{ "Edit Doctor" if doctor else "Add Doctor" }}
+</h2>
 
-<form action="{{ url_for('admin.new_doctor') }}" method="POST" class="auth-form">
+<form action="{{ url_for('admin.edit_doctor', doctor_id=doctor.id) if doctor else url_for('admin.new_doctor') }}"
+      method="POST" class="auth-form">
 
   <label>Full Name</label>
-  <input type="text" name="name" placeholder="Dr. John Doe" required>
+  <input type="text" name="name" placeholder="Dr. John Doe"
+         value="{{ doctor.name if doctor else '' }}" required>
 
   <label>Email</label>
-  <input type="email" name="email" placeholder="doctor@example.com" required>
+  <input type="email" name="email" placeholder="doctor@example.com"
+         value="{{ doctor.email if doctor else '' }}" required>
 
+  {% if not doctor %}
+  <!-- Hide password for edit mode -->
   <label>Password</label>
   <input type="password" name="password" placeholder="Enter password" required>
+  {% endif %}
 
   <label>Age</label>
-  <input type="number" name="age" placeholder="35" required>
+  <input type="number" name="age" placeholder="35"
+         value="{{ doctor.age if doctor else '' }}" required>
 
   <label>Contact</label>
-  <input type="text" name="contact" placeholder="+91 98765 43210" required>
+  <input type="text" name="contact" placeholder="+91 98765 43210"
+         value="{{ doctor.contact if doctor else '' }}" required>
 
   <div class="collapsable-input-field">
     <label>Specialization</label>
-    <input type="text" name="specialization" placeholder="Cardiology, Neurology, etc." required>
+    <input type="text" name="specialization" placeholder="Cardiology, Neurology, etc."
+           value="{{ doctor.specialization if doctor else '' }}" required>
 
     <label>Department</label>
     <select name="department_id" required>
       <option value="">Select Department</option>
       {% for dept in departments %}
-      <option value="{{ dept.id }}">{{ dept.name }}</option>
+      <option value="{{ dept.id }}"
+              {% if doctor and doctor.department_id == dept.id %}selected{% endif %}>
+        {{ dept.name }}
+      </option>
       {% endfor %}
     </select>
   </div>
 
-  <button type="submit" class="btn btn-filled">Create Doctor Account</button>
+  <button type="submit" class="btn btn-filled">
+    {{ "Update Doctor" if doctor else "Create Doctor Account" }}
+  </button>
 
   <p class="alt-link">
     Return to <a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a>

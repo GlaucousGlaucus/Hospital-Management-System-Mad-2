@@ -43,3 +43,26 @@ def new_doctor():
             return redirect(url_for(Routes.DASHBOARD_ROUTE))
         departments = db_session.query(Department).all()
     return render_template("admin/new_doctor.html", departments=departments)
+
+@admin_bp.route("/edit/doctor/<int:doctor_id>/", methods=["GET", "POST"])
+def edit_doctor(doctor_id):
+    with SessionLocal() as db_session:
+        doctor = db_session.query(Doctor).get(doctor_id)
+        if request.method == "POST":
+            doctor.name = request.form["name"]
+            doctor.email = request.form["email"]
+            doctor.age = int(request.form["age"])
+            doctor.contact = request.form["contact"]
+            doctor.specialization = request.form["specialization"]
+            doctor.department_id = int(request.form["department_id"])
+
+            new_password = request.form.get("password", "").strip()
+            if new_password:
+                doctor.password = generate_password_hash(new_password)
+
+            db_session.commit()
+            flash("Doctor details updated successfully!", "success")
+            return redirect(url_for("dashboard.dashboard"))
+
+        departments = db_session.query(Department).all()
+    return render_template("admin/new_doctor.html", doctor=doctor, departments=departments)
