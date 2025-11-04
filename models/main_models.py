@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import enum
-from datetime import date, time
+import random
+from datetime import date, time, timedelta
 from typing import List, Optional
 from logging import getLogger
 
@@ -18,14 +19,104 @@ SessionLocal = scoped_session(sessionmaker(bind=engine))
 def setup_db():
     if DB_PATH.exists():
         logger.info(f"DB already exists at {DB_PATH}")
-    else:
-        Base.metadata.create_all(engine)
-        admin = Admin(name="Admin", email="admin@nodomain.com", password=generate_password_hash("123"))
-        with SessionLocal() as session:
-            session.add_all([Department(name=f"D{i}", description=f"Description {i}") for i in range(10)])
-            session.add(admin)
-            session.commit()
-        logger.info(f"DB created at {DB_PATH}")
+        return
+
+    Base.metadata.create_all(engine)
+    logger.info("Creating dummy data...")
+
+    with SessionLocal() as session:
+        # 1️⃣  Admin
+        admin = Admin(
+            name="Admin",
+            email="admin@admin.com",
+            password=generate_password_hash("123"),
+            age=40,
+            contact="+91 9999999999",
+        )
+        session.add(admin)
+
+        # 2️⃣  Departments
+        department_names = [
+            "Cardiology", "Neurology", "Orthopedics", "Pediatrics",
+            "Dermatology", "Oncology", "Psychiatry", "Radiology",
+            "ENT", "General Medicine",
+        ]
+        departments = [
+            Department(name=name, description=f"{name} Department")
+            for name in department_names
+        ]
+        session.add_all(departments)
+        session.flush()  # assigns IDs to departments
+
+        # 3️⃣  Doctors
+        specializations = [
+            "Cardiologist", "Neurologist", "Orthopedic Surgeon",
+            "Pediatrician", "Dermatologist", "Oncologist",
+            "Psychiatrist", "Radiologist", "ENT Specialist", "General Physician",
+        ]
+        doctors = []
+        for i in range(30):
+            dept = random.choice(departments)
+            doc = Doctor(
+                name=f"Dr. {random.choice(['John', 'Alex', 'Mira', 'Sara', 'Raj', 'Lina', 'Omar', 'Nina'])} {i}",
+                email=f"doctor{i}@hospital.com",
+                password=generate_password_hash("123"),
+                age=random.randint(30, 65),
+                contact=f"+91 {random.randint(7000000000, 9999999999)}",
+                specialization=random.choice(specializations),
+                department_id=dept.id,  # ✅ only FK used
+            )
+            doctors.append(doc)
+        session.add_all(doctors)
+        session.flush()  # assign doctor IDs
+
+        # 4️⃣  Patients
+        patients = []
+        for i in range(100):
+            patient = Patient(
+                name=f"Patient {i}",
+                email=f"patient{i}@example.com",
+                password=generate_password_hash("123"),
+                age=random.randint(10, 90),
+                contact=f"+91 {random.randint(6000000000, 9999999999)}",
+            )
+            patients.append(patient)
+        session.add_all(patients)
+        session.flush()  # assign patient IDs
+
+        # 5️⃣  Appointments & Treatments (no lazy loads)
+        statuses = list(AppointmentStatus)
+        for _ in range(120):
+            patient = random.choice(patients)
+            doctor = random.choice(doctors)
+            appt = Appointment(
+                patient_id=patient.id,
+                doctor_id=doctor.id,
+                date=date.today() - timedelta(days=random.randint(0, 30)),
+                time=time(hour=random.randint(8, 17), minute=random.choice([0, 15, 30, 45])),
+                status=random.choice(statuses),
+            )
+            session.add(appt)
+            session.flush()  # ensures appt.id available for FK use
+
+            if appt.status in [AppointmentStatus.BOOKED, AppointmentStatus.COMPLETED]:
+                session.add(Treatment(
+                    appointment_id=appt.id,
+                    diagnosis=random.choice([
+                        "Hypertension", "Migraine", "Fracture", "Allergy", "Diabetes", "Anxiety"
+                    ]),
+                    prescription=random.choice([
+                        "Paracetamol 500mg", "Amoxicillin 250mg", "Ibuprofen 400mg", "Vitamin D supplement"
+                    ]),
+                    notes=random.choice([
+                        "Follow-up required", "Patient improving", "Schedule recheck", "Prescribed rest"
+                    ]),
+                ))
+
+        # 6️⃣  Final commit
+        session.commit()
+        logger.info("Dummy data created successfully.")
+
 
 class Base(DeclarativeBase):
     pass
