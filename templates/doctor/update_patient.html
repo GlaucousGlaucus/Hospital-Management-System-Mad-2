@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="dashboard">
+    <h2 class="dashboard-title">Update Patient History</h2>
+    <div class="patient-info">
+        <p><strong>Patient Name:</strong> {{ patient.name }}</p>
+        <p><strong>Department:</strong> {{ department }}</p>
+    </div>
+
+    <form method="POST" class="auth-form" style="gap:1rem;">
+        <div class="dashboard-section" style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+            <div>
+                <label>Visit Type</label>
+                <input type="text" name="visit_type" placeholder="Checkup / Follow-up / Emergency">
+            </div>
+
+            <div>
+                <label>Test Done</label>
+                <input type="text" name="test_done" placeholder="Blood Test / X-Ray / ECG">
+            </div>
+        </div>
+
+        <div>
+            <label>Diagnosis</label>
+            <textarea name="diagnosis" rows="2" placeholder="Enter diagnosis">{{ treatment.diagnosis or '' }}</textarea>
+        </div>
+
+        <div>
+            <label>Prescription</label>
+            <textarea name="prescription" rows="2" placeholder="Enter prescription">{{ treatment.prescription or '' }}</textarea>
+        </div>
+
+        <div>
+            <label>Medicines</label>
+            <div id="medicine-list" class="card-list" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="card-item">
+                    <input type="text" name="medicine_name[]" placeholder="Medicine name">
+                    <input type="text" name="medicine_dose[]" placeholder="1-0-1">
+                </div>
+            </div>
+            <button type="button" class="btn btn-outline" id="add-medicine">Add Medicine</button>
+        </div>
+
+        <div>
+            <label>Notes</label>
+            <textarea name="notes" rows="2" placeholder="Additional remarks or observations">{{ treatment.notes or '' }}</textarea>
+        </div>
+
+        <div style="display:block; justify-content:flex-end; gap: 1rem; align-self: end">
+            <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline">Cancel</a>
+            <button type="reset" class="btn btn-outline">Reset</button>
+            <button type="submit" class="btn btn-filled">Save</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.getElementById("add-medicine").addEventListener("click", () => {
+        const list = document.getElementById("medicine-list");
+        const div = document.createElement("div");
+        div.className = "card-item";
+        div.innerHTML = `
+    <input type="text" name="medicine_name[]" placeholder="Medicine name">
+    <input type="text" name="medicine_dose[]" placeholder="1-0-1">
+  `;
+        list.appendChild(div);
+    });
+</script>
+{% endblock %}

@@ -2,7 +2,7 @@
 {% block content %}
 
 <div class="dashboard">
-    <h2 class="dashboard-title">Welcome Dr. {{ doctor.name }}</h2>
+    <h2 class="dashboard-title">Welcome {{ doctor.name }}</h2>
 
     <section class="dashboard-section">
         <h3>Upcoming Appointments</h3>
@@ -24,7 +24,7 @@
                     <td>{{ loop.index }}</td>
                     <td>{{ a.patient.name }}</td>
                     <td>
-                        <a href="{{ url_for('api.patient_history', patient_id=a.patient.id) }}"
+                        <a href="{{ url_for('doctor.update_history', appointment_id=a.id) }}"
                            class="btn btn-outline">Update</a>
                     </td>
                     <td>

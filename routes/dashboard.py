@@ -1,15 +1,17 @@
 from logging import getLogger
 
 from flask import Blueprint, render_template, session, redirect, url_for, request, flash
+from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash
 
-from models.main_models import SessionLocal, Doctor, Patient, Appointment, Department
+from models.main_models import SessionLocal, Doctor, Patient, Appointment, Department, Treatment
 from services.doctor_service import create_doctor
 from utils.constants import SessionInfo, UserTypes, Routes
 
 logger = getLogger(__name__)
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
+doctor_bp = Blueprint("doctor", __name__, url_prefix="/doctor")
 
 @dashboard_bp.route('/')
 def dashboard():
@@ -170,3 +172,43 @@ def edit_patient(patient_id):
 @dashboard_bp.route("doctor/availability")
 def availability():
     return render_template("availability_form.html")
+
+@doctor_bp.route("/update_history/<int:appointment_id>", methods=["GET", "POST"])
+def update_history(appointment_id):
+    with SessionLocal() as db_session:
+        appointment = (
+            db_session.query(Appointment)
+            .options(
+                joinedload(Appointment.patient),
+                joinedload(Appointment.doctor).joinedload(Doctor.department),
+                joinedload(Appointment.treatment)
+            )
+            .get(appointment_id)
+        )
+        if not appointment:
+            flash("Appointment not found!", "error")
+            return redirect(url_for("dashboard.dashboard"))
+
+        treatment = appointment.treatment or Treatment(appointment_id=appointment.id)
+
+        if request.method == "POST":
+            treatment.diagnosis = request.form.get("diagnosis", "")
+            treatment.prescription = request.form.get("prescription", "")
+            treatment.notes = request.form.get("notes", "")
+
+            db_session.add(treatment)
+            db_session.commit()
+            flash("Patient history updated successfully!", "success")
+            return redirect(url_for("dashboard.dashboard"))
+
+        patient = appointment.patient
+        doctor = appointment.doctor
+        dept = doctor.department.name if doctor.department else "N/A"
+
+        return render_template(
+            "doctor/update_patient.html",
+            appointment=appointment,
+            treatment=treatment,
+            patient=patient,
+            department=dept,
+        )
