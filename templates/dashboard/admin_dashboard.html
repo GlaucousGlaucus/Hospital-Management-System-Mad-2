@@ -13,7 +13,7 @@
                class="dashboard-search"
                placeholder="Search for doctor, patients, departments, etc.">
         <button class="btn btn-filled">Search</button>
-        <button class="btn btn-outline">Create</button>
+        <a href="{{ url_for('admin.new_doctor') }}" class="btn btn-outline">Create</a>
     </div>
 
     <!-- Registered Doctors -->
