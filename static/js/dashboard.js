@@ -1,8 +1,9 @@
-import {createPersonListCard} from "./components/person_list_cards.js";
+import {createAppointmentRow, createPersonListCard} from "./components/person_list_cards.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     loadDoctors().then(r => {});
     loadPatients().then(r => {});
+    loadAppointments().then(r => {});
 
     document.body.addEventListener("click", async (event) => {
         const btn = event.target.closest("[data-action]");
@@ -22,6 +23,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         break
                     case "patient":
                         loadPatients().then(r => {});
+                        break
+                    case "appointment":
+                        loadAppointments().then(r => {});
+                        break
                 }
             } else {
                 alert(data.error || "Failed to delete");
@@ -57,7 +62,6 @@ async function loadPatients() {
     container.innerHTML = "<p>Loading...</p>";
     const res = await fetch("/api/patients/all", { method: "GET" });
     const data = await res.json();
-    console.log(data);
 
     if (!data || !data.length) {
         container.innerHTML = "<p class='empty-text'>No patients registered.</p>";
@@ -65,4 +69,19 @@ async function loadPatients() {
     }
 
     container.innerHTML = data.map(d => createPersonListCard(d, "patient")).join("");
+}
+
+async function loadAppointments() {
+    const container = document.getElementById("appointments-table");
+    container.innerHTML = "<tr><td colSpan=\"5\" className=\"empty-text\">No upcoming appointments.</td></tr>";
+
+    const res = await fetch("/api/appointments/all", {method: "GET"});
+    const data = await res.json();
+
+    if (!data || !data.length) {
+        container.innerHTML = "<tr><td colSpan=\"5\" className=\"empty-text\">No upcoming appointments.</td></tr>";
+        return;
+    }
+
+    container.innerHTML = data.map(d => createAppointmentRow(d)).join("");
 }

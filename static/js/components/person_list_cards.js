@@ -16,6 +16,21 @@ export function createPersonListCard(entity, role) {
   `;
 }
 
+export function createAppointmentRow(data) {
+    return `
+    <tr>
+        <td>${data.id}</td>
+        <td>${data.patient_name ?? "N/A"}</td>
+        <td>${data.doctor_name ?? "N/A"}</td>
+        <td>${data.doctor_dep ?? "N/A"}</td>
+        <td>
+            <a href="/view_patient_history/${data.patient?.id ?? ''}"
+               class="btn btn-filled btn-view">View</a>
+        </td>
+    </tr>
+    `;
+}
+
 export function createIconButton(action, type, id, icon) {
     return `
     <button class="btn btn-icon" data-action="${action}" data-type="${type}" data-id="${id}" title="${action}">

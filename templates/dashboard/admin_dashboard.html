@@ -37,28 +37,14 @@
             <table class="data-table">
                 <thead>
                 <tr>
-                    <th>Sr No.</th>
+                    <th>ID</th>
                     <th>Patient Name</th>
                     <th>Doctor Name</th>
                     <th>Department</th>
                     <th>Patient History</th>
                 </tr>
                 </thead>
-                <tbody>
-                {% for appt in appointments %}
-                <tr>
-                    <td>{{ appt.id }}</td>
-                    <td>{{ appt.patient.name }}</td>
-                    <td>Dr. {{ appt.doctor.name }}</td>
-                    <td>{{ appt.doctor.department.name if appt.doctor.department else "N/A" }}</td>
-                    <td>
-                        <a href="{{ url_for('view_patient_history', patient_id=appt.patient.id) }}"
-                           class="btn btn-filled btn-view">View</a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr><td colspan="5" class="empty-text">No upcoming appointments.</td></tr>
-                {% endfor %}
+                <tbody id="appointments-table">
                 </tbody>
             </table>
         </div>
