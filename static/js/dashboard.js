@@ -5,6 +5,16 @@ document.addEventListener("DOMContentLoaded", () => {
     loadPatients().then(r => {});
     loadAppointments().then(r => {});
 
+    const collapsibles = document.querySelectorAll(".collapsible");
+
+    collapsibles.forEach(c => {
+        c.addEventListener("click", () => {
+            c.classList.toggle("active");
+            const content = c.nextElementSibling;
+            content.classList.toggle("open");
+        });
+    });
+
     document.body.addEventListener("click", async (event) => {
         const btn = event.target.closest("[data-action]");
         if (!btn) return;
