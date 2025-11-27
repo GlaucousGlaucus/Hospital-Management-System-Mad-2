@@ -85,15 +85,22 @@ def setup_db():
         ]
 
         statuses = list(AppointmentStatus)
+        visit_types = ["Checkup", "Follow-up", "Emergency"]
+        tests_done = ["Blood Test", "X-Ray", "ECG", "MRI", "None"]
+
         for _ in range(120):
             patient = random.choice(patients)
             doctor = random.choice(doctors)
+
             appt = Appointment(
                 patient_id=patient.id,
                 doctor_id=doctor.id,
                 date=date.today() - timedelta(days=random.randint(0, 30)),
                 time=time(hour=random.randint(8, 17), minute=random.choice([0, 15, 30, 45])),
                 status=random.choice(statuses),
+
+                visit_type=random.choice(visit_types),
+                test_done=random.choice(tests_done),
             )
             session.add(appt)
             session.flush()
@@ -195,6 +202,8 @@ class Appointment(Base):
     date: Mapped[date]
     time: Mapped[time]
     status: Mapped[AppointmentStatus] = mapped_column(Enum(AppointmentStatus), default=AppointmentStatus.BOOKED)
+    visit_type: Mapped[Optional[str]]
+    test_done: Mapped[Optional[str]]
 
     patient: Mapped[Patient] = relationship(back_populates="appointments")
     doctor: Mapped[Doctor] = relationship(back_populates="appointments")

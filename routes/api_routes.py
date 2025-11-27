@@ -100,8 +100,8 @@ def patient_history(patient_id: int):
             t = appt.treatment
             visits.append({
                 "no": idx,
-                "visit_type": "In-person",  # could expand later to Online, etc.
-                "tests_done": "ECG",  # static for demo; could be dynamic later
+                "visit_type": appt.visit_type if appt.visit_type else "N/A",
+                "tests_done": appt.test_done if appt.test_done else "N/A",
                 "diagnosis": t.diagnosis if t else "N/A",
                 "prescription": t.prescription if t else "N/A",
                 "medicines": t.notes if t else "N/A",
