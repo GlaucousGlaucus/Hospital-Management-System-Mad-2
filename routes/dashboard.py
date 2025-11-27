@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, session, redirect, url_for, reques
 from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash
 
-from models.main_models import SessionLocal, Doctor, Patient, Appointment, Department, Treatment
+from models.main_models import SessionLocal, Doctor, Patient, Appointment, Department, Treatment, DoctorAvailability
 from services.doctor_service import create_doctor
 from utils.constants import SessionInfo, UserTypes, Routes
 
@@ -73,16 +73,22 @@ def dashboard():
                     for p in patients
                 ]
 
+                availability = {
+                    (data.date, data.slot) : data.enabled
+                    for data in db_session.query(DoctorAvailability).filter_by(doctor_id=doctor_id).all()
+                }
+
             today = datetime.today()
             start_of_week = today - timedelta(days=today.weekday() + 1)  # Sunday
-            days = [(start_of_week + timedelta(days=i)).strftime("%A, %d %B %Y") for i in range(7)]
+            days = [(start_of_week + timedelta(days=i)).date() for i in range(7)]
 
             return render_template(
                 "dashboard/doctor_dashboard.html",
                 doctor=doctor_data,
                 appointments=appointment_data,
                 patients=patient_data,
-                days=days
+                days=days,
+                availability=availability,
             )
 
         case UserTypes.PATIENT:

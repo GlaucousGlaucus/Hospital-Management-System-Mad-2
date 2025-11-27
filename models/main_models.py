@@ -165,6 +165,9 @@ class Doctor(UserMixin, Base):
     department: Mapped[Optional[Department]] = relationship(back_populates="doctors")
 
     appointments: Mapped[List[Appointment]] = relationship(back_populates="doctor")
+    availability: Mapped[list["DoctorAvailability"]] = relationship(
+        back_populates="doctor", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"{self.name} {self.email} ({self.specialization})"
@@ -200,3 +203,14 @@ class Treatment(Base):
     notes: Mapped[Optional[str]] = mapped_column(Text)
 
     appointment: Mapped[Appointment] = relationship(back_populates="treatment")
+
+class DoctorAvailability(Base):
+    __tablename__ = "doctor_availability"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    doctor_id: Mapped[int] = mapped_column(ForeignKey("doctors.id"))
+    date: Mapped[date]
+    slot: Mapped[str] = mapped_column(String(20))
+    enabled: Mapped[bool] = mapped_column(default=False)
+
+    doctor: Mapped[Doctor] = relationship(back_populates="availability")

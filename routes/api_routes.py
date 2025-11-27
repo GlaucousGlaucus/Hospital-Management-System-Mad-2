@@ -1,11 +1,12 @@
+import datetime
 from logging import getLogger
-from typing import List
+from typing import List, dataclass_transform
 
 from flask import Blueprint, jsonify, abort, render_template, flash, redirect, url_for, request, session
 from sqlalchemy.orm import joinedload
 
-from models.main_models import Doctor, Patient, SessionLocal, Appointment
-from utils.constants import SessionInfo
+from models.main_models import Doctor, Patient, SessionLocal, Appointment, DoctorAvailability
+from utils.constants import SessionInfo, UserTypes
 
 logger = getLogger(__name__)
 api_bp = Blueprint("api", __name__, url_prefix="/api")
@@ -137,36 +138,38 @@ def cancel_appointment(appointment_id):
 def update_availability():
     data = request.get_json()
 
-    slot = data.get("slot")       # e.g. "Monday_morning"
-    enabled = data.get("enabled") # 1 or 0
+    slot = data.get("slot")
+    enabled = data.get("enabled")
 
     if not slot:
         return jsonify({"error": "invalid slot"}), 400
 
-    day, time = slot.split("_")   # "Monday", "morning"
+    date, slot = slot.split("_")
+    date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
 
-    print(day, time)
+    if session[SessionInfo.USER_TYPE] != UserTypes.DOCTOR:
+        return jsonify({"error": "invalid user, only doctors can issue this command!"}), 400
 
-    # doctor_id = session[SessionInfo.USER_ID]
+    doctor_id = session[SessionInfo.USER_ID]
 
-    # availability = DoctorAvailability.query.filter_by(
-    #     doctor_id=doctor_id,
-    #     day=day,
-    #     time=time
-    # ).first()
-    #
-    # if availability:
-    #     availability.enabled = enabled
-    # else:
-    #     availability = DoctorAvailability(
-    #         doctor_id=doctor_id,
-    #         day=day,
-    #         time=time,
-    #         enabled=enabled
-    #     )
-    #     db.session.add(availability)
-    #
-    # db.session.commit()
+    with SessionLocal() as db_session:
+        availability = db_session.query(DoctorAvailability).filter_by(
+            doctor_id=doctor_id,
+            date=date,
+            slot=slot
+        ).first()
+
+        if availability:
+            availability.enabled = enabled
+        else:
+            availability = DoctorAvailability(
+                doctor_id=doctor_id,
+                date=date,
+                slot=slot,
+                enabled=enabled
+            )
+            db_session.add(availability)
+        db_session.commit()
 
     return jsonify({
         "status": "success",

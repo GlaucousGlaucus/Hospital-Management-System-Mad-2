@@ -91,18 +91,20 @@
                     <tbody>
                     {% for day in days %}
                     <tr>
-                        <td>{{ day }}</td>
+                        <td>{{ day.strftime("%A, %d %B %Y") }}</td>
                         <td>
                             <label class="availability-slot morning">
                                 <input type="checkbox" name="availability"
-                                       value="{{ day }}_morning" checked>
+                                       value="{{ day }}_morning"
+                                    {% if availability.get((day, 'morning')) %}checked{% endif %}>
                                 <span>08:00 - 12:00 am</span>
                             </label>
                         </td>
                         <td>
                             <label class="availability-slot evening">
                                 <input type="checkbox" name="availability"
-                                       value="{{ day }}_evening">
+                                       value="{{ day }}_evening"
+                                       {% if availability.get((day, 'evening')) %}checked{% endif %}>
                                 <span>04:00 - 09:00 pm</span>
                             </label>
                         </td>
