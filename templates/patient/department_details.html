@@ -9,7 +9,6 @@
 
   <section class="dashboard-section">
     <h3>Overview</h3>
-
     <p style="line-height:1.6; max-width:900px; color:#333;">
       {{ department.description }}
     </p>
@@ -19,7 +18,6 @@
     <h3>Doctors' list</h3>
 
     <div class="card" style="padding:1rem 1.5rem;">
-
       {% if doctors %}
       <div class="card-list" style="grid-template-columns: 1fr; gap:0.75rem; border:none">
 
@@ -30,12 +28,11 @@
           <span style="font-size:1rem; color:#777;">Dr. {{ d.name }}</span>
 
           <div class="card-buttons">
-            <a href="{{ url_for('patient.check_availability', doctor_id=d.id) }}"
-               class="btn btn-filled">
+            <a class="btn btn-filled" onclick="openAvailabilityModal({{ d.id }})">
               Check Availability
             </a>
 
-            <button class="btn btn-outline doctor-view-btn"  data-doctor='{{ d | tojson }}'>
+            <button class="btn btn-outline doctor-view-btn" data-doctor='{{ d | tojson }}'>
               View Details
             </button>
           </div>
@@ -53,6 +50,7 @@
 
 </div>
 
+
 <div id="doctorModal" class="modal-overlay">
   <div class="modal-card">
 
@@ -61,59 +59,152 @@
     </div>
 
     <div class="modal-body">
-
       <div class="modal-body-left">
         <p id="doctorQualification" class="doctor-subtext"></p>
         <p id="doctorSpecialization" class="doctor-subtext"></p>
         <p id="doctorExperience" class="doctor-subtext"></p>
-
         <p id="doctorBio" class="doctor-bio"></p>
       </div>
 
       <div class="modal-body-right">
         <div class="doctor-avatar"></div>
       </div>
-
     </div>
 
     <div class="modal-footer">
-      <a id="availabilityBtn" class="btn btn-filled">Check Availability</a>
+      <a id="availabilityBtn" class="btn btn-filled" onclick="openAvailabilityModal(currentDoctor.id)">
+        Check Availability
+      </a>
       <button class="btn btn-outline" onclick="closeDoctorModal()">Go Back</button>
     </div>
+
   </div>
 </div>
 
+
+<div id="availabilityModal" class="modal-overlay">
+  <div class="modal-card" style="width:750px;">
+
+    <h2 class="dashboard-title" style="margin-bottom:1rem; text-align:left;">
+      Doctor's Availability
+    </h2>
+
+    <div id="availabilityGrid"></div>
+
+    <div style="margin-top:1.5rem; display:flex; justify-content:flex-end; gap:1rem;">
+      <button class="btn btn-filled" id="bookBtn" disabled>book</button>
+      <button class="btn btn-outline" onclick="closeAvailabilityModal()">Go Back</button>
+    </div>
+
+  </div>
+</div>
+
+
 <script>
-    function openDoctorModal(doctor) {
+  let currentDoctor = null;
 
-    const nameEl = document.getElementById("doctorName");
-    const qualEl = document.getElementById("doctorQualification");
-    const specEl = document.getElementById("doctorSpecialization");
-    const expEl = document.getElementById("doctorExperience");
-    const bioEl = document.getElementById("doctorBio");
+  function openDoctorModal(doctor) {
+    currentDoctor = doctor;
 
-    nameEl.innerText = "Dr. " + (doctor.name || "");
-    qualEl.innerText = doctor.qualification || "";
-    specEl.innerText = doctor.specialization || "";
-    expEl.innerText = doctor.experience || "";
-    bioEl.innerText = doctor.bio || "";
-
-    document.getElementById("availabilityBtn").href =
-    `/patient/doctor/${doctor.id}/availability`;
-
+    document.getElementById("doctorName").innerText = "Dr. " + (doctor.name || "");
+    document.getElementById("doctorQualification").innerText = doctor.qualification || "";
+    document.getElementById("doctorSpecialization").innerText = doctor.specialization || "";
+    document.getElementById("doctorExperience").innerText = doctor.experience || "";
+    document.getElementById("doctorBio").innerText = doctor.bio || "";
     document.getElementById("doctorModal").style.display = "flex";
   }
 
-    function closeDoctorModal() {
+  function closeDoctorModal() {
     document.getElementById("doctorModal").style.display = "none";
   }
 
-    document.addEventListener("click", function (e) {
+  document.addEventListener("click", function (e) {
     if (e.target.classList.contains("doctor-view-btn")) {
-    const doctor = JSON.parse(e.target.dataset.doctor);
-    openDoctorModal(doctor);
-  }
+      const doctor = JSON.parse(e.target.dataset.doctor);
+      openDoctorModal(doctor);
+    }
   });
+
+
+  let selectedSlot = null;
+  let selectedData = null;
+
+  function openAvailabilityModal(doctorId) {
+    fetch(`/api/doctor/${doctorId}/availability_json`)
+            .then(resp => resp.json())
+            .then(data => buildAvailabilityGrid(data));
+
+    document.getElementById("availabilityModal").style.display = "flex";
+  }
+
+  function closeAvailabilityModal() {
+    document.getElementById("availabilityModal").style.display = "none";
+    document.getElementById("availabilityGrid").innerHTML = "";
+    selectedSlot = null;
+    selectedData = null;
+    document.getElementById("bookBtn").disabled = true;
+  }
+
+  function buildAvailabilityGrid(data) {
+    const grid = document.getElementById("availabilityGrid");
+    grid.innerHTML = "";
+
+    data.forEach(day => {
+      const row = document.createElement("div");
+      row.className = "av-row";
+
+      const dateBox = document.createElement("div");
+      dateBox.className = "av-date";
+      dateBox.innerText = day.date_display;
+      row.appendChild(dateBox);
+
+      ["morning", "evening"].forEach(slot => {
+        const slotBox = document.createElement("div");
+        const available = day[slot].available;
+        const label = day[slot].label;
+
+        slotBox.className = "av-slot " + (available ? "av-available" : "av-unavailable");
+        slotBox.innerText = label;
+
+        slotBox.onclick = () => {
+          if (!available) return;
+
+          document.querySelectorAll(".av-slot").forEach(e =>
+                  e.classList.remove("av-selected")
+          );
+
+          slotBox.classList.add("av-selected");
+          selectedSlot = slot;
+          selectedData = day;
+          document.getElementById("bookBtn").disabled = false;
+        };
+
+        row.appendChild(slotBox);
+      });
+
+      grid.appendChild(row);
+    });
+
+    document.getElementById("bookBtn").onclick = () => bookAppointment();
+  }
+
+  function bookAppointment() {
+    if (!selectedData || !selectedSlot) return;
+
+    fetch("/api/book_appointment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        doctor_id: selectedData.doctor_id,
+        date: selectedData.date,
+        slot: selectedSlot
+      })
+    }).then(resp => resp.json())
+            .then(result => {
+              alert(result.message);
+              closeAvailabilityModal();
+            });
+  }
 </script>
 
 {% endblock %}

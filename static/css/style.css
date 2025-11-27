@@ -742,3 +742,46 @@ textarea {
     from { opacity: 0; transform: scale(0.97); }
     to   { opacity: 1; transform: scale(1); }
 }
+
+
+.av-row {
+    display: grid;
+    grid-template-columns: 180px 200px 200px;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.av-date {
+    padding: 0.75rem;
+    background: #e8f0fa;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 500;
+    color: #333;
+}
+
+.av-slot {
+    padding: 0.75rem;
+    border: 2px solid;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.av-available {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.av-unavailable {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.av-selected {
+    background:#0d6efd !important;
+    border-color:#0d6efd !important;
+    color:#fff !important;
+}

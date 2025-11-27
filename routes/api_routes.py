@@ -181,3 +181,48 @@ def update_availability():
 @api_bp.route("/cancel_appointment/<int:appointment_id>", methods=["POST"])
 def cancel_appointment_patient(appointment_id):
     return redirect(url_for("dashboard.dashboard"))
+
+@api_bp.route("/book_appointment", methods=["POST"])
+def book_appointment():
+    return jsonify({"message": "Appointment booked!"})
+
+@api_bp.route("/doctor/<int:doctor_id>/availability_json")
+def availability_json(doctor_id):
+    """Return 7-day availability grid for a doctor."""
+    from datetime import date, timedelta
+
+    with SessionLocal() as db_session:
+        entries = db_session.query(DoctorAvailability).filter_by(
+            doctor_id=doctor_id
+        ).all()
+
+        avail_map = {
+            (a.date, a.slot): a.enabled
+            for a in entries
+        }
+
+    today = date.today()
+    days_out = 7
+    schedule = []
+
+    for i in range(days_out):
+        d = today + timedelta(days=i)
+
+        morning = avail_map.get((d, "morning"), False)
+        evening = avail_map.get((d, "evening"), False)
+
+        schedule.append({
+            "doctor_id": doctor_id,
+            "date": d.isoformat(),
+            "date_display": d.strftime("%d/%m/%Y"),
+            "morning": {
+                "label": "08:00 - 12:00 am",
+                "available": morning
+            },
+            "evening": {
+                "label": "04:00 - 09:00 pm",
+                "available": evening
+            }
+        })
+
+    return jsonify(schedule)
