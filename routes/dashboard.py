@@ -308,3 +308,32 @@ def update_history(appointment_id):
             department=dept,
             medicines=medicines
         )
+
+@patient_bp.route("edit/profile", methods=["GET", "POST"])
+def edit_patient():
+    if session[SessionInfo.USER_TYPE] != UserTypes.PATIENT:
+        flash("You are not allowed to edit this patient!", "error")
+        return redirect(url_for("dashboard.dashboard"))
+
+    with SessionLocal() as db_session:
+        patient = db_session.query(Patient).get(session[SessionInfo.USER_ID])
+        if not patient:
+            flash("Patient not found", "error")
+            return redirect(url_for("dashboard.dashboard"))
+
+        if request.method == "POST":
+            patient.name = request.form["name"]
+            patient.email = request.form["email"]
+            patient.age = int(request.form["age"])
+            patient.contact = request.form["contact"]
+
+            new_password = request.form.get("password", "").strip()
+            if new_password:
+                patient.password = generate_password_hash(new_password)
+
+            db_session.commit()
+            flash("Patient details updated successfully!", "success")
+            return redirect(url_for("dashboard.dashboard"))
+
+        return render_template("admin/patient_update.html", patient=patient)
+
