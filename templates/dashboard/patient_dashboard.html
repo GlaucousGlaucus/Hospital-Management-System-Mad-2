@@ -1,5 +1,85 @@
 {% extends "base.html" %}
-
 {% block content %}
+
+<div class="dashboard">
+
+    <h2 class="dashboard-title">Welcome {{ patient.name }}</h2>
+
+    <div style="text-align:right; margin-bottom:1rem;">
+        <a href="{{ url_for('auth.edit_profile') }}" class="navbar-username">Edit Profile</a> |
+        <a href="{{ url_for('api.patient_history', patient_id=session['user_id']) }}" class="navbar-username">History</a> |
+    </div>
+
+    <section class="dashboard-section">
+        <h3>Departments</h3>
+
+        <div class="card" style="padding:1rem 1.5rem;">
+
+            {% if departments %}
+            <div class="card-list" style="border: none">
+                {% for d in departments %}
+                <div class="card-item" style="padding: 0">
+                    <button type="button" onclick="window.location.href='{{ url_for('patient.department_details', dept_id=d.id) }}'"
+                       class="btn btn-filled" style="width: 100%; height: 100%">
+                        {{ d.name }}
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% else %}
+            <p class="empty-text">No departments available.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="dashboard-section">
+        <h3>Upcoming Appointments</h3>
+
+        {% if appointments %}
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Sr No.</th>
+                    <th>Doctor Name</th>
+                    <th>Dept</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for a in appointments %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>Dr. {{ a.doctor.name }}</td>
+                    <td>{{ a.doctor.department.name }}</td>
+                    <td>{{ a.date.strftime("%d/%m/%Y") }}</td>
+                    <td>{{ a.time_slot }}</td>
+
+                    <td>
+                        <form action="{{ url_for('api.cancel_appointment', appointment_id=a.id) }}"
+                              method="POST">
+                            <button type="submit" class="btn btn-filled"
+                                    style="background:#f8d7da; color:#c82333;">
+                                cancel
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+
+        {% else %}
+        <p class="empty-text">No appointments booked.</p>
+        {% endif %}
+    </section>
+
+</div>
 
 {% endblock %}

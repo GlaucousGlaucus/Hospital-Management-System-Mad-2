@@ -15,6 +15,15 @@ logger = getLogger(__name__)
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 doctor_bp = Blueprint("doctor", __name__, url_prefix="/doctor")
+patient_bp = Blueprint("patient", __name__, url_prefix="/patient")
+
+@patient_bp.route("/department/<int:dept_id>")
+def department_details(dept_id):
+    return f"Department details for ID {dept_id} (dummy)"
+
+@patient_bp.route("/history")
+def history():
+    return "Patient main history page (dummy)"
 
 @dashboard_bp.route('/')
 def dashboard():
@@ -94,7 +103,47 @@ def dashboard():
             )
 
         case UserTypes.PATIENT:
-            return render_template('dashboard/patient_dashboard.html')
+            patient_id = session.get(SessionInfo.USER_ID)
+
+            with SessionLocal() as db_session:
+                patient = db_session.query(Patient).get(patient_id)
+                departments = db_session.query(Department).all()
+                upcoming = (
+                    db_session.query(Appointment)
+                    .join(Doctor)
+                    .join(Department)
+                    .filter(
+                        Appointment.patient_id == patient_id,
+                        Appointment.status == "BOOKED"
+                    )
+                    .all()
+                )
+                appointments = []
+                for a in upcoming:
+                    appointments.append({
+                        "id": a.id,
+                        "date": a.date,
+                        "time_slot": a.time,
+                        "doctor": {
+                            "name": a.doctor.name,
+                            "department": {
+                                "name": a.doctor.department.name
+                            }
+                        }
+                    })
+                patient_data = {
+                    "id": patient.id,
+                    "name": patient.name,
+                    "email": patient.email,
+                    "age": patient.age,
+                }
+                dept_data = [{"id": d.id, "name": d.name} for d in departments]
+            return render_template(
+                "dashboard/patient_dashboard.html",
+                patient=patient_data,
+                departments=dept_data,
+                appointments=appointments,
+            )
     return redirect(url_for(Routes.LOGIN_ROUTE))
 
 @admin_bp.route('/new/doctor', methods=['GET', 'POST'])

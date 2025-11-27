@@ -11,6 +11,12 @@ logger = getLogger(__name__)
 auth_signup_bp = Blueprint("auth_signup", __name__, url_prefix="/signup")
 auth_login_bp = Blueprint("auth_login", __name__, url_prefix="/login")
 
+auth_profile_bp = Blueprint("auth", __name__, url_prefix="/auth")
+
+@auth_profile_bp.route("/edit_profile")
+def edit_profile():
+    return "Edit profile page (dummy)"
+
 @auth_login_bp.route("/logout")
 def logout():
     session.clear()
