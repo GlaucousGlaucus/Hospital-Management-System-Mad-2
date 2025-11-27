@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="dashboard">
+
+  <h2 class="dashboard-title" style="text-align:left;">
+    Department of {{ department.name }}
+  </h2>
+
+  <section class="dashboard-section">
+    <h3>Overview</h3>
+
+    <p style="line-height:1.6; max-width:900px; color:#333;">
+      {{ department.description }}
+    </p>
+  </section>
+
+  <section class="dashboard-section">
+    <h3>Doctors' list</h3>
+
+    <div class="card" style="padding:1rem 1.5rem;">
+
+      {% if doctors %}
+      <div class="card-list" style="grid-template-columns: 1fr; gap:0.75rem; border:none">
+
+        {% for d in doctors %}
+        <div class="card-item"
+             style="flex-direction:row; justify-content:space-between; align-items:center; padding:0.75rem 1rem;">
+
+          <span style="font-size:1rem; color:#777;">Dr. {{ d.name }}</span>
+
+          <div class="card-buttons">
+            <a href="{{ url_for('patient.check_availability', doctor_id=d.id) }}"
+               class="btn btn-filled">
+              Check Availability
+            </a>
+
+            <a href="{{ url_for('patient.doctor_details', doctor_id=d.id) }}"
+               class="btn btn-outline">
+              View Details
+            </a>
+          </div>
+
+        </div>
+        {% endfor %}
+
+      </div>
+      {% else %}
+      <p class="empty-text">No doctors available in this department.</p>
+      {% endif %}
+
+    </div>
+  </section>
+
+</div>
+
+{% endblock %}

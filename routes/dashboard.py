@@ -19,7 +19,26 @@ patient_bp = Blueprint("patient", __name__, url_prefix="/patient")
 
 @patient_bp.route("/department/<int:dept_id>")
 def department_details(dept_id):
-    return f"Department details for ID {dept_id} (dummy)"
+    with SessionLocal() as session:
+        dep = session.query(Department).get(dept_id)
+        doctors = session.query(Doctor).filter(Doctor.department_id == dep.id).all()
+    return render_template(
+        "patient/department_details.html",
+        department={
+            "id": dep.id,
+            "name": dep.name,
+            "description": dep.description
+        },
+        doctors=[{"id": d.id, "name": d.name} for d in doctors]
+    )
+
+@patient_bp.route("/doctor/<int:doctor_id>/availability")
+def check_availability(doctor_id):
+    return f"Check availability for doctor {doctor_id} (dummy)"
+
+@patient_bp.route("/doctor/<int:doctor_id>")
+def doctor_details(doctor_id):
+    return f"Doctor details for doctor {doctor_id} (dummy)"
 
 @patient_bp.route("/history")
 def history():
