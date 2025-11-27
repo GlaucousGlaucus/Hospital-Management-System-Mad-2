@@ -5,7 +5,7 @@ from typing import List, dataclass_transform
 from flask import Blueprint, jsonify, abort, render_template, flash, redirect, url_for, request, session
 from sqlalchemy.orm import joinedload
 
-from models.main_models import Doctor, Patient, SessionLocal, Appointment, DoctorAvailability
+from models.main_models import Doctor, Patient, SessionLocal, Appointment, DoctorAvailability, AppointmentStatus
 from utils.constants import SessionInfo, UserTypes
 
 logger = getLogger(__name__)
@@ -122,14 +122,14 @@ def mark_complete(appointment_id):
         appt.status = "COMPLETED"
         db_session.commit()
     flash("Appointment marked as complete!", "success")
-    return redirect(url_for("doctor.dashboard"))
+    return redirect(url_for("dashboard.dashboard"))
 
 
 @api_bp.route("doctor/appointment/<int:appointment_id>/cancel", methods=["POST"])
 def cancel_appointment(appointment_id):
     with SessionLocal() as db_session:
         appt = db_session.query(Appointment).get(appointment_id)
-        appt.status = "CANCELED"
+        appt.status = AppointmentStatus.CANCELLED.value.upper()
         db_session.commit()
     flash("Appointment cancelled.", "info")
     return redirect(url_for("dashboard.dashboard"))
