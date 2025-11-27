@@ -47,5 +47,20 @@
 <footer class="footer">
     &copy; 2025 Therapeia dia Oikonomia. All rights reserved.
 </footer>
+
+<script>
+    function adjustContainerHeight() {
+        const navbar = document.querySelector('.navbar');
+        const container = document.querySelector('.container');
+        if (!navbar || !container) return;
+
+        const navbarHeight = navbar.offsetHeight;
+        container.style.minHeight = `calc(100vh - ${navbarHeight}px)`;
+    }
+
+    window.addEventListener('load', adjustContainerHeight);
+    window.addEventListener('resize', adjustContainerHeight);
+</script>
+
 </body>
 </html>
