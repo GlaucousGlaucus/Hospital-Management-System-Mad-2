@@ -8,7 +8,7 @@
     </div>
 
     <form method="POST" class="auth-form" style="gap:1rem;">
-        <div class="dashboard-section" style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+        <section class="dashboard-section">
             <div>
                 <label>Visit Type</label>
                 <input type="text" name="visit_type" placeholder="Checkup / Follow-up / Emergency">
@@ -18,30 +18,40 @@
                 <label>Test Done</label>
                 <input type="text" name="test_done" placeholder="Blood Test / X-Ray / ECG">
             </div>
-        </div>
 
-        <div>
-            <label>Diagnosis</label>
-            <textarea name="diagnosis" rows="2" placeholder="Enter diagnosis">{{ treatment.diagnosis or '' }}</textarea>
-        </div>
+            <div>
+                <label>Diagnosis</label>
+                <textarea name="diagnosis" rows="2" placeholder="Enter diagnosis">{{ treatment.diagnosis or '' }}</textarea>
+            </div>
 
-        <div>
-            <label>Prescription</label>
-            <textarea name="prescription" rows="2" placeholder="Enter prescription">{{ treatment.prescription or '' }}</textarea>
-        </div>
+            <div>
+                <label>Prescription</label>
+                <textarea name="prescription" rows="2" placeholder="Enter prescription">{{ treatment.prescription or '' }}</textarea>
+            </div>
+        </section>
 
         <div>
             <label>Medicines</label>
 
-            <div id="medicine-list" class="card-list"
-                 style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Medicine</th>
+                    <th>Morning</th>
+                    <th>Afternoon</th>
+                    <th>Night</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
 
-                <p id="medicine-empty" class="empty-text">
-                    No medicines added yet. Click “Add Medicine” to begin.
-                </p>
-            </div>
+                <tbody id="medicine-list">
+                <tr id="medicine-empty">
+                    <td colspan="5" class="empty-text">No medicines added yet. Click “Add Medicine”.</td>
+                </tr>
+                </tbody>
+            </table>
 
-            <button type="button" class="btn btn-outline" id="add-medicine">Add Medicine</button>
+            <button type="button" class="btn btn-filled" id="add-medicine">Add Medicine</button>
         </div>
 
         <div>
@@ -50,8 +60,8 @@
         </div>
 
         <div style="display:block; justify-content:flex-end; gap: 1rem; align-self: end">
-            <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline">Cancel</a>
-            <button type="button" class="btn btn-outline" onclick="window.location.reload();">Reset</button>
+            <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-filled">Cancel</a>
+            <button type="button" class="btn btn-filled" onclick="window.location.reload();">Reset</button>
             <button type="submit" class="btn btn-filled">Save</button>
         </div>
     </form>
@@ -60,53 +70,47 @@
 <script>
     function updatePlaceholder() {
         const list = document.getElementById("medicine-list");
-        const placeholder = document.getElementById("medicine-empty");
-        placeholder.style.display = list.querySelector(".card-item") ? "none" : "block";
+        const empty = document.getElementById("medicine-empty");
+        empty.style.display = list.querySelector(".medicine-row") ? "none" : "table-row";
     }
 
-    function createMedicineCard(name = "", m = 0, a = 0, n = 0) {
-        const div = document.createElement("div");
-        div.className = "card-item";
 
-        div.innerHTML = `
+    function createMedicineRow(name = "", m = 0, a = 0, n = 0) {
+        const tr = document.createElement("tr");
+        tr.className = "medicine-row";
+
+        tr.innerHTML = `
+        <td>
             <input type="text" name="medicine_name[]" value="${name}" placeholder="Medicine Name">
-
-            <div class="dose-row">
-                <div class="dose-field">
-                    <label>Morning</label>
-                    <input type="number" name="dose_morning[]" min="0" max="3" value="${m}">
-                </div>
-                <div class="dose-field">
-                    <label>Afternoon</label>
-                    <input type="number" name="dose_afternoon[]" min="0" max="3" value="${a}">
-                </div>
-                <div class="dose-field">
-                    <label>Night</label>
-                    <input type="number" name="dose_night[]" min="0" max="3" value="${n}">
-                </div>
-            </div>
-
-            <button type="button" class="btn btn-outline remove-btn"
-                onclick="this.parentElement.remove(); updatePlaceholder();">
+        </td>
+        <td>
+            <input type="number" name="dose_morning[]" min="0" max="3" value="${m}">
+        </td>
+        <td>
+            <input type="number" name="dose_afternoon[]" min="0" max="3" value="${a}">
+        </td>
+        <td>
+            <input type="number" name="dose_night[]" min="0" max="3" value="${n}">
+        </td>
+        <td>
+            <button type="submit" class="btn btn-filled" style="background-color:#f8d7da; color:#721c24; margin-top: 0;"
+                onclick="this.closest('tr').remove(); updatePlaceholder();">
                 Remove
             </button>
-        `;
+        </td>
+    `;
 
-        return div;
+        return tr;
     }
 
     function loadExistingMedicines() {
         const list = document.getElementById("medicine-list");
-        const medicines = {{ medicines | tojson }}
+        const medicines = {{ medicines | tojson }};
+
         if (medicines.length > 0) {
             for (const med of medicines) {
                 list.appendChild(
-                    createMedicineCard(
-                        med.name,
-                        med.m,
-                        med.a,
-                        med.n
-                    )
+                    createMedicineRow(med.name, med.m, med.a, med.n)
                 );
             }
         }
@@ -116,7 +120,7 @@
     function setupAddMedicineButton() {
         document.getElementById("add-medicine").addEventListener("click", () => {
             const list = document.getElementById("medicine-list");
-            list.appendChild(createMedicineCard("", 0, 0, 0));
+            list.appendChild(createMedicineRow("", 0, 0, 0));
             updatePlaceholder();
         });
     }
