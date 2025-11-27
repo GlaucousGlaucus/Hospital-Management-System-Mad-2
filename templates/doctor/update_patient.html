@@ -64,40 +64,68 @@
         placeholder.style.display = list.querySelector(".card-item") ? "none" : "block";
     }
 
-    document.getElementById("add-medicine").addEventListener("click", () => {
-        const list = document.getElementById("medicine-list");
-
+    function createMedicineCard(name = "", m = 0, a = 0, n = 0) {
         const div = document.createElement("div");
         div.className = "card-item";
 
-
         div.innerHTML = `
-        <input type="text" name="medicine_name[]" placeholder="Medicine Name">
+            <input type="text" name="medicine_name[]" value="${name}" placeholder="Medicine Name">
 
-        <div class="dose-row">
-            <div class="dose-field">
-                <label>Morning</label>
-                <input type="number" name="dose_morning[]" min="0" max="3" value="0">
+            <div class="dose-row">
+                <div class="dose-field">
+                    <label>Morning</label>
+                    <input type="number" name="dose_morning[]" min="0" max="3" value="${m}">
+                </div>
+                <div class="dose-field">
+                    <label>Afternoon</label>
+                    <input type="number" name="dose_afternoon[]" min="0" max="3" value="${a}">
+                </div>
+                <div class="dose-field">
+                    <label>Night</label>
+                    <input type="number" name="dose_night[]" min="0" max="3" value="${n}">
+                </div>
             </div>
-            <div class="dose-field">
-                <label>Afternoon</label>
-                <input type="number" name="dose_afternoon[]" min="0" max="3" value="0">
-            </div>
-            <div class="dose-field">
-                <label>Night</label>
-                <input type="number" name="dose_night[]" min="0" max="3" value="0">
-            </div>
-        </div>
 
-        <button type="button" class="btn btn-outline remove-btn"
-            onclick="this.parentElement.remove(); updatePlaceholder();">
-            Remove
-        </button>
-    `;
+            <button type="button" class="btn btn-outline remove-btn"
+                onclick="this.parentElement.remove(); updatePlaceholder();">
+                Remove
+            </button>
+        `;
 
-        list.appendChild(div);
+        return div;
+    }
+
+    function loadExistingMedicines() {
+        const list = document.getElementById("medicine-list");
+        const medicines = {{ medicines | tojson }}
+        if (medicines.length > 0) {
+            for (const med of medicines) {
+                list.appendChild(
+                    createMedicineCard(
+                        med.name,
+                        med.m,
+                        med.a,
+                        med.n
+                    )
+                );
+            }
+        }
+        updatePlaceholder();
+    }
+
+    function setupAddMedicineButton() {
+        document.getElementById("add-medicine").addEventListener("click", () => {
+            const list = document.getElementById("medicine-list");
+            list.appendChild(createMedicineCard("", 0, 0, 0));
+            updatePlaceholder();
+        });
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+        loadExistingMedicines();
+        setupAddMedicineButton();
         updatePlaceholder();
     });
-    updatePlaceholder();
 </script>
+
 {% endblock %}

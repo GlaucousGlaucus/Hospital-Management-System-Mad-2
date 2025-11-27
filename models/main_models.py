@@ -6,7 +6,7 @@ from datetime import date, time, timedelta
 from typing import List, Optional
 from logging import getLogger
 
-from sqlalchemy import Enum, ForeignKey, String, Text, create_engine
+from sqlalchemy import Enum, ForeignKey, String, Text, create_engine, Integer
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, scoped_session, sessionmaker
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -18,14 +18,11 @@ SessionLocal = scoped_session(sessionmaker(bind=engine))
 
 def setup_db():
     if DB_PATH.exists():
-        logger.info(f"DB already exists at {DB_PATH}")
         return
 
     Base.metadata.create_all(engine)
-    logger.info("Creating dummy data...")
 
     with SessionLocal() as session:
-        # 1️⃣  Admin
         admin = Admin(
             name="Admin",
             email="admin@admin.com",
@@ -35,7 +32,6 @@ def setup_db():
         )
         session.add(admin)
 
-        # 2️⃣  Departments
         department_names = [
             "Cardiology", "Neurology", "Orthopedics", "Pediatrics",
             "Dermatology", "Oncology", "Psychiatry", "Radiology",
@@ -46,9 +42,8 @@ def setup_db():
             for name in department_names
         ]
         session.add_all(departments)
-        session.flush()  # assigns IDs to departments
+        session.flush()
 
-        # 3️⃣  Doctors
         specializations = [
             "Cardiologist", "Neurologist", "Orthopedic Surgeon",
             "Pediatrician", "Dermatologist", "Oncologist",
@@ -64,13 +59,12 @@ def setup_db():
                 age=random.randint(30, 65),
                 contact=f"+91 {random.randint(7000000000, 9999999999)}",
                 specialization=random.choice(specializations),
-                department_id=dept.id,  # ✅ only FK used
+                department_id=dept.id,
             )
             doctors.append(doc)
         session.add_all(doctors)
-        session.flush()  # assign doctor IDs
+        session.flush()
 
-        # 4️⃣  Patients
         patients = []
         for i in range(100):
             patient = Patient(
@@ -82,9 +76,14 @@ def setup_db():
             )
             patients.append(patient)
         session.add_all(patients)
-        session.flush()  # assign patient IDs
+        session.flush()
 
-        # 5️⃣  Appointments & Treatments (no lazy loads)
+        medicine_names = [
+            "Paracetamol", "Amoxicillin", "Ibuprofen", "Cetirizine",
+            "Ranitidine", "Metformin", "Aspirin", "Azithromycin",
+            "Cough Syrup", "Vitamin D", "Calcium Tablet"
+        ]
+
         statuses = list(AppointmentStatus)
         for _ in range(120):
             patient = random.choice(patients)
@@ -97,10 +96,10 @@ def setup_db():
                 status=random.choice(statuses),
             )
             session.add(appt)
-            session.flush()  # ensures appt.id available for FK use
+            session.flush()
 
             if appt.status in [AppointmentStatus.BOOKED, AppointmentStatus.COMPLETED]:
-                session.add(Treatment(
+                treatment = Treatment(
                     appointment_id=appt.id,
                     diagnosis=random.choice([
                         "Hypertension", "Migraine", "Fracture", "Allergy", "Diabetes", "Anxiety"
@@ -111,11 +110,20 @@ def setup_db():
                     notes=random.choice([
                         "Follow-up required", "Patient improving", "Schedule recheck", "Prescribed rest"
                     ]),
-                ))
+                )
+                session.add(treatment)
+                session.flush()
 
-        # 6️⃣  Final commit
+                for _ in range(random.randint(0, 3)):
+                    med = Medicine(
+                        treatment_id=treatment.id,
+                        name=random.choice(medicine_names),
+                        morning=random.randint(0, 2),
+                        afternoon=random.randint(0, 2),
+                        night=random.randint(0, 2),
+                    )
+                    session.add(med)
         session.commit()
-        logger.info("Dummy data created successfully.")
 
 
 class Base(DeclarativeBase):
@@ -203,6 +211,24 @@ class Treatment(Base):
     notes: Mapped[Optional[str]] = mapped_column(Text)
 
     appointment: Mapped[Appointment] = relationship(back_populates="treatment")
+
+    medicines: Mapped[List["Medicine"]] = relationship(
+        back_populates="treatment",
+        cascade="all, delete-orphan"
+    )
+
+class Medicine(Base):
+    __tablename__ = "medicines"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    treatment_id: Mapped[int] = mapped_column(ForeignKey("treatments.id"))
+
+    name: Mapped[str] = mapped_column(String(255))
+    morning: Mapped[int] = mapped_column(Integer, default=0)
+    afternoon: Mapped[int] = mapped_column(Integer, default=0)
+    night: Mapped[int] = mapped_column(Integer, default=0)
+
+    treatment: Mapped["Treatment"] = relationship(back_populates="medicines")
 
 class DoctorAvailability(Base):
     __tablename__ = "doctor_availability"

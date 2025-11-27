@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
 from logging import getLogger
+from typing import List
 
 from flask import Blueprint, render_template, session, redirect, url_for, request, flash
 from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash
 
-from models.main_models import SessionLocal, Doctor, Patient, Appointment, Department, Treatment, DoctorAvailability
+from models.main_models import SessionLocal, Doctor, Patient, Appointment, Department, Treatment, DoctorAvailability, \
+    Medicine
 from services.doctor_service import create_doctor
 from utils.constants import SessionInfo, UserTypes, Routes
 
@@ -192,7 +194,7 @@ def update_history(appointment_id):
             .options(
                 joinedload(Appointment.patient),
                 joinedload(Appointment.doctor).joinedload(Doctor.department),
-                joinedload(Appointment.treatment)
+                joinedload(Appointment.treatment).joinedload(Treatment.medicines)
             )
             .get(appointment_id)
         )
@@ -201,6 +203,13 @@ def update_history(appointment_id):
             return redirect(url_for("dashboard.dashboard"))
 
         treatment = appointment.treatment or Treatment(appointment_id=appointment.id)
+        treatment.medicines: List[Medicine]
+        medicines = [{
+           "name": med.name,
+            "m": med.morning,
+            "a": med.afternoon,
+            "n": med.night,
+        } for med in treatment.medicines] if treatment.medicines else []
 
         if request.method == "POST":
             treatment.diagnosis = request.form.get("diagnosis", "")
@@ -222,4 +231,5 @@ def update_history(appointment_id):
             treatment=treatment,
             patient=patient,
             department=dept,
+            medicines=medicines
         )
