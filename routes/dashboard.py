@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from logging import getLogger
 
 from flask import Blueprint, render_template, session, redirect, url_for, request, flash
@@ -72,12 +73,16 @@ def dashboard():
                     for p in patients
                 ]
 
-            # Pass only plain dicts/lists
+            today = datetime.today()
+            start_of_week = today - timedelta(days=today.weekday() + 1)  # Sunday
+            days = [(start_of_week + timedelta(days=i)).strftime("%A, %d %B %Y") for i in range(7)]
+
             return render_template(
                 "dashboard/doctor_dashboard.html",
                 doctor=doctor_data,
                 appointments=appointment_data,
-                patients=patient_data
+                patients=patient_data,
+                days=days
             )
 
         case UserTypes.PATIENT:

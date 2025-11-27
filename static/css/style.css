@@ -540,3 +540,63 @@ body {
 .dashboard-title {
     margin-bottom: 1rem;
 }
+
+.availability-slot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ddd;
+    border-radius: var(--border-radius);
+    padding: 0.4rem 0.8rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    gap: 0.4rem;
+    font-weight: 500;
+}
+
+.availability-slot input {
+    display: none;
+}
+
+.availability-slot span {
+    pointer-events: none;
+}
+
+.availability-slot.open input:checked + span {
+    color: #155724;
+}
+
+.availability-slot.open {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.availability-slot.closed {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.availability-slot.closed input:checked + span {
+    color: #721c24;
+}
+
+/* highlight active slots */
+.availability-slot input:checked + span {
+    font-weight: bold;
+    opacity: 1;
+}
+
+.availability-slot:hover {
+    box-shadow: 0 0 4px rgba(0,0,0,0.1);
+}
+
+.availability-slot input:checked + span {
+    font-weight: bold;
+    opacity: 1;
+}
+
+.availability-slot:has(input:checked) {
+    background-color: #28a745;
+    color: white;
+    border-color: #28a745;
+}

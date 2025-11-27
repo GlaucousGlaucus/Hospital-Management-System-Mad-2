@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
+<script>
+    const UPDATE_AVAILABILITY_URL = "{{ url_for('api.update_availability') }}";
+</script>
+<script type="module" src="{{ url_for('static', filename='js/doctor_dashboard.js') }}"></script>
 
 <div class="dashboard">
     <h2 class="dashboard-title">Welcome {{ doctor.name }}</h2>
@@ -69,13 +73,44 @@
         {% else %}
         <p class="empty-text">No patients assigned yet.</p>
         {% endif %}
+    </section>
 
-        <div style="text-align:right; margin-top:1.5rem;">
-            <a href="{{ url_for('dashboard.availability') }}"
-               class="btn btn-filled"
-               style="background-color:#d4edda; color:#155724;">
-                Provide Availability
-            </a>
+    <section class="dashboard-section">
+        <h3>Your Availability</h3>
+
+        <div class="dashboard-section">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Morning Slot</th>
+                        <th>Evening Slot</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for day in days %}
+                    <tr>
+                        <td>{{ day }}</td>
+                        <td>
+                            <label class="availability-slot morning">
+                                <input type="checkbox" name="availability"
+                                       value="{{ day }}_morning" checked>
+                                <span>08:00 - 12:00 am</span>
+                            </label>
+                        </td>
+                        <td>
+                            <label class="availability-slot evening">
+                                <input type="checkbox" name="availability"
+                                       value="{{ day }}_evening">
+                                <span>04:00 - 09:00 pm</span>
+                            </label>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </section>
 </div>
