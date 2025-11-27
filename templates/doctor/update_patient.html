@@ -1,69 +1,86 @@
 {% extends "base.html" %}
 {% block content %}
+
 <div class="dashboard">
     <h2 class="dashboard-title">Update Patient History</h2>
+
     <div class="patient-info">
         <p><strong>Patient Name:</strong> {{ patient.name }}</p>
         <p><strong>Department:</strong> {{ department }}</p>
     </div>
 
-    <form method="POST" class="auth-form" style="gap:1rem;">
-        <section class="dashboard-section">
-            <div>
-                <label>Visit Type</label>
-                <input type="text" name="visit_type" placeholder="Checkup / Follow-up / Emergency">
-            </div>
+    <form method="POST" class="auth-form" style="gap:1.5rem;">
 
-            <div>
-                <label>Test Done</label>
-                <input type="text" name="test_done" placeholder="Blood Test / X-Ray / ECG">
-            </div>
+        <section class="dashboard-section card">
+            <h3>Visit Information</h3>
+            <div class="two-col-grid">
+                <div class="wide-input">
+                    <label>Visit Type</label>
+                    <input type="text" name="visit_type" placeholder="Checkup / Follow-up / Emergency">
+                </div>
 
-            <div>
-                <label>Diagnosis</label>
-                <textarea name="diagnosis" rows="2" placeholder="Enter diagnosis">{{ treatment.diagnosis or '' }}</textarea>
-            </div>
-
-            <div>
-                <label>Prescription</label>
-                <textarea name="prescription" rows="2" placeholder="Enter prescription">{{ treatment.prescription or '' }}</textarea>
+                <div class="wide-input">
+                    <label>Test Done</label>
+                    <input type="text" name="test_done" placeholder="Blood Test / X-Ray / ECG">
+                </div>
             </div>
         </section>
 
-        <div>
-            <label>Medicines</label>
+        <section class="dashboard-section card">
+            <h3>Clinical Notes</h3>
 
-            <table class="data-table">
-                <thead>
-                <tr>
-                    <th>Medicine</th>
-                    <th>Morning</th>
-                    <th>Afternoon</th>
-                    <th>Night</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
+            <div class="two-col-grid">
+                <div>
+                    <label>Diagnosis</label>
+                    <textarea name="diagnosis" rows="4">{{ treatment.diagnosis or '' }}</textarea>
+                </div>
 
-                <tbody id="medicine-list">
-                <tr id="medicine-empty">
-                    <td colspan="5" class="empty-text">No medicines added yet. Click “Add Medicine”.</td>
-                </tr>
-                </tbody>
-            </table>
+                <div>
+                    <label>Prescription Notes</label>
+                    <textarea name="prescription" rows="4">{{treatment.prescription or ''}}</textarea>
+                </div>
+            </div>
+        </section>
 
-            <button type="button" class="btn btn-filled" id="add-medicine">Add Medicine</button>
-        </div>
+        <section class="dashboard-section card">
+            <div class="collapsible">Medicines</div>
 
-        <div>
-            <label>Notes</label>
-            <textarea name="notes" rows="2" placeholder="Additional remarks or observations">{{ treatment.notes or '' }}</textarea>
-        </div>
+            <div class="collapsible-content" id="medicines-section">
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>Medicine</th>
+                        <th>Morning</th>
+                        <th>Afternoon</th>
+                        <th>Night</th>
+                        <th></th>
+                    </tr>
+                    </thead>
 
-        <div style="display:block; justify-content:flex-end; gap: 1rem; align-self: end">
-            <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-filled">Cancel</a>
-            <button type="button" class="btn btn-filled" onclick="window.location.reload();">Reset</button>
+                    <tbody id="medicine-list">
+                    <tr id="medicine-empty">
+                        <td colspan="5" class="empty-text">No medicines added yet. Click “Add Medicine”.</td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <div style="margin-top:1rem;">
+                    <button type="button" class="btn btn-filled" id="add-medicine">Add Medicine</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="dashboard-section card">
+            <h3>Doctor Notes</h3>
+            <textarea name="notes" rows="3">{{ treatment.notes or '' }}</textarea>
+        </section>
+
+        <div class="action-buttons">
+            <button type="button" class="btn btn-outline" onclick="window.location.href={{ url_for('dashboard.dashboard') }}">Cancel</button>
+            <button type="button" class="btn btn-outline" onclick="window.location.reload();">Reset</button>
             <button type="submit" class="btn btn-filled">Save</button>
         </div>
+
     </form>
 </div>
 
@@ -74,33 +91,46 @@
         empty.style.display = list.querySelector(".medicine-row") ? "none" : "table-row";
     }
 
+    function doseSelector(name, value = 0) {
+        return `
+            <div class="dose-selector">
+                ${[0,1,2,3].map(v => `
+                    <span class="dose-pill ${value === v ? 'active' : ''}"
+                          data-value="${v}">${v}</span>
+                `).join("")}
+                <input type="hidden" name="${name}[]" value="${value}">
+            </div>
+        `;
+    }
 
     function createMedicineRow(name = "", m = 0, a = 0, n = 0) {
         const tr = document.createElement("tr");
         tr.className = "medicine-row";
 
         tr.innerHTML = `
-        <td>
-            <input type="text" name="medicine_name[]" value="${name}" placeholder="Medicine Name">
-        </td>
-        <td>
-            <input type="number" name="dose_morning[]" min="0" max="3" value="${m}">
-        </td>
-        <td>
-            <input type="number" name="dose_afternoon[]" min="0" max="3" value="${a}">
-        </td>
-        <td>
-            <input type="number" name="dose_night[]" min="0" max="3" value="${n}">
-        </td>
-        <td>
-            <button type="submit" class="btn btn-filled" style="background-color:#f8d7da; color:#721c24; margin-top: 0;"
+            <td><input type="text" name="medicine_name[]" value="${name}" placeholder="Medicine Name"></td>
+            <td>${doseSelector("dose_morning", m)}</td>
+            <td>${doseSelector("dose_afternoon", a)}</td>
+            <td>${doseSelector("dose_night", n)}</td>
+            <td>
+                <span class="material-symbols-outlined remove-icon"
                 onclick="this.closest('tr').remove(); updatePlaceholder();">
-                Remove
-            </button>
-        </td>
-    `;
+                delete</span>
+            </td>
+        `;
 
         return tr;
+    }
+
+    function attachDoseEvents(row) {
+        row.querySelectorAll(".dose-pill").forEach(pill => {
+            pill.addEventListener("click", () => {
+                const parent = pill.closest(".dose-selector");
+                parent.querySelectorAll(".dose-pill").forEach(p => p.classList.remove("active"));
+                pill.classList.add("active");
+                parent.querySelector("input").value = pill.dataset.value;
+            });
+        });
     }
 
     function loadExistingMedicines() {
@@ -109,9 +139,9 @@
 
         if (medicines.length > 0) {
             for (const med of medicines) {
-                list.appendChild(
-                    createMedicineRow(med.name, med.m, med.a, med.n)
-                );
+                const row = createMedicineRow(med.name, med.m, med.a, med.n);
+                list.appendChild(row);
+                attachDoseEvents(row);
             }
         }
         updatePlaceholder();
@@ -120,15 +150,24 @@
     function setupAddMedicineButton() {
         document.getElementById("add-medicine").addEventListener("click", () => {
             const list = document.getElementById("medicine-list");
-            list.appendChild(createMedicineRow("", 0, 0, 0));
+            const row = createMedicineRow("", 0, 0, 0);
+            list.appendChild(row);
+            attachDoseEvents(row);
             updatePlaceholder();
         });
     }
 
+    document.querySelectorAll(".collapsible").forEach(col => {
+        col.addEventListener("click", () => {
+            col.classList.toggle("active");
+            const content = col.nextElementSibling;
+            content.classList.toggle("open");
+        });
+    });
+
     window.addEventListener("DOMContentLoaded", () => {
         loadExistingMedicines();
         setupAddMedicineButton();
-        updatePlaceholder();
     });
 </script>
 
