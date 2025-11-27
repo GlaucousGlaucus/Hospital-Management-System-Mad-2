@@ -35,10 +35,9 @@
               Check Availability
             </a>
 
-            <a href="{{ url_for('patient.doctor_details', doctor_id=d.id) }}"
-               class="btn btn-outline">
+            <button class="btn btn-outline doctor-view-btn"  data-doctor='{{ d | tojson }}'>
               View Details
-            </a>
+            </button>
           </div>
 
         </div>
@@ -53,5 +52,68 @@
   </section>
 
 </div>
+
+<div id="doctorModal" class="modal-overlay">
+  <div class="modal-card">
+
+    <div class="modal-header">
+      <h3 id="doctorName"></h3>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="modal-body-left">
+        <p id="doctorQualification" class="doctor-subtext"></p>
+        <p id="doctorSpecialization" class="doctor-subtext"></p>
+        <p id="doctorExperience" class="doctor-subtext"></p>
+
+        <p id="doctorBio" class="doctor-bio"></p>
+      </div>
+
+      <div class="modal-body-right">
+        <div class="doctor-avatar"></div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <a id="availabilityBtn" class="btn btn-filled">Check Availability</a>
+      <button class="btn btn-outline" onclick="closeDoctorModal()">Go Back</button>
+    </div>
+  </div>
+</div>
+
+<script>
+    function openDoctorModal(doctor) {
+
+    const nameEl = document.getElementById("doctorName");
+    const qualEl = document.getElementById("doctorQualification");
+    const specEl = document.getElementById("doctorSpecialization");
+    const expEl = document.getElementById("doctorExperience");
+    const bioEl = document.getElementById("doctorBio");
+
+    nameEl.innerText = "Dr. " + (doctor.name || "");
+    qualEl.innerText = doctor.qualification || "";
+    specEl.innerText = doctor.specialization || "";
+    expEl.innerText = doctor.experience || "";
+    bioEl.innerText = doctor.bio || "";
+
+    document.getElementById("availabilityBtn").href =
+    `/patient/doctor/${doctor.id}/availability`;
+
+    document.getElementById("doctorModal").style.display = "flex";
+  }
+
+    function closeDoctorModal() {
+    document.getElementById("doctorModal").style.display = "none";
+  }
+
+    document.addEventListener("click", function (e) {
+    if (e.target.classList.contains("doctor-view-btn")) {
+    const doctor = JSON.parse(e.target.dataset.doctor);
+    openDoctorModal(doctor);
+  }
+  });
+</script>
 
 {% endblock %}
