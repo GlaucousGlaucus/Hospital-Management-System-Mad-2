@@ -29,7 +29,19 @@ def department_details(dept_id):
             "name": dep.name,
             "description": dep.description
         },
-        doctors=[{"id": d.id, "name": d.name} for d in doctors]
+        doctors=[
+            {
+                "id": d.id,
+                "name": d.name,
+                "specialization": d.specialization,
+                "age": getattr(d, "age", None),
+                "contact": getattr(d, "contact", None),
+                "qualification": getattr(d, "qualification", None),
+                "experience": getattr(d, "experience", None),
+                "bio": getattr(d, "bio", None),
+            }
+            for d in doctors
+        ]
     )
 
 @dashboard_bp.route('/')
