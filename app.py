@@ -2,7 +2,6 @@ from logging import getLogger
 from flask import Flask, render_template
 
 import models.main_models as db_util
-from routes.auth import auth_profile_bp
 from routes.dashboard import patient_bp
 from utils.setup import setup_db
 
@@ -24,7 +23,6 @@ def create_app() -> Flask:
     app.register_blueprint(admin_bp)
     app.register_blueprint(doctor_bp)
     app.register_blueprint(patient_bp)
-    app.register_blueprint(auth_profile_bp)
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):

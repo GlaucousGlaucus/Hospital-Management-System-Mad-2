@@ -32,18 +32,6 @@ def department_details(dept_id):
         doctors=[{"id": d.id, "name": d.name} for d in doctors]
     )
 
-@patient_bp.route("/doctor/<int:doctor_id>/availability")
-def check_availability(doctor_id):
-    return f"Check availability for doctor {doctor_id} (dummy)"
-
-@patient_bp.route("/doctor/<int:doctor_id>")
-def doctor_details(doctor_id):
-    return f"Doctor details for doctor {doctor_id} (dummy)"
-
-@patient_bp.route("/history")
-def history():
-    return "Patient main history page (dummy)"
-
 @dashboard_bp.route('/')
 def dashboard():
     user_type = session.get(SessionInfo.USER_TYPE)
