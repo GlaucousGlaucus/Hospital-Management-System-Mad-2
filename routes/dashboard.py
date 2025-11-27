@@ -7,7 +7,7 @@ from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash
 
 from models.main_models import SessionLocal, Doctor, Patient, Appointment, Department, Treatment, DoctorAvailability, \
-    Medicine
+    Medicine, AppointmentStatus
 from services.doctor_service import create_doctor
 from utils.constants import SessionInfo, UserTypes, Routes
 
@@ -49,7 +49,7 @@ def dashboard():
                     db_session.query(Appointment)
                     .filter(
                         Appointment.doctor_id == doctor_id,
-                        Appointment.status == "BOOKED"
+                        Appointment.status == AppointmentStatus.BOOKED
                     )
                     .join(Patient)
                     .add_entity(Patient)
@@ -76,8 +76,8 @@ def dashboard():
                     appointment_data.append({
                         "id": a.id,
                         "status": a.status,
-                        "date": getattr(a, "date", None),
-                        "time": getattr(a, "time", None),
+                        "date": a.date,
+                        "time": a.time,
                         "patient": {
                             "id": p.id,
                             "name": p.name,
@@ -121,7 +121,7 @@ def dashboard():
                     .join(Department)
                     .filter(
                         Appointment.patient_id == patient_id,
-                        Appointment.status == "BOOKED"
+                        Appointment.status == AppointmentStatus.BOOKED
                     )
                     .all()
                 )

@@ -119,7 +119,7 @@ def patient_history(patient_id: int):
 def mark_complete(appointment_id):
     with SessionLocal() as db_session:
         appt = db_session.query(Appointment).get(appointment_id)
-        appt.status = "COMPLETED"
+        appt.status = AppointmentStatus.COMPLETED
         db_session.commit()
     flash("Appointment marked as complete!", "success")
     return redirect(url_for("dashboard.dashboard"))
@@ -129,7 +129,7 @@ def mark_complete(appointment_id):
 def cancel_appointment(appointment_id):
     with SessionLocal() as db_session:
         appt = db_session.query(Appointment).get(appointment_id)
-        appt.status = AppointmentStatus.CANCELLED.value.upper()
+        appt.status = AppointmentStatus.CANCELLED
         db_session.commit()
     flash("Appointment cancelled.", "info")
     return redirect(url_for("dashboard.dashboard"))

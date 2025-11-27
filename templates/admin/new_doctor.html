@@ -16,7 +16,10 @@
   <input type="email" name="email" placeholder="doctor@example.com"
          value="{{ doctor.email if doctor else '' }}" required>
 
-  {% if not doctor %}
+  {% if doctor %}
+  <label>New Password (leave blank to keep unchanged)</label>
+  <input type="password" name="password" placeholder="Enter new password">
+  {% else %}
   <label>Password</label>
   <input type="password" name="password" placeholder="Enter password" required>
   {% endif %}

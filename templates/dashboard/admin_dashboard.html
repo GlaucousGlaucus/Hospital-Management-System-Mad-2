@@ -5,7 +5,9 @@
 
 <div class="dashboard">
 
-    <h2 class="dashboard-title">Welcome {{ session['user_name'] or 'Admin' }}</h2>
+    <h2 class="dashboard-title">
+        Welcome {{ session.get('user_name', 'Admin') }}
+    </h2>
 
     <!-- Search + Create -->
     <div class="dashboard-actions">
@@ -13,7 +15,11 @@
                class="dashboard-search"
                placeholder="Search for doctor, patients, departments, etc.">
         <button class="btn btn-filled">Search</button>
-        <a href="{{ url_for('admin.new_doctor') }}" class="btn btn-outline">Create</a>
+
+        <div class="create-buttons">
+            <a href="{{ url_for('admin.new_doctor') }}" class="btn btn-outline">Add Doctor</a>
+            <a href="{{ url_for('admin.new_patient') }}" class="btn btn-outline">Add Patient</a>
+        </div>
     </div>
 
     <!-- Registered Doctors -->

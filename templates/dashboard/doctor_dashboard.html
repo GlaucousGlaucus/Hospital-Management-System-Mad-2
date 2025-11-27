@@ -22,26 +22,32 @@
                     <th>Actions</th>
                 </tr>
                 </thead>
+
                 <tbody>
                 {% for a in appointments %}
                 <tr>
                     <td>{{ loop.index }}</td>
                     <td>{{ a.patient.name }}</td>
                     <td>
-                        <a href="{{ url_for('doctor.update_history', appointment_id=a.id) }}"
-                           class="btn btn-outline">Update</a>
+                        <a class="btn btn-outline"
+                           href="{{ url_for('doctor.update_history', appointment_id=a.id) }}">
+                            Update
+                        </a>
                     </td>
+
                     <td>
                         <div class="card-buttons">
                             <form action="{{ url_for('api.mark_complete', appointment_id=a.id) }}"
                                   method="POST" style="display:inline;">
-                                <button type="submit" class="btn btn-filled" style="background-color:#d4edda; color:#155724;">
+                                <button type="submit" class="btn btn-filled"
+                                        style="background-color:#d4edda; color:#155724;">
                                     Mark as Complete
                                 </button>
                             </form>
                             <form action="{{ url_for('api.cancel_appointment', appointment_id=a.id) }}"
                                   method="POST" style="display:inline;">
-                                <button type="submit" class="btn btn-filled" style="background-color:#f8d7da; color:#721c24;">
+                                <button type="submit" class="btn btn-filled"
+                                        style="background-color:#f8d7da; color:#721c24;">
                                     Cancel
                                 </button>
                             </form>
@@ -78,41 +84,48 @@
     <section class="dashboard-section">
         <h3>Your Availability</h3>
 
-        <div class="dashboard-section">
-            <div class="table-wrapper">
-                <table class="data-table">
-                    <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Morning Slot</th>
-                        <th>Evening Slot</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for day in days %}
-                    <tr>
-                        <td>{{ day.strftime("%A, %d %B %Y") }}</td>
-                        <td>
-                            <label class="availability-slot morning">
-                                <input type="checkbox" name="availability"
-                                       value="{{ day }}_morning"
-                                    {% if availability.get((day, 'morning')) %}checked{% endif %}>
-                                <span>08:00 - 12:00 am</span>
-                            </label>
-                        </td>
-                        <td>
-                            <label class="availability-slot evening">
-                                <input type="checkbox" name="availability"
-                                       value="{{ day }}_evening"
-                                       {% if availability.get((day, 'evening')) %}checked{% endif %}>
-                                <span>04:00 - 09:00 pm</span>
-                            </label>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Morning</th>
+                    <th>Afternoon</th>
+                    <th>Evening</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for day in days %}
+                <tr>
+                    <td>{{ day.strftime("%A, %d %B %Y") }}</td>
+                    <td>
+                        <label class="availability-slot">
+                            <input type="checkbox"
+                                   value="{{ day }}_morning"
+                                   {% if availability.get((day, 'morning')) %}checked{% endif %}>
+                            <span>08:00 – 12:00</span>
+                        </label>
+                    </td>
+                    <td>
+                        <label class="availability-slot">
+                            <input type="checkbox"
+                                   value="{{ day }}_afternoon"
+                                   {% if availability.get((day, 'afternoon')) %}checked{% endif %}>
+                            <span>12:00 – 04:00</span>
+                        </label>
+                    </td>
+                    <td>
+                        <label class="availability-slot">
+                            <input type="checkbox"
+                                   value="{{ day }}_evening"
+                                   {% if availability.get((day, 'evening')) %}checked{% endif %}>
+                            <span>04:00 – 09:00</span>
+                        </label>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
     </section>
 </div>

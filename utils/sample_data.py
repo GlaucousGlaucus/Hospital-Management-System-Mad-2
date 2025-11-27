@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import random
-from datetime import date, time, timedelta
+from datetime import date, time, timedelta, datetime
 
 from werkzeug.security import generate_password_hash
 
-from models.main_models import SessionLocal, Department, Appointment, Doctor, Patient, AppointmentStatus, \
-    DoctorAvailability, Medicine, Treatment, Admin
+from models.main_models import (
+    SessionLocal, Department, Appointment, Doctor, Patient,
+    AppointmentStatus, DoctorAvailability, Medicine, Treatment, Admin
+)
 
 
 def create_dummy_data():
@@ -20,6 +22,10 @@ def create_dummy_data():
 
         session.commit()
 
+
+# -----------------------------
+# Admin
+# -----------------------------
 def seed_admin(session):
     admin = Admin(
         name="Admin",
@@ -30,6 +36,10 @@ def seed_admin(session):
     )
     session.add(admin)
 
+
+# -----------------------------
+# Departments
+# -----------------------------
 def seed_departments(session):
     department_names = [
         "Cardiology", "Neurology", "Orthopedics", "Pediatrics",
@@ -46,6 +56,9 @@ def seed_departments(session):
     return departments
 
 
+# -----------------------------
+# Doctors
+# -----------------------------
 def seed_doctors(session, departments):
     specializations = [
         "Cardiologist", "Neurologist", "Orthopedic Surgeon",
@@ -72,6 +85,9 @@ def seed_doctors(session, departments):
     return doctors
 
 
+# -----------------------------
+# Patients
+# -----------------------------
 def seed_patients(session):
     patients = []
     for i in range(100):
@@ -89,8 +105,13 @@ def seed_patients(session):
     return patients
 
 
+# -----------------------------
+# Availability
+# -----------------------------
 def seed_availability(session, doctors):
-    slots = ["morning", "afternoon", "evening"]
+    # NEW: your app uses ONLY morning / evening
+    slots = ["morning", "evening"]
+
     today = date.today()
     days = [today + timedelta(days=i) for i in range(7)]
 
@@ -108,6 +129,9 @@ def seed_availability(session, doctors):
     session.flush()
 
 
+# -----------------------------
+# Appointments + Treatment + Medicines
+# -----------------------------
 def seed_appointments_with_treatments(session, doctors, patients):
     medicine_names = [
         "Paracetamol", "Amoxicillin", "Ibuprofen", "Cetirizine",
@@ -131,11 +155,18 @@ def seed_appointments_with_treatments(session, doctors, patients):
             status=random.choice(statuses),
             visit_type=random.choice(visit_types),
             test_done=random.choice(tests_done),
+
+            # NEW FIELDS
+            original_date=None,
+            original_time=None,
+            reschedule_count=0,
         )
         session.add(appt)
         session.flush()
 
+        # Only generate treatment for BOOKED or COMPLETED
         if appt.status in [AppointmentStatus.BOOKED, AppointmentStatus.COMPLETED]:
+
             treatment = Treatment(
                 appointment_id=appt.id,
                 diagnosis=random.choice([
@@ -150,6 +181,8 @@ def seed_appointments_with_treatments(session, doctors, patients):
                     "Follow-up required", "Patient improving",
                     "Schedule recheck", "Prescribed rest"
                 ]),
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
             )
             session.add(treatment)
             session.flush()
@@ -161,6 +194,15 @@ def seed_appointments_with_treatments(session, doctors, patients):
                     morning=random.randint(0, 2),
                     afternoon=random.randint(0, 2),
                     night=random.randint(0, 2),
+
+                    # NEW FIELDS
+                    duration_days=random.randint(1, 14),
+                    instructions=random.choice([
+                        "Take after food",
+                        "Take before breakfast",
+                        "Do not skip doses",
+                        "Drink plenty of water"
+                    ])
                 )
                 session.add(med)
 

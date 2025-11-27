@@ -60,7 +60,13 @@ def signup():
             contact: str = request.form["contact"]
 
             with SessionLocal() as db_session:
-                email_exists = db_session.query(Doctor.email).filter_by(email=email).first()
+                if role == "patient":
+                    email_exists = db_session.query(Patient).filter_by(email=email).first()
+                elif role == "doctor":
+                    email_exists = db_session.query(Doctor).filter_by(email=email).first()
+                else:
+                    flash("Invalid role", "error")
+                    return redirect(url_for(Routes.SIGNUP_ROUTE))
                 if email_exists:
                     flash(f"Account with email {email} already exists!", "error")
                     return redirect(url_for(Routes.SIGNUP_ROUTE))
@@ -128,9 +134,11 @@ def signup_doctor():
             doctor = Doctor(
                 name=request.form['name'],
                 email=email,
+                password=generate_password_hash(request.form['password']),
+                age=int(request.form['age']),
+                contact=request.form['contact'],
                 specialization=request.form['specialization'],
                 department=department,
-                password=generate_password_hash(request.form['password'])
             )
             db_session.add(doctor)
             db_session.commit()

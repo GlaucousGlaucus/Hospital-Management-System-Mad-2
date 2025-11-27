@@ -9,7 +9,7 @@
 </div>
 
 <form action="{{ url_for('auth_login.login') }}" method="POST" class="auth-form">
-    <input type="hidden" id="role" name="user_type" value="patient">
+    <input type="hidden" id="role" name="user_type" value="doctor">
 
     <label>Email</label>
     <input type="email" name="email" required>
@@ -17,7 +17,7 @@
     <label>Password</label>
     <input type="password" name="password" required>
 
-    <button id="btn-submit" type="submit" class="btn btn-filled">Login</button>
+    <button id="btn-submit" type="submit" class="btn btn-filled">Login as Doctor</button>
 
     <p class="alt-link">
         Don’t have an account?
@@ -34,19 +34,15 @@
         const roleInput = document.getElementById("role");
 
         function selectRole(role) {
-            const isDoctor = role === "doctor";
-            const isPatient = role === "patient";
-            const isAdmin = role === "admin";
-
-            btnDoctor.classList.toggle("active", isDoctor);
-            btnPatient.classList.toggle("active", isPatient);
-            btnAdmin.classList.toggle("active", isAdmin);
+            btnDoctor.classList.toggle("active", role === "doctor");
+            btnPatient.classList.toggle("active", role === "patient");
+            btnAdmin.classList.toggle("active", role === "admin");
 
             roleInput.value = role;
             submitBtn.textContent = `Login as ${role.charAt(0).toUpperCase() + role.slice(1)}`;
         }
 
-        selectRole("patient");
+        selectRole("doctor");
 
         btnDoctor.addEventListener("click", () => selectRole("doctor"));
         btnPatient.addEventListener("click", () => selectRole("patient"));
