@@ -215,6 +215,25 @@ def update_history(appointment_id):
             treatment.diagnosis = request.form.get("diagnosis", "")
             treatment.prescription = request.form.get("prescription", "")
             treatment.notes = request.form.get("notes", "")
+            treatment.medicines.clear()
+
+            names = request.form.getlist("medicine_name[]")
+            m_doses = request.form.getlist("dose_morning[]")
+            a_doses = request.form.getlist("dose_afternoon[]")
+            n_doses = request.form.getlist("dose_night[]")
+
+            for i in range(len(names)):
+                name = names[i].strip()
+                if not name:
+                    continue
+
+                med = Medicine(
+                    name=name,
+                    morning=int(m_doses[i]),
+                    afternoon=int(a_doses[i]),
+                    night=int(n_doses[i]),
+                )
+                treatment.medicines.append(med)
 
             db_session.add(treatment)
             db_session.commit()

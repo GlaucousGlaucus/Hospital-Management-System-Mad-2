@@ -51,7 +51,7 @@
 
         <div style="display:block; justify-content:flex-end; gap: 1rem; align-self: end">
             <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline">Cancel</a>
-            <button type="reset" class="btn btn-outline">Reset</button>
+            <button type="button" class="btn btn-outline" onclick="window.location.reload();">Reset</button>
             <button type="submit" class="btn btn-filled">Save</button>
         </div>
     </form>
