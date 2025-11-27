@@ -1,16 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
-
 <div class="dashboard">
     <h2 class="dashboard-title">Update Patient History</h2>
-
     <div class="patient-info">
         <p><strong>Patient Name:</strong> {{ patient.name }}</p>
         <p><strong>Department:</strong> {{ department }}</p>
     </div>
 
     <form method="POST" class="auth-form" style="gap:1.5rem;">
-
         <section class="dashboard-section card">
             <h3>Visit Information</h3>
             <div class="two-col-grid">
@@ -28,7 +25,6 @@
 
         <section class="dashboard-section card">
             <h3>Clinical Notes</h3>
-
             <div class="two-col-grid">
                 <div>
                     <label>Diagnosis</label>
@@ -44,7 +40,6 @@
 
         <section class="dashboard-section card">
             <div class="collapsible">Medicines</div>
-
             <div class="collapsible-content" id="medicines-section">
                 <table class="data-table">
                     <thead>
