@@ -5,7 +5,7 @@
     <h1 class="hero-title">Therapeia dia Oikonomia</h1>
     <h2 class="hero-subtitle">Healthcare Through Management</h2>
 
-    <div class="hero-actions">
+    <div class="hero-actions" style="flex-direction: column; gap: 0.5rem;">
         {% if session.get('user_id') %}
         <h2 class="hero-subtitle">Hello {{ session['user_name'] }}</h2>
         <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-filled">Go to Dashboard</a>
@@ -15,5 +15,4 @@
         {% endif %}
     </div>
 </div>
-
 {% endblock %}
