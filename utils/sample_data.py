@@ -89,27 +89,12 @@ TESTS = ["Blood Test", "X-Ray", "ECG", "MRI", "None"]
 # ----------------------------------------------------------
 def create_dummy_data():
     with SessionLocal() as session:
-        seed_admin(session)
         departments = seed_departments(session)
         doctors = seed_doctors(session, departments)
         patients = seed_patients(session)
         seed_availability(session, doctors)
         seed_appointments(session, doctors, patients)
         session.commit()
-
-
-# ----------------------------------------------------------
-# Admin
-# ----------------------------------------------------------
-def seed_admin(session):
-    session.add(Admin(
-        name="Admin User",
-        email="admin@admin.com",
-        password=generate_password_hash("123"),
-        dob=date(1980, 1, 1),
-        contact="+91 9999999999",
-        is_blacklisted=False
-    ))
 
 
 # ----------------------------------------------------------

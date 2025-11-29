@@ -329,6 +329,9 @@ def update_history(appointment_id):
             "n": m.night,
         } for m in treatment.medicines] if treatment.medicines else []
         if request.method == "POST":
+            appt.visit_type = request.form.get("visit_type", "")
+            appt.test_done = request.form.get("test_done", "")
+
             treatment.diagnosis = request.form.get("diagnosis", "")
             treatment.prescription = request.form.get("prescription", "")
             treatment.notes = request.form.get("notes", "")
