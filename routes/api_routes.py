@@ -31,12 +31,16 @@ def get_all_items(entity):
         match entity:
             case "doctors":
                 data = [
-                    {"id": d.id, "name": d.name, "age": d.age, "email": d.email, "contact": d.contact, "specialization": d.specialization or ""}
+                    {"id": d.id, "name": d.name, "age": d.age, "email": d.email,
+                     "contact": d.contact, "specialization": d.specialization or "",
+                     "is_blacklisted": d.is_blacklisted}
                     for d in entities
                 ]
             case "patients":
                 data = [
-                    {"id": p.id, "name": p.name, "age": p.age, "email": p.email, "contact": p.contact}
+                    {"id": p.id, "name": p.name, "age": p.age,
+                     "email": p.email, "contact": p.contact,
+                     "is_blacklisted": p.is_blacklisted}
                     for p in entities
                 ]
             case "appointments":
@@ -541,3 +545,45 @@ def search():
         else:
             return jsonify({"error": "Unknown or unauthorized user"}), 403
 
+@api_bp.route("/blacklist/<entity>/<int:user_id>", methods=["POST"])
+def blacklist_user(entity, user_id):
+    if session.get(SessionInfo.USER_TYPE) != UserTypes.ADMIN:
+        return jsonify({"error": "Only admin can blacklist users"}), 403
+
+    model_map = {"doctor": Doctor, "patient": Patient}
+    model = model_map.get(entity)
+
+    if not model:
+        return jsonify({"error": "Invalid entity"}), 400
+
+    with SessionLocal() as db:
+        user = db.get(model, user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        user.is_blacklisted = True
+        db.commit()
+
+    return jsonify({"status": "blacklisted"})
+
+
+@api_bp.route("/unblacklist/<entity>/<int:user_id>", methods=["POST"])
+def unblacklist_user(entity, user_id):
+    if session.get(SessionInfo.USER_TYPE) != UserTypes.ADMIN:
+        return jsonify({"error": "Only admin can unblacklist users"}), 403
+
+    model_map = {"doctor": Doctor, "patient": Patient}
+    model = model_map.get(entity)
+
+    if not model:
+        return jsonify({"error": "Invalid entity"}), 400
+
+    with SessionLocal() as db:
+        user = db.get(model, user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        user.is_blacklisted = False
+        db.commit()
+
+    return jsonify({"status": "unblacklisted"})

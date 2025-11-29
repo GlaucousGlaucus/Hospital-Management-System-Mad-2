@@ -1,6 +1,13 @@
 export function createPersonListCard(entity, role) {
+
+    const bg = entity.is_blacklisted ? `style="background:#fff0f0;"` : "";
+
+    const blacklistBtn = entity.is_blacklisted
+        ? createIconButton("unblacklist", role, entity.id, "block")   // same icon for minimal change
+        : createIconButton("blacklist", role, entity.id, "block");
+
     return `
-    <div class="card-item" data-id="${entity.id}">
+    <div class="card-item" data-id="${entity.id}" ${bg}>
         <span class="card-title">${entity.name}</span>
 
         <div class="profile-picture">
@@ -10,11 +17,12 @@ export function createPersonListCard(entity, role) {
         <div class="card-buttons">
             ${createIconButton("edit", role, entity.id, "edit")}
             ${createIconButton("delete", role, entity.id, "person_remove")}
-            ${createIconButton("blacklist", role, entity.id, "block")}
+            ${blacklistBtn}
         </div>
     </div>
   `;
 }
+
 
 export function createAppointmentRow(data) {
     return `

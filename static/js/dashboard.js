@@ -47,9 +47,22 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.href = `/admin/edit/${type}/${id}`;
         }
         else if (action === "blacklist") {
-            const res = await fetch(`/api/${type}/${id}/blacklist`, { method: "PATCH" });
+            const res = await fetch(`/api/blacklist/${type}/${id}`, { method: "POST" });
             const data = await res.json();
-            if (data.status === "updated") alert("User blacklisted!");
+            if (data.status === "blacklisted") {
+                alert("User blacklisted!");
+                if (type === "doctor") loadDoctors();
+                if (type === "patient") loadPatients();
+            }
+        }
+        else if (action === "unblacklist") {
+            const res = await fetch(`/api/unblacklist/${type}/${id}`, { method: "POST" });
+            const data = await res.json();
+            if (data.status === "unblacklisted") {
+                alert("User removed from blacklist!");
+                if (type === "doctor") loadDoctors();
+                if (type === "patient") loadPatients();
+            }
         }
     });
 });

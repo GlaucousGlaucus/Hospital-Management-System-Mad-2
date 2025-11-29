@@ -36,12 +36,17 @@ def login():
                         user = db_session.query(Admin).filter_by(email=email).first()
                     case _:
                         flash("Invalid user type")
-            if user and check_password_hash(user.password, password):
-                session[SessionInfo.USER_ID] = user.id
-                session[SessionInfo.USER_NAME] = user.name
-                session[SessionInfo.USER_EMAIL] = user.email
-                session[SessionInfo.USER_TYPE] = user_type
-                return redirect(url_for(Routes.DASHBOARD_ROUTE))
+            if user:
+                if user.is_blacklisted:
+                    flash("Your account has been disabled by admin.", "error")
+                    return redirect(url_for("auth_login.login"))
+
+                if check_password_hash(user.password, password):
+                    session[SessionInfo.USER_ID] = user.id
+                    session[SessionInfo.USER_NAME] = user.name
+                    session[SessionInfo.USER_EMAIL] = user.email
+                    session[SessionInfo.USER_TYPE] = user_type
+                    return redirect(url_for(Routes.DASHBOARD_ROUTE))
             flash("Invalid credentials", "error")
     return render_template('login.html')
 
