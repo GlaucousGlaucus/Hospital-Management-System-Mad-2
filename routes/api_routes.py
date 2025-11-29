@@ -177,6 +177,9 @@ def update_availability():
         "enabled": enabled
     })
 
+@api_bp.route("/reschedule/<int:appointment_id>", methods=["POST"])
+def reschedule_appointment_patient(appointment_id):
+    return redirect(url_for("dashboard.dashboard"))
 
 @api_bp.route("/cancel_appointment/<int:appointment_id>", methods=["POST"])
 def cancel_appointment_patient(appointment_id):
