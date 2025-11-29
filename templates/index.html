@@ -2,12 +2,12 @@
 
 {% block content %}
 <div class="hero">
-    <h1 class="hero-title">Therapeia dia Oikonomia</h1>
-    <h2 class="hero-subtitle">Healthcare Through Management</h2>
+    <h1 class="hero-title">CliniTrak</h1>
+    <h2 class="hero-subtitle">Manage Less. Care More.</h2>
+    <h2 class="hero-subtitle">Your solution to managing your hospital.</h2>
 
     <div class="hero-actions" style="flex-direction: column; gap: 0.5rem;">
         {% if session.get('user_id') %}
-        <h2 class="hero-subtitle">Hello {{ session['user_name'] }}</h2>
         <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-filled">Go to Dashboard</a>
         {% else %}
         <a href="{{ url_for('auth_login.login') }}" class="btn btn-outline">Login</a>
