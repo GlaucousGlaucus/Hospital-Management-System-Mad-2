@@ -58,8 +58,16 @@ class UserMixin:
     name: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(120), unique=True)
     password: Mapped[str] = mapped_column(String(128))
-    age: Mapped[Optional[int]]
+    dob: Mapped[Optional[date]]
     contact: Mapped[Optional[str]] = mapped_column(String(50))
+    is_blacklisted: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    @property
+    def age(self) -> Optional[int]:
+        if not self.dob:
+            return None
+        today = date.today()
+        return today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
 
     @classmethod
     def create_user(cls, session: SessionLocal, **kwargs):

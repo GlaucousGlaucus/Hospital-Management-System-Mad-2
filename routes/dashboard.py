@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from logging import getLogger
 from typing import List
 
@@ -178,7 +178,7 @@ def new_doctor():
                 name=request.form["name"],
                 email=request.form["email"],
                 password=generate_password_hash(request.form["password"]),
-                age=request.form["age"],
+                dob = date.fromisoformat(request.form["dob"]),
                 contact=request.form["contact"],
                 specialization=request.form["specialization"],
                 department_id=int(request.form["department_id"]),
@@ -195,7 +195,7 @@ def edit_doctor(doctor_id):
         if request.method == "POST":
             doctor.name = request.form["name"]
             doctor.email = request.form["email"]
-            doctor.age = int(request.form["age"])
+            doctor.dob = date.fromisoformat(request.form["dob"])
             doctor.contact = request.form["contact"]
             doctor.specialization = request.form["specialization"]
             doctor.department_id = int(request.form["department_id"])
@@ -220,7 +220,7 @@ def new_patient():
                 name=request.form["name"],
                 email=request.form["email"],
                 password=generate_password_hash(request.form["password"]),
-                age=int(request.form["age"]),
+                dob = date.fromisoformat(request.form["dob"]),
                 contact=request.form["contact"],
             )
             db_session.add(patient)
@@ -241,7 +241,7 @@ def edit_patient(patient_id):
         if request.method == "POST":
             patient.name = request.form["name"]
             patient.email = request.form["email"]
-            patient.age = int(request.form["age"])
+            patient.dob = date.fromisoformat(request.form["dob"])
             patient.contact = request.form["contact"]
 
             new_password = request.form.get("password", "").strip()
@@ -340,7 +340,7 @@ def edit_patient():
         if request.method == "POST":
             patient.name = request.form["name"]
             patient.email = request.form["email"]
-            patient.age = int(request.form["age"])
+            patient.dob = date.fromisoformat(request.form["dob"])
             patient.contact = request.form["contact"]
 
             new_password = request.form.get("password", "").strip()

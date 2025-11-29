@@ -24,9 +24,10 @@
   <input type="password" name="password" placeholder="Enter password" required>
   {% endif %}
 
-  <label>Age</label>
-  <input type="number" name="age" placeholder="35"
-         value="{{ doctor.age if doctor else '' }}" required>
+  <label>Date of Birth</label>
+  <input type="date" name="dob"
+         value="{{ doctor.dob.isoformat() if doctor and doctor.dob else '' }}"
+         required>
 
   <label>Contact</label>
   <input type="text" name="contact" placeholder="+91 98765 43210"

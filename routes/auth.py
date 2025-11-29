@@ -1,3 +1,4 @@
+from datetime import date
 from logging import getLogger
 from typing import Any, Optional
 
@@ -56,7 +57,12 @@ def signup():
             name: str = request.form["name"]
             email: str = request.form["email"]
             password = generate_password_hash(request.form["password"])
-            age: int = int(request.form["age"])
+            dob_str = request.form["dob"]
+            try:
+                dob = date.fromisoformat(dob_str)
+            except ValueError:
+                flash("Invalid date of birth", "error")
+                return redirect(url_for(Routes.SIGNUP_ROUTE))
             contact: str = request.form["contact"]
 
             with SessionLocal() as db_session:
@@ -73,7 +79,7 @@ def signup():
 
                 match role:
                     case "doctor":
-                        dep_id: Optional[str] = request.form["department"]
+                        dep_id: Optional[str] = request.form["department_id"]
                         if not dep_id.isdigit():
                             flash("Invalid department ID", "error")
                             return redirect(url_for(Routes.SIGNUP_ROUTE))
@@ -88,7 +94,7 @@ def signup():
                             name=name,
                             email=email,
                             password=password,
-                            age=age,
+                            dob=dob,
                             contact=contact,
                             specialization=request.form["specialization"],
                             department_id=dep_id,
@@ -101,7 +107,7 @@ def signup():
                             name=name,
                             email=email,
                             password=password,
-                            age=age,
+                            dob=dob,
                             contact=contact,
                         )
                         flash("Account created successfully! Please login.", "success")
@@ -131,11 +137,16 @@ def signup_doctor():
                 flash("Department not found", "error")
                 return redirect(url_for('signup_doctor'))
 
+            try:
+                dob = date.fromisoformat(request.form['dob'])
+            except ValueError:
+                flash("Invalid date of birth", "error")
+                return redirect(url_for(Routes.SIGNUP_ROUTE))
             doctor = Doctor(
                 name=request.form['name'],
                 email=email,
                 password=generate_password_hash(request.form['password']),
-                age=int(request.form['age']),
+                dob=dob,
                 contact=request.form['contact'],
                 specialization=request.form['specialization'],
                 department=department,

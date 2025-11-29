@@ -10,7 +10,21 @@ from models.main_models import (
     AppointmentStatus, DoctorAvailability, Medicine, Treatment, Admin
 )
 
+# ----------------------------------------------------------
+# Helper — generate random DOB from age range
+# ----------------------------------------------------------
+def random_dob(min_age: int, max_age: int) -> date:
+    age = random.randint(min_age, max_age)
+    today = date.today()
+    birth_year = today.year - age
+    birth_day = random.randint(1, 28)
+    birth_month = random.randint(1, 12)
+    return date(birth_year, birth_month, birth_day)
 
+
+# ----------------------------------------------------------
+# Create All Seed Data
+# ----------------------------------------------------------
 def create_dummy_data():
     with SessionLocal() as session:
         seed_admin(session)
@@ -23,23 +37,24 @@ def create_dummy_data():
         session.commit()
 
 
-# -----------------------------
+# ----------------------------------------------------------
 # Admin
-# -----------------------------
+# ----------------------------------------------------------
 def seed_admin(session):
     admin = Admin(
         name="Admin",
         email="admin@admin.com",
         password=generate_password_hash("123"),
-        age=40,
+        dob=date(1985, 1, 1),         # arbitrary DOB
         contact="+91 9999999999",
+        is_blacklisted=False,
     )
     session.add(admin)
 
 
-# -----------------------------
+# ----------------------------------------------------------
 # Departments
-# -----------------------------
+# ----------------------------------------------------------
 def seed_departments(session):
     department_names = [
         "Cardiology", "Neurology", "Orthopedics", "Pediatrics",
@@ -47,8 +62,16 @@ def seed_departments(session):
         "ENT", "General Medicine",
     ]
 
+    long_description = (
+        "This department is responsible for providing comprehensive healthcare "
+        "services to patients. Our medical team offers specialized diagnostic "
+        "and therapeutic care while ensuring patient comfort. We continuously "
+        "work with modern medical practices to deliver high-quality treatment. "
+        "The department collaborates with other specialties for holistic care."
+    )
+
     departments = [
-        Department(name=name, description=f"{name} Department")
+        Department(name=name, description=long_description)
         for name in department_names
     ]
     session.add_all(departments)
@@ -56,9 +79,9 @@ def seed_departments(session):
     return departments
 
 
-# -----------------------------
+# ----------------------------------------------------------
 # Doctors
-# -----------------------------
+# ----------------------------------------------------------
 def seed_doctors(session, departments):
     specializations = [
         "Cardiologist", "Neurologist", "Orthopedic Surgeon",
@@ -69,14 +92,21 @@ def seed_doctors(session, departments):
     doctors = []
     for i in range(30):
         dept = random.choice(departments)
+
         doc = Doctor(
             name=f"Dr. {random.choice(['John','Alex','Mira','Sara','Raj','Lina','Omar','Nina'])} {i}",
             email=f"doctor{i}@hospital.com",
             password=generate_password_hash("123"),
-            age=random.randint(30, 65),
+
+            # NEW: dob instead of age
+            dob=random_dob(30, 65),
+
             contact=f"+91 {random.randint(7000000000, 9999999999)}",
             specialization=random.choice(specializations),
             department_id=dept.id,
+
+            # NEW FIELD
+            is_blacklisted=False,
         )
         doctors.append(doc)
 
@@ -85,9 +115,9 @@ def seed_doctors(session, departments):
     return doctors
 
 
-# -----------------------------
+# ----------------------------------------------------------
 # Patients
-# -----------------------------
+# ----------------------------------------------------------
 def seed_patients(session):
     patients = []
     for i in range(100):
@@ -95,8 +125,14 @@ def seed_patients(session):
             name=f"Patient {i}",
             email=f"patient{i}@example.com",
             password=generate_password_hash("123"),
-            age=random.randint(10, 90),
+
+            # NEW: dob instead of age
+            dob=random_dob(10, 90),
+
             contact=f"+91 {random.randint(6000000000, 9999999999)}",
+
+            # NEW FIELD
+            is_blacklisted=False,
         )
         patients.append(patient)
 
@@ -105,11 +141,10 @@ def seed_patients(session):
     return patients
 
 
-# -----------------------------
+# ----------------------------------------------------------
 # Availability
-# -----------------------------
+# ----------------------------------------------------------
 def seed_availability(session, doctors):
-    # NEW: your app uses ONLY morning / evening
     slots = ["morning", "evening"]
 
     today = date.today()
@@ -122,16 +157,16 @@ def seed_availability(session, doctors):
                     doctor_id=doc.id,
                     date=d,
                     slot=slot,
-                    enabled=random.choice([True, False])
+                    enabled=random.choice([True, False]),
                 )
                 session.add(entry)
 
     session.flush()
 
 
-# -----------------------------
-# Appointments + Treatment + Medicines
-# -----------------------------
+# ----------------------------------------------------------
+# Appointments + Treatments + Medicines
+# ----------------------------------------------------------
 def seed_appointments_with_treatments(session, doctors, patients):
     medicine_names = [
         "Paracetamol", "Amoxicillin", "Ibuprofen", "Cetirizine",
@@ -156,7 +191,6 @@ def seed_appointments_with_treatments(session, doctors, patients):
             visit_type=random.choice(visit_types),
             test_done=random.choice(tests_done),
 
-            # NEW FIELDS
             original_date=None,
             original_time=None,
             reschedule_count=0,
@@ -164,7 +198,6 @@ def seed_appointments_with_treatments(session, doctors, patients):
         session.add(appt)
         session.flush()
 
-        # Only generate treatment for BOOKED or COMPLETED
         if appt.status in [AppointmentStatus.BOOKED, AppointmentStatus.COMPLETED]:
 
             treatment = Treatment(
@@ -194,14 +227,12 @@ def seed_appointments_with_treatments(session, doctors, patients):
                     morning=random.randint(0, 2),
                     afternoon=random.randint(0, 2),
                     night=random.randint(0, 2),
-
-                    # NEW FIELDS
                     duration_days=random.randint(1, 14),
                     instructions=random.choice([
                         "Take after food",
                         "Take before breakfast",
                         "Do not skip doses",
-                        "Drink plenty of water"
+                        "Drink plenty of water",
                     ])
                 )
                 session.add(med)
