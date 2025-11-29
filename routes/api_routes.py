@@ -336,12 +336,12 @@ def availability_json(doctor_id):
             for a in entries
         }
 
-    today = date.today()
-    days_out = 7
+    today = datetime.datetime.today().date()
+    start_of_week = today - timedelta(days=(today.weekday() + 1) % 7)
+    days = [(start_of_week + timedelta(days=i)) for i in range(7)]
     schedule = []
 
-    for i in range(days_out):
-        d = today + timedelta(days=i)
+    for d in days:
         morning = avail_map.get((d, AvailabilitySlot.MORNING), False)
         afternoon = avail_map.get((d, AvailabilitySlot.AFTERNOON), False)
         evening = avail_map.get((d, AvailabilitySlot.EVENING), False)
