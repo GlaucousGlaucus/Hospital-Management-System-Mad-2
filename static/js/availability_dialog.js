@@ -1,20 +1,24 @@
-const SLOT_TIMES = {
+const SLOT_KEYS = ["morning", "afternoon", "evening"];
+
+const SLOT_TIME_MAP = {
     morning: "08:00",
+    afternoon: "12:00",
     evening: "16:00"
-}
+};
 
 let selectedSlot = null;
 let selectedData = null;
 let dialog_context = {
-        type: 'booking',
-        data: {}
-    };
+    type: "booking",
+    data: {}
+};
 
 function openAvailabilityModal(doctorId, context) {
     dialog_context = {
-        type: context.type || 'booking',
-        data: context.data || {}
+        type: context?.type || "booking",
+        data: context?.data || {}
     };
+
     fetch(`/api/doctor/${doctorId}/availability_json`)
         .then(resp => resp.json())
         .then(data => buildAvailabilityGrid(data));
@@ -43,16 +47,16 @@ function buildAvailabilityGrid(data) {
         dateBox.innerText = day.date_display;
         row.appendChild(dateBox);
 
-        ["morning", "evening"].forEach(slot => {
+        SLOT_KEYS.forEach(slot => {
+            const slotInfo = day[slot];
+            console.log(slotInfo, slot);
             const slotBox = document.createElement("div");
-            const available = day[slot].available;
-            const label = day[slot].label;
-
-            slotBox.className = "av-slot " + (available ? "av-available" : "av-unavailable");
-            slotBox.innerText = label;
+            slotBox.className =
+                "av-slot " + (slotInfo.available ? "av-available" : "av-unavailable");
+            slotBox.innerText = slotInfo.label;
 
             slotBox.onclick = () => {
-                if (!available) return;
+                if (!slotInfo.available) return;
 
                 document.querySelectorAll(".av-slot").forEach(e =>
                     e.classList.remove("av-selected")
@@ -60,7 +64,15 @@ function buildAvailabilityGrid(data) {
 
                 slotBox.classList.add("av-selected");
                 selectedSlot = slot;
-                selectedData = day;
+
+                selectedData = {
+                    doctor_id: day.doctor_id,
+                    date: day.date,
+                    slot: slot,
+                    start_time: SLOT_TIME_MAP[slot],
+                    end_time: null
+                };
+
                 document.getElementById("bookBtn").disabled = false;
             };
 
@@ -80,8 +92,9 @@ function emitSelection() {
         detail: {
             doctor_id: selectedData.doctor_id,
             date: selectedData.date,
-            slot: selectedSlot,
-            time: SLOT_TIMES[selectedSlot],
+            time: selectedData.start_time, // API expects "time"
+            slot: selectedData.slot,
+            start_time: selectedData.start_time,
             type: dialog_context.type,
             extra_data: dialog_context.data
         }

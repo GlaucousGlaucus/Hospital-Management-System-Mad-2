@@ -267,11 +267,11 @@ def book_appointment():
 
         hour = appointment_time.hour
         if hour < 12:
-            slot = "morning"
+            slot = AvailabilitySlot.MORNING
         elif hour < 16:
-            slot = "afternoon"
+            slot = AvailabilitySlot.AFTERNOON
         else:
-            slot = "evening"
+            slot = AvailabilitySlot.EVENING
         availability = db_session.query(DoctorAvailability).filter_by(
             doctor_id=doctor_id,
             date=appointment_date,
@@ -324,7 +324,6 @@ def book_appointment():
 
 @api_bp.route("/doctor/<int:doctor_id>/availability_json")
 def availability_json(doctor_id):
-    """Return 7-day availability grid for a doctor."""
     from datetime import date, timedelta
 
     with SessionLocal() as db_session:
@@ -343,10 +342,9 @@ def availability_json(doctor_id):
 
     for i in range(days_out):
         d = today + timedelta(days=i)
-
-        morning = avail_map.get((d, "morning"), False)
-        evening = avail_map.get((d, "evening"), False)
-        afternoon = avail_map.get((d, "afternoon"), False)
+        morning = avail_map.get((d, AvailabilitySlot.MORNING), False)
+        afternoon = avail_map.get((d, AvailabilitySlot.AFTERNOON), False)
+        evening = avail_map.get((d, AvailabilitySlot.EVENING), False)
 
         schedule.append({
             "doctor_id": doctor_id,

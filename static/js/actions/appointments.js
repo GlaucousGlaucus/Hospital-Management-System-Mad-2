@@ -14,13 +14,19 @@ document.addEventListener("availability:selected", async function(e) {
 });
 
 async function bookAppointment(data) {
+    console.log(JSON.stringify({
+            doctor_id: data.doctor_id,
+            date: data.date,
+            time: data.start_time,
+            visit_type: "Checkup"
+        }))
     const resp = await fetch("/api/book_appointment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             doctor_id: data.doctor_id,
             date: data.date,
-            time: data.time,
+            time: data.start_time,
             visit_type: "Checkup"
         })
     });

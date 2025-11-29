@@ -746,7 +746,7 @@ textarea {
 
 .av-row {
     display: grid;
-    grid-template-columns: 180px 200px 200px;
+    grid-template-columns: 180px 200px 200px 200px;
     gap: 1rem;
     margin-bottom: 0.75rem;
 }
