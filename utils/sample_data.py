@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import random
 from datetime import date, time, timedelta, datetime
-
 from werkzeug.security import generate_password_hash
 
 from models.main_models import (
@@ -11,19 +10,82 @@ from models.main_models import (
 )
 
 # ----------------------------------------------------------
-# Helper — generate random DOB from age range
+# Helper — random DOB in age range
 # ----------------------------------------------------------
 def random_dob(min_age: int, max_age: int) -> date:
-    age = random.randint(min_age, max_age)
     today = date.today()
-    birth_year = today.year - age
-    birth_day = random.randint(1, 28)
-    birth_month = random.randint(1, 12)
-    return date(birth_year, birth_month, birth_day)
+    age = random.randint(min_age, max_age)
+    year = today.year - age
+    month = random.randint(1, 12)
+    day = random.randint(1, 28)
+    return date(year, month, day)
 
 
 # ----------------------------------------------------------
-# Create All Seed Data
+# Name pools
+# ----------------------------------------------------------
+FIRST_NAMES = [
+    "Aarav", "Vivaan", "Aditya", "Kabir", "Krishna", "Arjun",
+    "Sarah", "Mira", "Priya", "Anika", "John", "Alex", "Maya",
+    "Riya", "Zoya", "Omar", "Fatima", "Neha", "Lina"
+]
+
+LAST_NAMES = [
+    "Sharma", "Verma", "Patel", "Reddy", "Singh", "Khan", "Kapoor",
+    "Nair", "Iyer", "Banerjee", "Gupta", "Mishra", "Das", "Roy"
+]
+
+SPECIALIZATION_MAP = {
+    "Cardiology": "Cardiologist",
+    "Neurology": "Neurologist",
+    "Orthopedics": "Orthopedic Surgeon",
+    "Pediatrics": "Pediatrician",
+    "Dermatology": "Dermatologist",
+    "Oncology": "Oncologist",
+    "Psychiatry": "Psychiatrist",
+    "Radiology": "Radiologist",
+    "ENT": "ENT Specialist",
+    "General Medicine": "General Physician",
+}
+
+DIAGNOSES = {
+    "Cardiologist": ["Hypertension", "Arrhythmia", "Chest Pain"],
+    "Neurologist": ["Migraine", "Epilepsy", "Neuropathy"],
+    "Orthopedic Surgeon": ["Fracture", "Arthritis", "Back Pain"],
+    "Pediatrician": ["Fever", "Common Cold", "Infection"],
+    "Dermatologist": ["Allergy", "Eczema", "Rash"],
+    "Oncologist": ["Cancer Check", "Chemotherapy Review"],
+    "Psychiatrist": ["Anxiety", "Depression", "Insomnia"],
+    "Radiologist": ["X-Ray Review", "MRI Report"],
+    "ENT Specialist": ["Ear Infection", "Sinusitis"],
+    "General Physician": ["Flu", "Weakness", "Checkup"],
+}
+
+MEDICINE_OPTIONS = {
+    "Hypertension": ["Amlodipine 5mg", "Losartan 50mg"],
+    "Migraine": ["Ibuprofen 400mg", "Sumatriptan 50mg"],
+    "Fracture": ["Calcium 500mg", "Vitamin D3"],
+    "Eczema": ["Cetirizine", "Hydrocortisone Cream"],
+    "Allergy": ["Cetrizine", "Allegra"],
+    "Anxiety": ["Escitalopram", "Clonazepam"],
+    "Fever": ["Paracetamol 500mg"],
+    "Chest Pain": ["Aspirin 75mg"],
+    "Flu": ["Cough Syrup", "Dolo 650"],
+}
+
+INSTRUCTIONS = [
+    "Take after meals",
+    "Take before breakfast",
+    "Do not skip doses",
+    "Drink plenty of water"
+]
+
+VISIT_TYPES = ["Checkup", "Follow-up", "Emergency"]
+TESTS = ["Blood Test", "X-Ray", "ECG", "MRI", "None"]
+
+
+# ----------------------------------------------------------
+# Create All Dummy Data
 # ----------------------------------------------------------
 def create_dummy_data():
     with SessionLocal() as session:
@@ -32,8 +94,7 @@ def create_dummy_data():
         doctors = seed_doctors(session, departments)
         patients = seed_patients(session)
         seed_availability(session, doctors)
-        seed_appointments_with_treatments(session, doctors, patients)
-
+        seed_appointments(session, doctors, patients)
         session.commit()
 
 
@@ -41,76 +102,59 @@ def create_dummy_data():
 # Admin
 # ----------------------------------------------------------
 def seed_admin(session):
-    admin = Admin(
-        name="Admin",
+    session.add(Admin(
+        name="Admin User",
         email="admin@admin.com",
         password=generate_password_hash("123"),
-        dob=date(1985, 1, 1),         # arbitrary DOB
+        dob=date(1980, 1, 1),
         contact="+91 9999999999",
-        is_blacklisted=False,
-    )
-    session.add(admin)
+        is_blacklisted=False
+    ))
 
 
 # ----------------------------------------------------------
 # Departments
 # ----------------------------------------------------------
 def seed_departments(session):
-    department_names = [
-        "Cardiology", "Neurology", "Orthopedics", "Pediatrics",
-        "Dermatology", "Oncology", "Psychiatry", "Radiology",
-        "ENT", "General Medicine",
-    ]
+    dept_objs = []
+    desc = "Specialized department offering diagnostic and therapeutic healthcare."
 
-    long_description = (
-        "This department is responsible for providing comprehensive healthcare "
-        "services to patients. Our medical team offers specialized diagnostic "
-        "and therapeutic care while ensuring patient comfort. We continuously "
-        "work with modern medical practices to deliver high-quality treatment. "
-        "The department collaborates with other specialties for holistic care."
-    )
+    for dept_name in SPECIALIZATION_MAP.keys():
+        dept_objs.append(
+            Department(name=dept_name, description=desc)
+        )
 
-    departments = [
-        Department(name=name, description=long_description)
-        for name in department_names
-    ]
-    session.add_all(departments)
+    session.add_all(dept_objs)
     session.flush()
-    return departments
+    return dept_objs
 
 
 # ----------------------------------------------------------
 # Doctors
 # ----------------------------------------------------------
 def seed_doctors(session, departments):
-    specializations = [
-        "Cardiologist", "Neurologist", "Orthopedic Surgeon",
-        "Pediatrician", "Dermatologist", "Oncologist",
-        "Psychiatrist", "Radiologist", "ENT Specialist", "General Physician",
-    ]
-
     doctors = []
-    for i in range(30):
-        dept = random.choice(departments)
+    counter = 1
 
-        doc = Doctor(
-            name=f"Dr. {random.choice(['John','Alex','Mira','Sara','Raj','Lina','Omar','Nina'])} {i}",
-            email=f"doctor{i}@hospital.com",
-            password=generate_password_hash("123"),
+    for dept in departments:
+        for _ in range(3):  # 3 per department = 30 doctors
+            f = random.choice(FIRST_NAMES)
+            l = random.choice(LAST_NAMES)
 
-            # NEW: dob instead of age
-            dob=random_dob(30, 65),
+            doc = Doctor(
+                name=f"{f} {l}",
+                email=f"doc{counter}@h.com",   # 🔥 simple predictable email
+                password=generate_password_hash("123"),
+                dob=random_dob(30, 60),
+                contact=f"+91 {random.randint(7000000000,9999999999)}",
+                specialization=SPECIALIZATION_MAP[dept.name],
+                department_id=dept.id,
+                is_blacklisted=False,
+            )
+            session.add(doc)
+            doctors.append(doc)
+            counter += 1
 
-            contact=f"+91 {random.randint(7000000000, 9999999999)}",
-            specialization=random.choice(specializations),
-            department_id=dept.id,
-
-            # NEW FIELD
-            is_blacklisted=False,
-        )
-        doctors.append(doc)
-
-    session.add_all(doctors)
     session.flush()
     return doctors
 
@@ -120,77 +164,89 @@ def seed_doctors(session, departments):
 # ----------------------------------------------------------
 def seed_patients(session):
     patients = []
-    for i in range(100):
-        patient = Patient(
-            name=f"Patient {i}",
-            email=f"patient{i}@example.com",
+
+    for i in range(1, 101):
+        f = random.choice(FIRST_NAMES)
+        l = random.choice(LAST_NAMES)
+
+        p = Patient(
+            name=f"{f} {l}",
+            email=f"pat{i}@h.com",      # 🔥 simple email
             password=generate_password_hash("123"),
-
-            # NEW: dob instead of age
-            dob=random_dob(10, 90),
-
-            contact=f"+91 {random.randint(6000000000, 9999999999)}",
-
-            # NEW FIELD
-            is_blacklisted=False,
+            dob=random_dob(10, 85),
+            contact=f"+91 {random.randint(6000000000,9999999999)}",
+            is_blacklisted=False
         )
-        patients.append(patient)
+        session.add(p)
+        patients.append(p)
 
-    session.add_all(patients)
     session.flush()
     return patients
 
 
 # ----------------------------------------------------------
-# Availability
+# Availability — current week only (Mon–Sun)
 # ----------------------------------------------------------
 def seed_availability(session, doctors):
-    slots = [AvailabilitySlot.MORNING, AvailabilitySlot.AFTERNOON, AvailabilitySlot.EVENING]
 
     today = date.today()
-    days = [today + timedelta(days=i) for i in range(7)]
+    week_start = today - timedelta(days=today.weekday())  # Monday
+    week_days = [week_start + timedelta(days=i) for i in range(7)]  # Mon–Sun
+
+    slots = [
+        AvailabilitySlot.MORNING,
+        AvailabilitySlot.AFTERNOON,
+        AvailabilitySlot.EVENING
+    ]
 
     for doc in doctors:
-        for d in days:
+        for d in week_days:
             for slot in slots:
-                entry = DoctorAvailability(
+
+                probability = {
+                    AvailabilitySlot.MORNING: 0.7,
+                    AvailabilitySlot.AFTERNOON: 0.6,
+                    AvailabilitySlot.EVENING: 0.3,
+                }[slot]
+
+                session.add(DoctorAvailability(
                     doctor_id=doc.id,
                     date=d,
                     slot=slot,
-                    enabled=random.choice([True, False]),
-                )
-                session.add(entry)
-
-    session.flush()
+                    enabled=random.random() < probability,
+                ))
 
 
 # ----------------------------------------------------------
-# Appointments + Treatments + Medicines
+# Appointments + Treatments
 # ----------------------------------------------------------
-def seed_appointments_with_treatments(session, doctors, patients):
-    medicine_names = [
-        "Paracetamol", "Amoxicillin", "Ibuprofen", "Cetirizine",
-        "Ranitidine", "Metformin", "Aspirin", "Azithromycin",
-        "Cough Syrup", "Vitamin D", "Calcium Tablet"
-    ]
-
-    visit_types = ["Checkup", "Follow-up", "Emergency"]
-    tests_done = ["Blood Test", "X-Ray", "ECG", "MRI", "None"]
-    statuses = list(AppointmentStatus)
+def seed_appointments(session, doctors, patients):
 
     for _ in range(120):
         patient = random.choice(patients)
         doctor = random.choice(doctors)
 
+        # 60% upcoming BOOKED, 40% past COMPLETED
+        if random.random() < 0.6:
+            appt_date = date.today() + timedelta(days=random.randint(1, 20))
+            status = AppointmentStatus.BOOKED
+        else:
+            appt_date = date.today() - timedelta(days=random.randint(1, 30))
+            status = AppointmentStatus.COMPLETED
+
+        appt_time = time(
+            hour=random.choice([9, 10, 11, 14, 15, 16]),
+            minute=random.choice([0, 15, 30, 45])
+        )
+
         appt = Appointment(
             patient_id=patient.id,
             doctor_id=doctor.id,
-            date=date.today() - timedelta(days=random.randint(0, 30)),
-            time=time(hour=random.randint(8, 17), minute=random.choice([0, 15, 30, 45])),
-            status=random.choice(statuses),
-            visit_type=random.choice(visit_types),
-            test_done=random.choice(tests_done),
-
+            date=appt_date,
+            time=appt_time,
+            status=status,
+            visit_type=random.choice(VISIT_TYPES),
+            test_done=random.choice(TESTS),
             original_date=None,
             original_time=None,
             reschedule_count=0,
@@ -198,21 +254,18 @@ def seed_appointments_with_treatments(session, doctors, patients):
         session.add(appt)
         session.flush()
 
-        if appt.status in [AppointmentStatus.BOOKED, AppointmentStatus.COMPLETED]:
+        if status == AppointmentStatus.COMPLETED:
+            diagnosis = random.choice(DIAGNOSES[doctor.specialization])
 
             treatment = Treatment(
                 appointment_id=appt.id,
-                diagnosis=random.choice([
-                    "Hypertension", "Migraine", "Fracture", "Allergy",
-                    "Diabetes", "Anxiety"
-                ]),
-                prescription=random.choice([
-                    "Paracetamol 500mg", "Amoxicillin 250mg", "Ibuprofen 400mg",
-                    "Vitamin D supplement"
-                ]),
+                diagnosis=diagnosis,
+                prescription=random.choice(MEDICINE_OPTIONS.get(diagnosis, ["Paracetamol 500mg"])),
                 notes=random.choice([
-                    "Follow-up required", "Patient improving",
-                    "Schedule recheck", "Prescribed rest"
+                    "Follow-up required",
+                    "Patient improving",
+                    "Prescribed rest",
+                    "Review in 1 week"
                 ]),
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
@@ -220,21 +273,15 @@ def seed_appointments_with_treatments(session, doctors, patients):
             session.add(treatment)
             session.flush()
 
-            for _ in range(random.randint(0, 3)):
-                med = Medicine(
+            for _ in range(random.randint(1, 3)):
+                session.add(Medicine(
                     treatment_id=treatment.id,
-                    name=random.choice(medicine_names),
-                    morning=random.randint(0, 2),
-                    afternoon=random.randint(0, 2),
-                    night=random.randint(0, 2),
-                    duration_days=random.randint(1, 14),
-                    instructions=random.choice([
-                        "Take after food",
-                        "Take before breakfast",
-                        "Do not skip doses",
-                        "Drink plenty of water",
-                    ])
-                )
-                session.add(med)
+                    name=random.choice(MEDICINE_OPTIONS.get(diagnosis, ["Paracetamol"])),
+                    morning=random.randint(0, 1),
+                    afternoon=random.randint(0, 1),
+                    night=random.randint(0, 1),
+                    duration_days=random.randint(3, 14),
+                    instructions=random.choice(INSTRUCTIONS)
+                ))
 
     session.flush()
