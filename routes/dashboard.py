@@ -158,6 +158,7 @@ def dashboard():
                     "name": patient.name,
                     "email": patient.email,
                     "age": patient.age,
+                    "contact": patient.contact,
                 }
                 dept_data = [{"id": d.id, "name": d.name} for d in departments]
             return render_template(

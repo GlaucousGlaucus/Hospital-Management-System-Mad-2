@@ -5,9 +5,16 @@
 
 <div class="dashboard">
 
-    <div style="text-align:right; margin-bottom:1rem;">
-        <a href="{{ url_for('patient.edit_patient') }}" class="navbar-username">Edit Profile</a> |
-        <a href="{{ url_for('api.patient_history', patient_id=session['user_id']) }}" class="navbar-username">History</a> |
+    <div class="patient-info">
+        <p><strong>Name:</strong> {{ patient.name }}</p>
+        <p><strong>Email:</strong> {{ patient.email }}</p>
+        <p><strong>Age:</strong> {{ patient.age }}</p>
+        <p><strong>Contact:</strong> {{ patient.contact }}</p>
+
+        <div style="text-align:left; margin-right: 0">
+            <a href="{{ url_for('patient.edit_patient') }}" class="navbar-username" style="padding-left: 0">Edit Profile</a> |
+            <a href="{{ url_for('api.patient_history', patient_id=session['user_id']) }}" class="navbar-username">History</a>
+        </div>
     </div>
 
     <section class="dashboard-section">
