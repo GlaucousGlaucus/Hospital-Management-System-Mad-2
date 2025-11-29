@@ -55,7 +55,7 @@ def signup():
     match request.method:
         case "POST":
             role = request.form["role"]
-            if role not in ("doctor", "patient"):
+            if role != "patient":
                 flash("Invalid role", "error")
                 return redirect(url_for(Routes.SIGNUP_ROUTE))
 
@@ -71,95 +71,22 @@ def signup():
             contact: str = request.form["contact"]
 
             with SessionLocal() as db_session:
-                if role == "patient":
-                    email_exists = db_session.query(Patient).filter_by(email=email).first()
-                elif role == "doctor":
-                    email_exists = db_session.query(Doctor).filter_by(email=email).first()
-                else:
-                    flash("Invalid role", "error")
-                    return redirect(url_for(Routes.SIGNUP_ROUTE))
+                email_exists = db_session.query(Patient).filter_by(email=email).first()
                 if email_exists:
                     flash(f"Account with email {email} already exists!", "error")
                     return redirect(url_for(Routes.SIGNUP_ROUTE))
 
-                match role:
-                    case "doctor":
-                        dep_id: Optional[str] = request.form["department_id"]
-                        if not dep_id.isdigit():
-                            flash("Invalid department ID", "error")
-                            return redirect(url_for(Routes.SIGNUP_ROUTE))
-                        dep_id: int = int(dep_id)
-                        dp_exists = db_session.query(Department.id).filter_by(id=dep_id).first()
-                        if not dp_exists:
-                            flash("This department does not exist", "error")
-                            return redirect(url_for(Routes.SIGNUP_ROUTE))
-
-                        Doctor.create_user(
-                            db_session,
-                            name=name,
-                            email=email,
-                            password=password,
-                            dob=dob,
-                            contact=contact,
-                            specialization=request.form["specialization"],
-                            department_id=dep_id,
-                        )
-                        flash("Account created successfully! Please login.", "success")
-                        return redirect(url_for(Routes.LOGIN_ROUTE))
-                    case "patient":
-                        Patient.create_user(
-                            db_session,
-                            name=name,
-                            email=email,
-                            password=password,
-                            dob=dob,
-                            contact=contact,
-                        )
-                        flash("Account created successfully! Please login.", "success")
-                        return redirect(url_for(Routes.LOGIN_ROUTE))
-            flash("Please select a valid account type!", "error")
-            return redirect(url_for(Routes.SIGNUP_ROUTE))
+                Patient.create_user(
+                    db_session,
+                    name=name,
+                    email=email,
+                    password=password,
+                    dob=dob,
+                    contact=contact,
+                )
+            flash("Account created successfully! Please login.", "success")
+            return redirect(url_for(Routes.LOGIN_ROUTE))
     with SessionLocal() as db_session:
         deps = db_session.query(Department).all()
     return render_template('signup.html', departments=deps)
 
-@auth_signup_bp.route('/doctor', methods=['GET', 'POST'])
-def signup_doctor():
-    if request.method == 'POST':
-        dep_id = request.form.get('department')
-        if not dep_id or not dep_id.isdigit():
-            flash("Invalid department ID", "error")
-            return redirect(url_for('signup_doctor'))
-
-        with SessionLocal() as db_session:
-            email = request.form['email']
-            if db_session.query(Doctor).filter_by(email=email).first():
-                flash("Email already exists!", "error")
-                return redirect(url_for('signup_doctor'))
-
-            department = db_session.get(Department, int(dep_id))
-            if not department:
-                flash("Department not found", "error")
-                return redirect(url_for('signup_doctor'))
-
-            try:
-                dob = date.fromisoformat(request.form['dob'])
-            except ValueError:
-                flash("Invalid date of birth", "error")
-                return redirect(url_for(Routes.SIGNUP_ROUTE))
-            doctor = Doctor(
-                name=request.form['name'],
-                email=email,
-                password=generate_password_hash(request.form['password']),
-                dob=dob,
-                contact=request.form['contact'],
-                specialization=request.form['specialization'],
-                department=department,
-            )
-            db_session.add(doctor)
-            db_session.commit()
-            flash("Doctor account created successfully!", "success")
-            return redirect(url_for('auth_login.login'))
-
-    deps = SessionLocal().query(Department).all()
-    return render_template('signup_doctor.html', departments=deps)

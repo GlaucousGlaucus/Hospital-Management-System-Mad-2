@@ -3,9 +3,9 @@
 <h2>Login</h2>
 
 <div class="role-selector">
-    <button type="button" id="btn-doctor" class="role-btn">As a Doctor</button>
-    <button type="button" id="btn-patient" class="role-btn">As a Patient</button>
-    <button type="button" id="btn-admin" class="role-btn">As an Admin</button>
+    <button type="button" id="btn-patient" class="role-btn">Patient</button>
+    <button type="button" id="btn-doctor" class="role-btn">Doctor</button>
+    <button type="button" id="btn-admin" class="role-btn">Admin</button>
 </div>
 
 <form action="{{ url_for('auth_login.login') }}" method="POST" class="auth-form">
@@ -42,7 +42,7 @@
             submitBtn.textContent = `Login as ${role.charAt(0).toUpperCase() + role.slice(1)}`;
         }
 
-        selectRole("doctor");
+        selectRole("patient");
 
         btnDoctor.addEventListener("click", () => selectRole("doctor"));
         btnPatient.addEventListener("click", () => selectRole("patient"));

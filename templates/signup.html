@@ -2,11 +2,6 @@
 {% block auth_section %}
 <h2>Sign Up</h2>
 
-<div class="role-selector">
-    <button type="button" id="btn-doctor" class="role-btn">As a Doctor</button>
-    <button type="button" id="btn-patient" class="role-btn">As a Patient</button>
-</div>
-
 <form action="{{ url_for('auth_signup.signup') }}" method="POST" class="auth-form">
     <input type="hidden" id="role" name="role" value="patient">
 
@@ -25,22 +20,6 @@
     <label>Contact</label>
     <input type="text" name="contact" required>
 
-    <div id="doctor-fields" class="collapsable-input-field hidden">
-        <label>Specialization</label>
-        <input type="text" name="specialization">
-
-        <label>Department</label>
-        <select id="department" name="department_id">
-            <option value="">Select Department</option>
-            {% for dept in departments %}
-            <option value="{{ dept.id }}">{{ dept.name }}</option>
-            {% endfor %}
-        </select>
-    </div>
-
-    <div id="patient-fields" class="collapsable-input-field">
-    </div>
-
     <button id="btn-submit" type="submit" class="btn btn-filled">
         Create Account as Patient
     </button>
@@ -50,40 +29,4 @@
         <a href="{{ url_for('auth_login.login') }}">Login</a>
     </p>
 </form>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const btnDoctor = document.getElementById("btn-doctor");
-        const btnPatient = document.getElementById("btn-patient");
-        const docFields = document.getElementById("doctor-fields");
-        const patientFields = document.getElementById("patient-fields");
-        const roleInput = document.getElementById("role");
-        const submitBtn = document.getElementById("btn-submit");
-
-        function selectRole(role) {
-            roleInput.value = role;
-
-            const isDoctor = role === "doctor";
-            const isPatient = role === "patient";
-
-            btnDoctor.classList.toggle("active", isDoctor);
-            btnPatient.classList.toggle("active", isPatient);
-
-            docFields.classList.toggle("hidden", !isDoctor);
-            patientFields.classList.toggle("hidden", !isPatient);
-
-            docFields.querySelectorAll("input, select").forEach(el => {
-                el.required = isDoctor;
-            });
-
-            submitBtn.textContent =
-                `Create Account as ${role.charAt(0).toUpperCase() + role.slice(1)}`;
-        }
-
-        selectRole("patient");
-
-        btnDoctor.addEventListener("click", () => selectRole("doctor"));
-        btnPatient.addEventListener("click", () => selectRole("patient"));
-    });
-</script>
 {% endblock %}
