@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 
+<script src="{{ url_for('static', filename='js/actions/appointments.js') }}"></script>
+
 <div class="dashboard">
 
   <h2 class="dashboard-title" style="text-align:left;">
@@ -28,7 +30,7 @@
           <span style="font-size:1rem; color:#777;">Dr. {{ d.name }}</span>
 
           <div class="card-buttons">
-            <a class="btn btn-filled" onclick="openAvailabilityModal({{ d.id }})">
+            <a class="btn btn-filled" onclick="openAvailabilityModal({{ d.id }}, { type: 'booking'})">
               Check Availability
             </a>
             <button class="btn btn-outline doctor-view-btn"
@@ -78,7 +80,7 @@
 
     <div class="modal-footer">
       <a id="availabilityBtn" class="btn btn-filled"
-         onclick="openAvailabilityModal(currentDoctor.id)">
+         onclick="openAvailabilityModal(currentDoctor.id, {type: 'booking'})">
         Check Availability
       </a>
       <button class="btn btn-outline" onclick="closeDoctorModal()">Go Back</button>
@@ -88,30 +90,8 @@
 </div>
 
 
-<div id="availabilityModal" class="modal-overlay">
-  <div class="modal-card" style="width:750px;">
-
-    <h2 class="dashboard-title" style="margin-bottom:1rem; text-align:left;">
-      Doctor's Availability
-    </h2>
-
-    <div id="availabilityGrid"></div>
-
-    <div style="margin-top:1.5rem; display:flex; justify-content:flex-end; gap:1rem;">
-      <button class="btn btn-filled" id="bookBtn" disabled>book</button>
-      <button class="btn btn-outline" onclick="closeAvailabilityModal()">Go Back</button>
-    </div>
-
-  </div>
-</div>
-
-
 <script>
   let currentDoctor = null;
-  const SLOT_TIMES = {
-    morning: "08:00",
-    evening: "16:00"
-  }
 
   function openDoctorModal(doctor) {
     currentDoctor = doctor;
@@ -134,94 +114,7 @@
       openDoctorModal(doctor);
     }
   });
-
-  let selectedSlot = null;
-  let selectedData = null;
-
-  function openAvailabilityModal(doctorId) {
-    fetch(`/api/doctor/${doctorId}/availability_json`)
-            .then(resp => resp.json())
-            .then(data => buildAvailabilityGrid(data));
-
-    document.getElementById("availabilityModal").style.display = "flex";
-  }
-
-  function closeAvailabilityModal() {
-    document.getElementById("availabilityModal").style.display = "none";
-    document.getElementById("availabilityGrid").innerHTML = "";
-    selectedSlot = null;
-    selectedData = null;
-    document.getElementById("bookBtn").disabled = true;
-  }
-
-  function buildAvailabilityGrid(data) {
-    const grid = document.getElementById("availabilityGrid");
-    grid.innerHTML = "";
-
-    data.forEach(day => {
-      const row = document.createElement("div");
-      row.className = "av-row";
-
-      const dateBox = document.createElement("div");
-      dateBox.className = "av-date";
-      dateBox.innerText = day.date_display;
-      row.appendChild(dateBox);
-
-      ["morning", "evening"].forEach(slot => {
-        const slotBox = document.createElement("div");
-        const available = day[slot].available;
-        const label = day[slot].label;
-
-        slotBox.className = "av-slot " + (available ? "av-available" : "av-unavailable");
-        slotBox.innerText = label;
-
-        slotBox.onclick = () => {
-          if (!available) return;
-
-          document.querySelectorAll(".av-slot").forEach(e =>
-                  e.classList.remove("av-selected")
-          );
-
-          slotBox.classList.add("av-selected");
-          selectedSlot = slot;
-          selectedData = day;
-          document.getElementById("bookBtn").disabled = false;
-        };
-
-        row.appendChild(slotBox);
-      });
-
-      grid.appendChild(row);
-    });
-
-    document.getElementById("bookBtn").onclick = () => bookAppointment();
-  }
-
-  function bookAppointment() {
-    if (!selectedData || !selectedSlot) return;
-
-    const time = SLOT_TIMES[selectedSlot];
-    fetch("/api/book_appointment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        doctor_id: selectedData.doctor_id,
-        date: selectedData.date,
-        time: time,
-        visit_type: "Checkup"
-      })
-    })
-            .then(resp => resp.json())
-            .then(result => {
-              if (result.error) {
-                alert(result.error);
-              } else {
-                alert("Appointment booked!");
-                closeAvailabilityModal();
-                location.reload();
-              }
-            });
-  }
 </script>
 
+{% include "components/availability_modal.html" %}
 {% endblock %}

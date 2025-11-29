@@ -146,6 +146,7 @@ def dashboard():
                         "date": a.date,
                         "time_slot": a.time.strftime("%I:%M %p"),
                         "doctor": {
+                            "id": a.doctor.id,
                             "name": a.doctor.name,
                             "department": {
                                 "name": a.doctor.department.name
