@@ -5,7 +5,8 @@ from typing import List, dataclass_transform
 from flask import Blueprint, jsonify, abort, render_template, flash, redirect, url_for, request, session
 from sqlalchemy.orm import joinedload
 
-from models.main_models import Doctor, Patient, SessionLocal, Appointment, DoctorAvailability, AppointmentStatus
+from models.main_models import Doctor, Patient, SessionLocal, Appointment, DoctorAvailability, AppointmentStatus, \
+    Department
 from utils.constants import SessionInfo, UserTypes
 
 logger = getLogger(__name__)
@@ -383,3 +384,61 @@ def get_past_appointments():
             for app in completed
         ]
         return jsonify(data)
+
+
+@api_bp.route("/search", methods=["GET"])
+def search():
+    q = request.args.get("q", "").strip().lower()
+    if not q:
+        return jsonify({
+            "doctors": [],
+            "patients": [],
+            "appointments": [],
+        })
+
+    with SessionLocal() as db:
+        doctors = db.query(Doctor).filter(
+            (Doctor.name.ilike(f"%{q}%")) |
+            (Doctor.specialization.ilike(f"%{q}%")) |
+            (Doctor.email.ilike(f"%{q}%")) |
+            (Doctor.contact.ilike(f"%{q}%"))
+        ).all()
+
+        patients = db.query(Patient).filter(
+            (Patient.name.ilike(f"%{q}%")) |
+            (Patient.email.ilike(f"%{q}%")) |
+            (Patient.contact.ilike(f"%{q}%"))
+        ).all()
+
+        appointments = (
+            db.query(Appointment)
+            .join(Appointment.patient)
+            .join(Appointment.doctor)
+            .join(Doctor.department)
+            .filter(
+                (Patient.name.ilike(f"%{q}%")) |
+                (Doctor.name.ilike(f"%{q}%")) |
+                (Department.name.ilike(f"%{q}%"))
+            )
+            .all()
+        )
+
+        return jsonify({
+            "doctors": [
+                {"id": d.id, "name": d.name, "specialization": d.specialization}
+                for d in doctors
+            ],
+            "patients": [
+                {"id": p.id, "name": p.name, "contact": p.contact}
+                for p in patients
+            ],
+            "appointments": [
+                {
+                    "id": a.id,
+                    "patient": a.patient.name,
+                    "doctor": a.doctor.name,
+                    "department": a.doctor.department.name
+                }
+                for a in appointments
+            ]
+        })
