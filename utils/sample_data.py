@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash
 
 from models.main_models import (
     SessionLocal, Department, Appointment, Doctor, Patient,
-    AppointmentStatus, DoctorAvailability, Medicine, Treatment, Admin
+    AppointmentStatus, DoctorAvailability, Medicine, Treatment, Admin, AvailabilitySlot
 )
 
 # ----------------------------------------------------------
@@ -145,7 +145,7 @@ def seed_patients(session):
 # Availability
 # ----------------------------------------------------------
 def seed_availability(session, doctors):
-    slots = ["morning", "evening"]
+    slots = [AvailabilitySlot.MORNING, AvailabilitySlot.AFTERNOON, AvailabilitySlot.EVENING]
 
     today = date.today()
     days = [today + timedelta(days=i) for i in range(7)]

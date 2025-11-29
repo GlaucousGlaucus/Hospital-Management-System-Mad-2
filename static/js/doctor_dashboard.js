@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(data)
-            }).then(data => data.json()).then(console.log).catch(error => { alert("Error updating availability"); console.error(error); });
+            }).then(data => data.json()).catch(error => { alert("Error updating availability"); console.error(error); });
         });
     });
 });

@@ -100,7 +100,8 @@
                     <td>
                         <label class="availability-slot">
                             <input type="checkbox"
-                                   value="{{ day }}_morning"
+                                   name="availability"
+                                   value="{{ day.isoformat() }}_morning"
                                    {% if availability.get((day, 'morning')) %}checked{% endif %}>
                             <span>08:00 – 12:00</span>
                         </label>
@@ -108,7 +109,8 @@
                     <td>
                         <label class="availability-slot">
                             <input type="checkbox"
-                                   value="{{ day }}_afternoon"
+                                   name="availability"
+                                   value="{{ day.isoformat() }}_afternoon"
                                    {% if availability.get((day, 'afternoon')) %}checked{% endif %}>
                             <span>12:00 – 04:00</span>
                         </label>
@@ -116,7 +118,8 @@
                     <td>
                         <label class="availability-slot">
                             <input type="checkbox"
-                                   value="{{ day }}_evening"
+                                   name="availability"
+                                   value="{{ day.isoformat() }}_evening"
                                    {% if availability.get((day, 'evening')) %}checked{% endif %}>
                             <span>04:00 – 09:00</span>
                         </label>

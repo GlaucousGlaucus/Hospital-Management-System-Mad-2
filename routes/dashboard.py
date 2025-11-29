@@ -104,13 +104,13 @@ def dashboard():
                 ]
 
                 availability = {
-                    (data.date, data.slot) : data.enabled
+                    (data.date, data.slot.value.lower()) : data.enabled
                     for data in db_session.query(DoctorAvailability).filter_by(doctor_id=doctor_id).all()
                 }
 
-            today = datetime.today()
-            start_of_week = today - timedelta(days=today.weekday() + 1)  # Sunday
-            days = [(start_of_week + timedelta(days=i)).date() for i in range(7)]
+            today = datetime.today().date()
+            start_of_week = today - timedelta(days=(today.weekday() + 1) % 7)
+            days = [(start_of_week + timedelta(days=i)) for i in range(7)]
 
             return render_template(
                 "dashboard/doctor_dashboard.html",
@@ -287,7 +287,8 @@ def update_history(appointment_id):
             treatment.diagnosis = request.form.get("diagnosis", "")
             treatment.prescription = request.form.get("prescription", "")
             treatment.notes = request.form.get("notes", "")
-            treatment.medicines.clear()
+            for m in list(treatment.medicines):
+                db_session.delete(m)
 
             names = request.form.getlist("medicine_name[]")
             m_doses = request.form.getlist("dose_morning[]")

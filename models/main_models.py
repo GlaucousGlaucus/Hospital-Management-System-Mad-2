@@ -53,6 +53,12 @@ class AppointmentStatus(enum.Enum):
     CANCELLED = "Cancelled"
 
 
+class AvailabilitySlot(enum.Enum):
+    MORNING = "Morning"
+    AFTERNOON = "Afternoon"
+    EVENING = "Evening"
+
+
 class UserMixin:
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
@@ -229,7 +235,7 @@ class DoctorAvailability(Base):
     )
 
     date: Mapped[date]
-    slot: Mapped[str] = mapped_column(String(20))
+    slot: Mapped[AvailabilitySlot] = mapped_column(Enum(AvailabilitySlot))
     enabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
     doctor: Mapped[Doctor] = relationship(back_populates="availability")

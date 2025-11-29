@@ -6,7 +6,7 @@ from flask import Blueprint, jsonify, abort, render_template, flash, redirect, u
 from sqlalchemy.orm import joinedload
 
 from models.main_models import Doctor, Patient, SessionLocal, Appointment, DoctorAvailability, AppointmentStatus, \
-    Department
+    Department, AvailabilitySlot
 from utils.constants import SessionInfo, UserTypes
 
 logger = getLogger(__name__)
@@ -195,39 +195,47 @@ def update_availability():
     if not slot:
         return jsonify({"error": "invalid slot"}), 400
 
-    date, slot = slot.split("_")
-    date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+    try:
+        date_str, slot_str = slot.split("_")
+        date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+    except Exception:
+        return jsonify({"error": "Invalid slot format"}), 400
 
-    if session[SessionInfo.USER_TYPE] != UserTypes.DOCTOR:
-        return jsonify({"error": "invalid user, only doctors can issue this command!"}), 400
+    try:
+        slot_enum = AvailabilitySlot(slot_str.lower().capitalize())
+    except ValueError:
+        return jsonify({"error": f"Invalid slot '{slot_str}'"}), 400
 
-    doctor_id = session[SessionInfo.USER_ID]
+    if session.get(SessionInfo.USER_TYPE) != UserTypes.DOCTOR:
+        return jsonify({"error": "Only doctors can update availability"}), 403
+
+    doctor_id = session.get(SessionInfo.USER_ID)
 
     with SessionLocal() as db_session:
         availability = db_session.query(DoctorAvailability).filter_by(
             doctor_id=doctor_id,
             date=date,
-            slot=slot
+            slot=slot_enum
         ).first()
 
         if availability:
-            availability.enabled = enabled
+            availability.enabled = bool(enabled)
         else:
             availability = DoctorAvailability(
                 doctor_id=doctor_id,
                 date=date,
-                slot=slot,
-                enabled=enabled
+                slot=slot_enum,
+                enabled=bool(enabled)
             )
             db_session.add(availability)
         db_session.commit()
 
     return jsonify({
         "status": "success",
-        "slot": slot,
-        "enabled": enabled
+        "date": date.isoformat(),
+        "slot": slot_enum.value,
+        "enabled": bool(enabled)
     })
-
 
 @api_bp.route("/book_appointment", methods=["POST"])
 def book_appointment():
@@ -241,7 +249,7 @@ def book_appointment():
     doctor_id = data.get("doctor_id")
     date_str = data.get("date")
     time_str = data.get("time")
-    visit_type = data.get("visit_type", "General Consultation")
+    visit_type = data.get("visit_type", "Checkup")
 
     if not doctor_id or not date_str or not time_str:
         return jsonify({"error": "doctor_id, date, and time are required"}), 400
@@ -257,7 +265,13 @@ def book_appointment():
         if not doctor:
             return jsonify({"error": "Doctor not found"}), 404
 
-        slot = "morning" if appointment_time.hour < 12 else "evening"
+        hour = appointment_time.hour
+        if hour < 12:
+            slot = "morning"
+        elif hour < 16:
+            slot = "afternoon"
+        else:
+            slot = "evening"
         availability = db_session.query(DoctorAvailability).filter_by(
             doctor_id=doctor_id,
             date=appointment_date,
@@ -332,6 +346,7 @@ def availability_json(doctor_id):
 
         morning = avail_map.get((d, "morning"), False)
         evening = avail_map.get((d, "evening"), False)
+        afternoon = avail_map.get((d, "afternoon"), False)
 
         schedule.append({
             "doctor_id": doctor_id,
@@ -344,6 +359,10 @@ def availability_json(doctor_id):
             "evening": {
                 "label": "04:00 - 09:00 pm",
                 "available": evening
+            },
+            "afternoon": {
+                "label": "12:00 - 04:00",
+                "available": afternoon
             }
         })
 

@@ -14,7 +14,6 @@ document.addEventListener("availability:selected", async function(e) {
 });
 
 async function bookAppointment(data) {
-    console.log(data)
     const resp = await fetch("/api/book_appointment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

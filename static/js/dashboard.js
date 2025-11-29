@@ -21,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!btn) return;
 
         const { action, type, id } = btn.dataset;
-        console.log(`Action: ${action}, Type: ${type}, ID: ${id}`);
 
         if (action === "delete") {
             if (!confirm(`Delete this ${type}?`)) return;
