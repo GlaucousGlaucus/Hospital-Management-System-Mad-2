@@ -1,42 +1,58 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2 class="auth-title">
-  {{ "Edit Doctor" if doctor else "Add Doctor" }}
-</h2>
+<div class="auth-section">
 
-<form action="{{ url_for('admin.edit_doctor', doctor_id=doctor.id) if doctor else url_for('admin.new_doctor') }}"
-      method="POST" class="auth-form">
+  <h2>{{ "Edit Doctor" if doctor else "Add Doctor" }}</h2>
 
-  <label>Full Name</label>
-  <input type="text" name="name" placeholder="Dr. John Doe"
-         value="{{ doctor.name if doctor else '' }}" required>
+  <form action="{{ url_for('admin.edit_doctor', doctor_id=doctor.id) if doctor else url_for('admin.new_doctor') }}"
+        method="POST"
+        class="auth-form">
 
-  <label>Email</label>
-  <input type="email" name="email" placeholder="doctor@example.com"
-         value="{{ doctor.email if doctor else '' }}" required>
+    <label>Full Name</label>
+    <input type="text"
+           name="name"
+           placeholder="Dr. John Doe"
+           value="{{ doctor.name if doctor else '' }}"
+           required>
 
-  {% if doctor %}
-  <label>New Password (leave blank to keep unchanged)</label>
-  <input type="password" name="password" placeholder="Enter new password">
-  {% else %}
-  <label>Password</label>
-  <input type="password" name="password" placeholder="Enter password" required>
-  {% endif %}
+    <label>Email</label>
+    <input type="email"
+           name="email"
+           placeholder="doctor@example.com"
+           value="{{ doctor.email if doctor else '' }}"
+           required>
 
-  <label>Date of Birth</label>
-  <input type="date" name="dob"
-         value="{{ doctor.dob.isoformat() if doctor and doctor.dob else '' }}"
-         required>
+    {% if doctor %}
+    <label>New Password (leave blank to keep unchanged)</label>
+    <input type="password" name="password" placeholder="Enter new password">
+    {% else %}
+    <label>Password</label>
+    <input type="password"
+           name="password"
+           placeholder="Enter password"
+           required>
+    {% endif %}
 
-  <label>Contact</label>
-  <input type="text" name="contact" placeholder="+91 98765 43210"
-         value="{{ doctor.contact if doctor else '' }}" required>
+    <label>Date of Birth</label>
+    <input type="date"
+           name="dob"
+           value="{{ doctor.dob.isoformat() if doctor and doctor.dob else '' }}"
+           required>
 
-  <div class="collapsable-input-field">
+    <label>Contact</label>
+    <input type="text"
+           name="contact"
+           placeholder="+91 98765 43210"
+           value="{{ doctor.contact if doctor else '' }}"
+           required>
+
     <label>Specialization</label>
-    <input type="text" name="specialization" placeholder="Cardiology, Neurology, etc."
-           value="{{ doctor.specialization if doctor else '' }}" required>
+    <input type="text"
+           name="specialization"
+           placeholder="Cardiology, Neurology, etc."
+           value="{{ doctor.specialization if doctor else '' }}"
+           required>
 
     <label>Department</label>
     <select name="department_id" required>
@@ -48,16 +64,17 @@
       </option>
       {% endfor %}
     </select>
-  </div>
 
-  <button type="submit" class="btn btn-filled">
-    {{ "Update Doctor" if doctor else "Create Doctor Account" }}
-  </button>
+    <button type="submit" class="btn btn-filled">
+      {{ "Update Doctor" if doctor else "Create Doctor Account" }}
+    </button>
 
-  <p class="alt-link">
-    Return to <a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a>
-  </p>
+    <p class="alt-link">
+      Return to <a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a>
+    </p>
 
-</form>
+  </form>
+
+</div>
 
 {% endblock %}
