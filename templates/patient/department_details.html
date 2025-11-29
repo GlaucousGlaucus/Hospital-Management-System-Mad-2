@@ -59,62 +59,6 @@
 </div>
 
 
-<div id="doctorModal" class="modal-overlay">
-  <div class="modal-card">
-
-    <div class="modal-header">
-      <h3 id="doctorName"></h3>
-    </div>
-
-    <div class="modal-body">
-      <div class="modal-body-left">
-        <p class="doctor-subtext"><strong>Specialization:</strong> <span id="doctorSpecialization"></span></p>
-        <p class="doctor-subtext"><strong>Age:</strong> <span id="doctorAge"></span></p>
-        <p class="doctor-subtext"><strong>Contact:</strong> <span id="doctorContact"></span></p>
-      </div>
-
-      <div class="modal-body-right">
-        <div class="doctor-avatar"></div>
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <a id="availabilityBtn" class="btn btn-filled"
-         onclick="openAvailabilityModal(currentDoctor.id, {type: 'booking'})">
-        Check Availability
-      </a>
-      <button class="btn btn-outline" onclick="closeDoctorModal()">Go Back</button>
-    </div>
-
-  </div>
-</div>
-
-
-<script>
-  let currentDoctor = null;
-
-  function openDoctorModal(doctor) {
-    currentDoctor = doctor;
-
-    document.getElementById("doctorName").innerText = "Dr. " + doctor.name;
-    document.getElementById("doctorSpecialization").innerText = doctor.specialization || "N/A";
-    document.getElementById("doctorAge").innerText = doctor.age || "N/A";
-    document.getElementById("doctorContact").innerText = doctor.contact || "N/A";
-
-    document.getElementById("doctorModal").style.display = "flex";
-  }
-
-  function closeDoctorModal() {
-    document.getElementById("doctorModal").style.display = "none";
-  }
-
-  document.addEventListener("click", function (e) {
-    if (e.target.classList.contains("doctor-view-btn")) {
-      const doctor = JSON.parse(e.target.dataset.doctor);
-      openDoctorModal(doctor);
-    }
-  });
-</script>
-
 {% include "components/availability_modal.html" %}
+{% include "components/doctor_modal.html" %}
 {% endblock %}
