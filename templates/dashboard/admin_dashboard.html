@@ -17,14 +17,12 @@
         <button class="btn btn-filled">Search</button>
 
         <div class="create-buttons">
-            <a href="{{ url_for('admin.new_doctor') }}" class="btn btn-outline">Add Doctor</a>
-            <a href="{{ url_for('admin.new_patient') }}" class="btn btn-outline">Add Patient</a>
+            <a href="{{ url_for('admin.new_doctor') }}" class="btn btn-filled">Add Doctor</a>
         </div>
     </div>
 
-    <!-- Registered Doctors -->
     <section class="dashboard-section">
-        <h3 class="collapsible">Registered Doctors</h3>
+        <h3 class="collapsible" id="doctor-header">Registered Doctors</h3>
         <div class="collapsible-content">
             <div id="doctor-list" class="card-list">
             </div>
@@ -33,7 +31,7 @@
 
     <!-- Registered Patients -->
     <section class="dashboard-section">
-        <h3 class="collapsible">Registered Patients</h3>
+        <h3 class="collapsible" id="patient-header">Registered Patients</h3>
         <div class="collapsible-content">
             <div id="patient-list" class="card-list">
             </div>
@@ -42,7 +40,7 @@
 
     <!-- Upcoming Appointments -->
     <section class="dashboard-section">
-        <h3 class="collapsible">Upcoming Appointments</h3>
+        <h3 class="collapsible" id="upcoming-appt-header">Registered Patients</h3>
         <div class="collapsible-content">
             <div class="table-wrapper">
                 <table class="data-table">

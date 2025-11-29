@@ -55,9 +55,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function loadDoctors() {
     const container = document.getElementById("doctor-list");
+    const header = document.getElementById("doctor-header");
+
     container.innerHTML = "<p>Loading...</p>";
+
     const res = await fetch("/api/doctors/all", { method: "GET" });
     const data = await res.json();
+
+    header.innerText = `Doctors (${data?.length | 0})`;
 
     if (!data || !data.length) {
         container.innerHTML = "<p class='empty-text'>No doctors registered.</p>";
@@ -69,9 +74,13 @@ async function loadDoctors() {
 
 async function loadPatients() {
     const container = document.getElementById("patient-list");
+    const header = document.getElementById("patient-header");
+
     container.innerHTML = "<p>Loading...</p>";
     const res = await fetch("/api/patients/all", { method: "GET" });
     const data = await res.json();
+
+    header.innerText = `Patients (${data?.length | 0})`;
 
     if (!data || !data.length) {
         container.innerHTML = "<p class='empty-text'>No patients registered.</p>";
@@ -83,10 +92,14 @@ async function loadPatients() {
 
 async function loadAppointments() {
     const container = document.getElementById("appointments-table");
+    const header = document.getElementById("upcoming-appt-header");
+
     container.innerHTML = "<tr><td colSpan=\"5\" className=\"empty-text\">No upcoming appointments.</td></tr>";
 
     const res = await fetch("/api/appointments/all", {method: "GET"});
     const data = await res.json();
+
+    header.innerText = `${data?.length | 0} Upcoming Appointments`;
 
     if (!data || !data.length) {
         container.innerHTML = "<tr><td colSpan=\"5\" className=\"empty-text\">No upcoming appointments.</td></tr>";
