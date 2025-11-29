@@ -3,6 +3,8 @@
 <script>
     const UPDATE_AVAILABILITY_URL = "{{ url_for('api.update_availability') }}";
 </script>
+
+<script src="{{ url_for('static', filename='js/actions/appointments.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/doctor_dashboard.js') }}"></script>
 
 <div class="dashboard">
@@ -36,6 +38,15 @@
 
                     <td>
                         <div class="card-buttons">
+                            <button type="button"
+                                    class="btn btn-filled"
+                                    style="background-color:#fff3cd; color:#856404;"
+                                    onclick="openAvailabilityModal({{ session.get('user_id') }}, {
+                                        type: 'reschedule',
+                                        data: { appointment_id: {{ a.id }} }
+                                    })">
+                                Reschedule
+                            </button>
                             <form action="{{ url_for('api.mark_complete', appointment_id=a.id) }}"
                                   method="POST" style="display:inline;">
                                 <button type="submit" class="btn btn-filled"
@@ -132,4 +143,5 @@
     </section>
 </div>
 
+{% include "components/availability_modal.html" %}
 {% endblock %}
