@@ -24,6 +24,10 @@
             <a href="{{ url_for('patient.edit_patient') }}" class="navbar-username">
                 {{ session['user_name'] }}
             </a>
+            {% elif session.get('user_type') == 'doctor' %}
+            <a href="{{ url_for('doctor.edit_doctor') }}" class="navbar-username">
+                {{ session['user_name'] }}
+            </a>
             {% else %}
             <a href="{{ url_for('dashboard.dashboard') }}" class="navbar-username">
                 {{ session['user_name'] }}

@@ -353,3 +353,10 @@ def edit_patient():
 
         return render_template("admin/patient_update.html", patient=patient)
 
+
+@doctor_bp.route("/edit", methods=["GET", "POST"])
+def edit_doctor():
+    if session[SessionInfo.USER_TYPE] != UserTypes.DOCTOR:
+        flash("You are not allowed to edit this doctor!", "error")
+        return redirect(url_for("dashboard.dashboard"))
+    return redirect(url_for("admin.edit_doctor", doctor_id=session[SessionInfo.USER_ID]))
