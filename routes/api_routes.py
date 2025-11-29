@@ -505,6 +505,14 @@ def _patient_search(db, query, department:str=None, date_str=None, slot=None):
     except ValueError:
         return {"doctors": []}
 
+    match slot:
+        case "morning":
+            slot = AvailabilitySlot.MORNING
+        case "afternoon":
+            slot = AvailabilitySlot.AFTERNOON
+        case "evening":
+            slot = AvailabilitySlot.EVENING
+
     availability = db.query(DoctorAvailability).filter(
         DoctorAvailability.date == selected_date,
         DoctorAvailability.slot == slot,
