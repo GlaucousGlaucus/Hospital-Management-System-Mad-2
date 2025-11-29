@@ -10,6 +10,7 @@ from models.main_models import SessionLocal, Doctor, Patient, Appointment, Depar
     Medicine, AppointmentStatus
 from services.doctor_service import create_doctor
 from utils.constants import SessionInfo, UserTypes, Routes
+from utils.helper_functions import update_session_if_self
 
 logger = getLogger(__name__)
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
@@ -205,6 +206,7 @@ def edit_doctor(doctor_id):
                 doctor.password = generate_password_hash(new_password)
 
             db_session.commit()
+            update_session_if_self(doctor, UserTypes.DOCTOR)
             flash("Doctor details updated successfully!", "success")
             return redirect(url_for("dashboard.dashboard"))
 
@@ -249,6 +251,7 @@ def edit_patient(patient_id):
                 patient.password = generate_password_hash(new_password)
 
             db_session.commit()
+            update_session_if_self(patient, UserTypes.PATIENT)
             flash("Patient details updated successfully!", "success")
             return redirect(url_for("dashboard.dashboard"))
 
