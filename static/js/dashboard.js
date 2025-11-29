@@ -1,9 +1,10 @@
 import {createAppointmentRow, createPersonListCard} from "./components/person_list_cards.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-    loadDoctors().then(r => {});
-    loadPatients().then(r => {});
-    loadAppointments().then(r => {});
+    loadDoctors();
+    loadPatients();
+    loadAppointments();
+    loadPastAppointments();
 
     const collapsibles = document.querySelectorAll(".collapsible");
 
@@ -96,13 +97,33 @@ async function loadAppointments() {
 
     container.innerHTML = "<tr><td colSpan=\"5\" className=\"empty-text\">No upcoming appointments.</td></tr>";
 
-    const res = await fetch("/api/appointments/all", {method: "GET"});
+    const res = await fetch("/api/appointments/upcoming", {method: "GET"});
     const data = await res.json();
 
     header.innerText = `${data?.length | 0} Upcoming Appointments`;
 
     if (!data || !data.length) {
         container.innerHTML = "<tr><td colSpan=\"5\" className=\"empty-text\">No upcoming appointments.</td></tr>";
+        return;
+    }
+
+    container.innerHTML = data.map(d => createAppointmentRow(d)).join("");
+}
+
+
+async function loadPastAppointments() {
+    const container = document.getElementById("past-appointments-table");
+    const header = document.getElementById("past-appt-header");
+
+    container.innerHTML = "<tr><td colSpan=\"5\" className=\"empty-text\">Loading...</td></tr>";
+
+    const res = await fetch("/api/appointments/past", { method: "GET" });
+    const data = await res.json();
+
+    header.innerText = `${data?.length | 0} Past Appointments`;
+
+    if (!data || !data.length) {
+        container.innerHTML = "<tr><td colSpan=\"5\" class=\"empty-text\">No past appointments.</td></tr>";
         return;
     }
 

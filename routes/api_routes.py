@@ -343,3 +343,43 @@ def availability_json(doctor_id):
         })
 
     return jsonify(schedule)
+
+
+@api_bp.route("/appointments/upcoming", methods=["GET"])
+def get_upcoming_appointments():
+    with (SessionLocal() as db_session):
+        upcoming = db_session.query(Appointment).filter(Appointment.status != AppointmentStatus.COMPLETED).all()
+        data = [
+            {
+                "id": app.id,
+                "patient_name": app.patient.name,
+                "doctor_name": app.doctor.name,
+                "doctor_dep": app.doctor.department.name,
+                "patient_id": app.patient.id,
+                "date": app.date.isoformat(),
+                "time": app.time.isoformat(),
+                "status": app.status.value,
+            }
+            for app in upcoming
+        ]
+        return jsonify(data)
+
+
+@api_bp.route("/appointments/past", methods=["GET"])
+def get_past_appointments():
+    with SessionLocal() as db_session:
+        completed = db_session.query(Appointment).filter(Appointment.status == AppointmentStatus.COMPLETED).all()
+        data = [
+            {
+                "id": app.id,
+                "patient_name": app.patient.name,
+                "doctor_name": app.doctor.name,
+                "doctor_dep": app.doctor.department.name,
+                "patient_id": app.patient.id,
+                "date": app.date.isoformat(),
+                "time": app.time.isoformat(),
+                "status": app.status.value,
+            }
+            for app in completed
+        ]
+        return jsonify(data)
