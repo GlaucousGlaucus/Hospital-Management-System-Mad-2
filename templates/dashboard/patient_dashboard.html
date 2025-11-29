@@ -27,7 +27,7 @@
                 {% for d in departments %}
                 <div class="card-item" style="padding: 0">
                     <button type="button" onclick="window.location.href='{{ url_for('patient.department_details', dept_id=d.id) }}'"
-                       class="btn btn-filled" style="width: 100%; height: 100%">
+                            class="btn btn-filled" style="width: 100%; height: 100%">
                         {{ d.name }}
                     </button>
                 </div>
@@ -116,6 +116,11 @@
                 <option value="afternoon">Afternoon (12 PM – 4 PM)</option>
                 <option value="evening">Evening (4 PM – 9 PM)</option>
             </select>
+
+            <input type="date"
+                   id="dateFilter"
+                   class="form-select"
+                   style="padding:0.3rem;">
         </div>
 
         <div class="card" style="padding:1rem 1.5rem;">
@@ -128,7 +133,6 @@
 
     <script src="{{ url_for('static', filename='js/actions/search_patient.js') }}"></script>
 
-
 </div>
 
 {% include "components/availability_modal.html" %}
@@ -138,20 +142,20 @@
         const searchInput = document.querySelector(".dashboard-search");
         const deptFilter = document.getElementById("deptFilter");
         const slotFilter = document.getElementById("slotFilter");
+        const dateFilter = document.getElementById("dateFilter");
         const container = document.getElementById("doctorSearchList");
 
         async function performSearch() {
             const q = searchInput.value.trim();
-            const slot = slotFilter.value || "";
-            const date = new Date().toISOString().split("T")[0];  // default today
+            const date = dateFilter.value || "";
 
             container.innerHTML = `<p class="empty-text">Searching...</p>`;
 
             const params = new URLSearchParams({
                 q,
                 department: deptFilter.value,
-                slot: slot || "",
-                date: date || ""
+                slot: slotFilter.value || "",
+                date: date
             });
 
             const res = await fetch(`/api/search?${params.toString()}`);
@@ -165,39 +169,39 @@
             }
 
             container.innerHTML = doctors.map(d => `
-            <div class="card-item"
-                style="flex-direction:row; justify-content:space-between; align-items:center; padding:0.75rem 1rem;">
+                <div class="card-item"
+                    style="flex-direction:row; justify-content:space-between; align-items:center; padding:0.75rem 1rem;">
 
-                <span style="font-size:1rem; color:#777;">Dr. ${d.name}</span>
+                    <span style="font-size:1rem; color:#777;">Dr. ${d.name}</span>
+                    <span style="font-size:1rem; color:#777;">${d.department_name}</span>
 
-                <span style="font-size:1rem; color:#777;">${d.department_name}</span>
+                    <div class="card-buttons">
+                        <a class="btn btn-filled"
+                           onclick="openAvailabilityModal(${d.id}, { type: 'booking' })">
+                           Check Availability
+                        </a>
 
-                <div class="card-buttons">
-                    <a class="btn btn-filled"
-                       onclick="openAvailabilityModal(${d.id}, { type: 'booking' })">
-                       Check Availability
-                    </a>
-
-                    <button class="btn btn-outline doctor-view-btn"
-                        data-doctor='${JSON.stringify({
+                        <button class="btn btn-outline doctor-view-btn"
+                                data-doctor='${JSON.stringify({
                 id: d.id,
                 name: d.name,
                 specialization: d.specialization,
                 age: d.age,
                 contact: d.contact
             })}'>
-                        View Details
-                    </button>
+                            View Details
+                        </button>
+                    </div>
                 </div>
-            </div>
-        `).join("");
+            `).join("");
         }
 
         searchInput.addEventListener("keyup", (e) => {
-            if (e.key === "Enter") { performSearch(); }
+            if (e.key === "Enter") performSearch();
         });
         deptFilter.addEventListener("change", performSearch);
         slotFilter.addEventListener("change", performSearch);
+        dateFilter.addEventListener("change", performSearch);
     });
 </script>
 
