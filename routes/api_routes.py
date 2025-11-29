@@ -125,7 +125,7 @@ def mark_complete(appointment_id):
     return redirect(url_for("dashboard.dashboard"))
 
 
-@api_bp.route("doctor/appointment/<int:appointment_id>/cancel", methods=["POST"])
+@api_bp.route("appointment/<int:appointment_id>/cancel", methods=["POST"])
 def cancel_appointment(appointment_id):
     with SessionLocal() as db_session:
         appt = db_session.query(Appointment).get(appointment_id)
@@ -133,6 +133,52 @@ def cancel_appointment(appointment_id):
         db_session.commit()
     flash("Appointment cancelled.", "info")
     return redirect(url_for("dashboard.dashboard"))
+
+
+@api_bp.route("appointment/<int:appointment_id>/reschedule", methods=["POST"])
+def reschedule_appointment(appointment_id):
+    data = request.get_json()
+
+    new_date_str = data.get("new_date")
+    new_time_str = data.get("new_time")
+
+    if not new_date_str or not new_time_str:
+        return jsonify({"error": "Missing new date or time"}), 400
+
+    try:
+        new_date = datetime.date.fromisoformat(new_date_str)
+        new_time = datetime.time.fromisoformat(new_time_str)
+    except ValueError:
+        return jsonify({"error": "Invalid date/time format"}), 400
+
+    with SessionLocal() as db_session:
+        appointment = db_session.get(Appointment, appointment_id)
+        if not appointment:
+            return jsonify({"error": "Appointment not found"}), 404
+
+        conflict = db_session.query(Appointment).filter_by(
+            doctor_id=appointment.doctor_id,
+            date=new_date,
+            time=new_time
+        ).first()
+
+        if conflict:
+            return jsonify({"error": "Slot already booked"}), 409
+
+        if appointment.reschedule_count == 0:
+            appointment.original_date = appointment.date
+            appointment.original_time = appointment.time
+
+        appointment.date = new_date
+        appointment.time = new_time
+        appointment.reschedule_count += 1
+
+        appointment.status = AppointmentStatus.BOOKED
+
+        db_session.commit()
+
+    flash("Appointment rescheduled successfully!", "success")
+    return jsonify({"status": "success"})
 
 @api_bp.route("doctor/update_availability", methods=["POST"])
 def update_availability():
@@ -177,17 +223,85 @@ def update_availability():
         "enabled": enabled
     })
 
-@api_bp.route("/reschedule/<int:appointment_id>", methods=["POST"])
-def reschedule_appointment_patient(appointment_id):
-    return redirect(url_for("dashboard.dashboard"))
-
-@api_bp.route("/cancel_appointment/<int:appointment_id>", methods=["POST"])
-def cancel_appointment_patient(appointment_id):
-    return redirect(url_for("dashboard.dashboard"))
 
 @api_bp.route("/book_appointment", methods=["POST"])
 def book_appointment():
-    return jsonify({"message": "Appointment booked!"})
+    if session.get(SessionInfo.USER_TYPE) != UserTypes.PATIENT:
+        return jsonify({"error": "Only patients can book appointments"}), 403
+
+    patient_id = session.get(SessionInfo.USER_ID)
+
+    data = request.get_json()
+
+    doctor_id = data.get("doctor_id")
+    date_str = data.get("date")
+    time_str = data.get("time")
+    visit_type = data.get("visit_type", "General Consultation")
+
+    if not doctor_id or not date_str or not time_str:
+        return jsonify({"error": "doctor_id, date, and time are required"}), 400
+
+    try:
+        appointment_date = datetime.date.fromisoformat(date_str)
+        appointment_time = datetime.time.fromisoformat(time_str)
+    except ValueError:
+        return jsonify({"error": "Invalid date/time format"}), 400
+
+    with SessionLocal() as db_session:
+        doctor = db_session.get(Doctor, doctor_id)
+        if not doctor:
+            return jsonify({"error": "Doctor not found"}), 404
+
+        slot = "morning" if appointment_time.hour < 12 else "evening"
+        availability = db_session.query(DoctorAvailability).filter_by(
+            doctor_id=doctor_id,
+            date=appointment_date,
+            slot=slot,
+            enabled=True
+        ).first()
+
+        if not availability:
+            return jsonify({"error": f"Doctor unavailable on {date_str} ({slot})"}), 409
+
+        conflict = db_session.query(Appointment).filter_by(
+            doctor_id=doctor_id,
+            date=appointment_date,
+            time=appointment_time,
+            status=AppointmentStatus.BOOKED
+        ).first()
+
+        if conflict:
+            return jsonify({"error": "This slot is already booked"}), 409
+
+        conflict_self = db_session.query(Appointment).filter_by(
+            patient_id=patient_id,
+            date=appointment_date,
+            time=appointment_time,
+            status=AppointmentStatus.BOOKED
+        ).first()
+
+        if conflict_self:
+            return jsonify({"error": "You already have an appointment booked at this time slot!"}), 409
+
+        new_appointment = Appointment(
+            patient_id=patient_id,
+            doctor_id=doctor_id,
+            date=appointment_date,
+            time=appointment_time,
+            visit_type=visit_type,
+            status=AppointmentStatus.BOOKED
+        )
+
+        db_session.add(new_appointment)
+        db_session.commit()
+
+        return jsonify({
+            "message": "Appointment booked successfully!",
+            "appointment_id": new_appointment.id,
+            "doctor_id": doctor_id,
+            "date": date_str,
+            "time": time_str
+        }), 201
 
 @api_bp.route("/doctor/<int:doctor_id>/availability_json")
 def availability_json(doctor_id):

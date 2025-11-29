@@ -59,14 +59,14 @@
                     <td>{{ a.date.strftime("%d/%m/%Y") }}</td>
                     <td>{{ a.time_slot }}</td>
                     <td>
-                        <form action="{{ url_for('api.reschedule_appointment_patient', appointment_id=a.id) }}"
+                        <form action="{{ url_for('api.reschedule_appointment', appointment_id=a.id) }}"
                               method="POST">
                             <button type="submit" class="btn btn-filled"
                                     style="background-color:#d4edda; color:#155724; width:60%;">
                                 Reschedule
                             </button>
                         </form>
-                        <form action="{{ url_for('api.cancel_appointment_patient', appointment_id=a.id) }}"
+                        <form action="{{ url_for('api.cancel_appointment', appointment_id=a.id) }}"
                               method="POST">
                             <button type="submit" class="btn btn-filled"
                                     style="background:#f8d7da; color:#c82333; width:60%;">

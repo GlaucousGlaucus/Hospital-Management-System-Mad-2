@@ -129,12 +129,14 @@ def dashboard():
                 departments = db_session.query(Department).all()
                 upcoming = (
                     db_session.query(Appointment)
-                    .join(Doctor)
-                    .join(Department)
+                    .options(
+                        joinedload(Appointment.doctor).joinedload(Doctor.department)
+                    )
                     .filter(
                         Appointment.patient_id == patient_id,
                         Appointment.status == AppointmentStatus.BOOKED
                     )
+                    .order_by(Appointment.date, Appointment.time)
                     .all()
                 )
                 appointments = []
@@ -142,7 +144,7 @@ def dashboard():
                     appointments.append({
                         "id": a.id,
                         "date": a.date,
-                        "time_slot": a.time,
+                        "time_slot": a.time.strftime("%I:%M %p"),
                         "doctor": {
                             "name": a.doctor.name,
                             "department": {

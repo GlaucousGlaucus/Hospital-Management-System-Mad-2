@@ -126,10 +126,6 @@ class Patient(UserMixin, Base):
 class Appointment(Base):
     __tablename__ = "appointments"
 
-    __table_args__ = (
-        UniqueConstraint("doctor_id", "date", "time"),
-    )
-
     id: Mapped[int] = mapped_column(primary_key=True)
 
     patient_id: Mapped[int] = mapped_column(
