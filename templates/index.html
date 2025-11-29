@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
+
 <div class="hero">
     <h1 class="hero-title">CliniTrak</h1>
     <h2 class="hero-subtitle">Manage Less. Care More.</h2>
-    <h2 class="hero-subtitle">Your solution to managing your hospital.</h2>
+    <h2 class="hero-subtitle">Your complete hospital management solution.</h2>
 
     <div class="hero-actions" style="flex-direction: column; gap: 0.5rem;">
         {% if session.get('user_id') %}
@@ -15,4 +16,89 @@
         {% endif %}
     </div>
 </div>
+
+<section>
+    <h2 class="why-title section-title">Why Choose CliniTrak?</h2>
+    <p class="why-subtitle section-subtitle">A smarter, faster and more reliable way to manage hospital operations.</p>
+
+    <div class="home-features">
+        <div class="feature-card">
+            <span class="material-symbols-outlined">speed</span>
+            <h3>Fast & Efficient</h3>
+            <p>Reduce paperwork, avoid mistakes and speed up operations.</p>
+        </div>
+
+        <div class="feature-card">
+            <span class="material-symbols-outlined">security</span>
+            <h3>Secure by Design</h3>
+            <p>Every role has controlled access to safeguard patient data.</p>
+        </div>
+
+        <div class="feature-card">
+            <span class="material-symbols-outlined">check_circle</span>
+            <h3>User Friendly</h3>
+            <p>Clean, intuitive interface designed for all skill levels.</p>
+        </div>
+    </div>
+</section>
+
+<section class="home-features">
+    <div class="feature-card">
+        <span class="material-symbols-outlined">local_hospital</span>
+        <h3>Smart Appointments</h3>
+        <p>Book, manage or reschedule appointments with ease.</p>
+    </div>
+
+    <div class="feature-card">
+        <span class="material-symbols-outlined">group</span>
+        <h3>Role-Based Dashboards</h3>
+        <p>Optimized workflows for Admins, Doctors & Patients.</p>
+    </div>
+
+    <div class="feature-card">
+        <span class="material-symbols-outlined">monitor_heart</span>
+        <h3>Patient History</h3>
+        <p>Access entire medical history in one unified place.</p>
+    </div>
+</section>
+
+<section>
+    <h2 class="why-title section-title">How It Works</h2>
+
+    <div class="home-features">
+        <div class="feature-card">
+            <span class="step-number">1</span>
+            <h3>Create Your Account</h3>
+            <p>Sign up as Admin, Doctor, or Patient to get started instantly.</p>
+        </div>
+
+        <div class="feature-card">
+            <span class="step-number">2</span>
+            <h3>Access Your Dashboard</h3>
+            <p>Manage appointments, availability, patient records and more.</p>
+        </div>
+
+        <div class="feature-card">
+            <span class="step-number">3</span>
+            <h3>Track & Manage</h3>
+            <p>Let CliniTrak handle organization while you focus on care.</p>
+        </div>
+    </div>
+</section>
+
+<section>
+    <h2 class="why-title section-title">What Our Users Say</h2>
+
+    <div class="home-features" style="grid-template-columns: 1fr;">
+        <div class="feature-card">
+            <p class="testimonial-text">
+                “CliniTrak has transformed our hospital workflow.
+                Doctors love the simplicity and patients appreciate the clear communication.
+                Admin work has become dramatically easier.”
+            </p>
+            <p class="testimonial-author">— Dr. Mehra, CityCare Hospital</p>
+        </div>
+    </div>
+</section>
+
 {% endblock %}
