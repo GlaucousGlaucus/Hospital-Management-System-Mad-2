@@ -124,19 +124,22 @@ async function loadAppointments(list = null) {
 }
 
 
-async function loadPastAppointments() {
+async function loadPastAppointments(list = null) {
     const container = document.getElementById("past-appointments-table");
     const header = document.getElementById("past-appt-header");
 
-    container.innerHTML = "<tr><td colSpan=\"5\" className=\"empty-text\">Loading...</td></tr>";
+    container.innerHTML = "<tr><td colspan='5' class='empty-text'>Loading...</td></tr>";
 
-    const res = await fetch("/api/appointments/past", { method: "GET" });
-    const data = await res.json();
+    let data = list;
+    if (!data) {
+        const res = await fetch("/api/appointments/past", { method: "GET" });
+        data = await res.json();
+    }
 
-    header.innerText = `${data?.length | 0} Past Appointments`;
+    header.innerText = `${data.length || 0} Past Appointments`;
 
-    if (!data || !data.length) {
-        container.innerHTML = "<tr><td colSpan=\"5\" class=\"empty-text\">No past appointments.</td></tr>";
+    if (!data.length) {
+        container.innerHTML = "<tr><td colspan='5' class='empty-text'>No past appointments.</td></tr>";
         return;
     }
 
@@ -157,9 +160,13 @@ async function performSearch() {
     const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
     const data = await res.json();
 
+    const upcoming = data.appointments.filter(a => a.is_upcoming);
+    const past = data.appointments.filter(a => !a.is_upcoming);
+
     loadDoctors(data.doctors);
     loadPatients(data.patients);
-    loadAppointments(data.appointments);
+    loadAppointments(upcoming);
+    loadPastAppointments(past);
 }
 
 

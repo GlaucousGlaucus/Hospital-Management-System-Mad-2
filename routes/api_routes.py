@@ -388,7 +388,10 @@ def get_past_appointments():
 
 @api_bp.route("/search", methods=["GET"])
 def search():
-    q = request.args.get("q", "").strip().lower()
+    q = request.args.get("q", "").strip()
+    query = f"%{q}%"
+    today = datetime.date.today()
+
     if not q:
         return jsonify({
             "doctors": [],
@@ -398,16 +401,16 @@ def search():
 
     with SessionLocal() as db:
         doctors = db.query(Doctor).filter(
-            (Doctor.name.ilike(f"%{q}%")) |
-            (Doctor.specialization.ilike(f"%{q}%")) |
-            (Doctor.email.ilike(f"%{q}%")) |
-            (Doctor.contact.ilike(f"%{q}%"))
+            (Doctor.name.ilike(query)) |
+            (Doctor.specialization.ilike(query)) |
+            (Doctor.email.ilike(query)) |
+            (Doctor.contact.ilike(query))
         ).all()
 
         patients = db.query(Patient).filter(
-            (Patient.name.ilike(f"%{q}%")) |
-            (Patient.email.ilike(f"%{q}%")) |
-            (Patient.contact.ilike(f"%{q}%"))
+            (Patient.name.ilike(query)) |
+            (Patient.email.ilike(query)) |
+            (Patient.contact.ilike(query))
         ).all()
 
         appointments = (
@@ -416,13 +419,12 @@ def search():
             .join(Appointment.doctor)
             .join(Doctor.department)
             .filter(
-                (Patient.name.ilike(f"%{q}%")) |
-                (Doctor.name.ilike(f"%{q}%")) |
-                (Department.name.ilike(f"%{q}%"))
+                (Patient.name.ilike(query)) |
+                (Doctor.name.ilike(query)) |
+                (Department.name.ilike(query))
             )
             .all()
         )
-
         return jsonify({
             "doctors": [
                 {"id": d.id, "name": d.name, "specialization": d.specialization}
@@ -435,10 +437,15 @@ def search():
             "appointments": [
                 {
                     "id": a.id,
-                    "patient": a.patient.name,
-                    "doctor": a.doctor.name,
-                    "department": a.doctor.department.name
+                    "patient_id": a.patient.id,
+                    "patient_name": a.patient.name,
+                    "doctor_name": a.doctor.name,
+                    "doctor_dep": a.doctor.department.name,
+                    "date": a.date.isoformat(),
+                    "is_upcoming": a.date >= today
                 }
                 for a in appointments
             ]
         })
+
+
