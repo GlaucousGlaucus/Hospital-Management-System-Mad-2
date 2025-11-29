@@ -1,18 +1,50 @@
 import datetime
 from logging import getLogger
-from typing import List, dataclass_transform
+from typing import List
 
-from flask import Blueprint, jsonify, abort, render_template, flash, redirect, url_for, request, session
+from flask import (
+    Blueprint, jsonify, abort, render_template,
+    flash, redirect, url_for, request, session
+)
 from sqlalchemy.orm import joinedload
 
-from models.main_models import Doctor, Patient, SessionLocal, Appointment, DoctorAvailability, AppointmentStatus, \
+from models.main_models import (
+    Doctor, Patient, SessionLocal, Appointment,
+    DoctorAvailability, AppointmentStatus,
     Department, AvailabilitySlot
-from utils.constants import SessionInfo, UserTypes
+)
+from utils.constants import SessionInfo, UserTypes, Routes
 
 logger = getLogger(__name__)
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
+def require_role(*roles):
+    def decorator(fn):
+        def wrapper(*args, **kwargs):
+            user_type = session.get(SessionInfo.USER_TYPE)
+            if user_type not in roles:
+                return jsonify({"error": "forbidden"}), 403
+            return fn(*args, **kwargs)
+        wrapper.__name__ = fn.__name__
+        return wrapper
+    return decorator
+
+def require_login(fn):
+    def wrapper(*args, **kwargs):
+        if not session.get(SessionInfo.USER_ID):
+            return jsonify({"error": "login required"}), 401
+        return fn(*args, **kwargs)
+    wrapper.__name__ = fn.__name__
+    return wrapper
+
+def ensure_doctor_owns(appt):
+    return appt.doctor_id == session.get(SessionInfo.USER_ID)
+
+def ensure_patient_owns(appt):
+    return appt.patient_id == session.get(SessionInfo.USER_ID)
+
 @api_bp.route("/<entity>/all", methods=["GET"])
+@require_role(UserTypes.ADMIN)
 def get_all_items(entity):
     with SessionLocal() as db_session:
         model_map = {
@@ -28,19 +60,31 @@ def get_all_items(entity):
         entities = db_session.query(model).all()
         if not entities:
             return jsonify({"error": "Not found"})
+
         match entity:
             case "doctors":
                 data = [
-                    {"id": d.id, "name": d.name, "age": d.age, "email": d.email,
-                     "contact": d.contact, "specialization": d.specialization or "",
-                     "is_blacklisted": d.is_blacklisted}
+                    {
+                        "id": d.id,
+                        "name": d.name,
+                        "age": d.age,
+                        "email": d.email,
+                        "contact": d.contact,
+                        "specialization": d.specialization or "",
+                        "is_blacklisted": d.is_blacklisted,
+                    }
                     for d in entities
                 ]
             case "patients":
                 data = [
-                    {"id": p.id, "name": p.name, "age": p.age,
-                     "email": p.email, "contact": p.contact,
-                     "is_blacklisted": p.is_blacklisted}
+                    {
+                        "id": p.id,
+                        "name": p.name,
+                        "age": p.age,
+                        "email": p.email,
+                        "contact": p.contact,
+                        "is_blacklisted": p.is_blacklisted,
+                    }
                     for p in entities
                 ]
             case "appointments":
@@ -55,9 +99,11 @@ def get_all_items(entity):
                     }
                     for app in entities
                 ]
-    return jsonify(data)
+
+        return jsonify(data)
 
 @api_bp.route("/<entity>/<int:item_id>", methods=["DELETE"])
+@require_role(UserTypes.ADMIN)
 def delete_item(entity, item_id):
     with SessionLocal() as db_session:
         model_map = {"doctor": Doctor, "patient": Patient}
@@ -72,15 +118,22 @@ def delete_item(entity, item_id):
 
         db_session.delete(item)
         db_session.commit()
+
     return jsonify({"status": "deleted"})
 
-
-@api_bp.route("patient/<int:patient_id>/history")
+@api_bp.route("/patient/<int:patient_id>/history")
+@require_login
 def patient_history(patient_id: int):
-    """Show the patient history table."""
-    with SessionLocal() as session:
+
+    user_type = session.get(SessionInfo.USER_TYPE)
+    user_id = session.get(SessionInfo.USER_ID)
+
+    if user_type == UserTypes.PATIENT and user_id != patient_id:
+        return abort(403)
+
+    with SessionLocal() as db:
         patient = (
-            session.query(Patient)
+            db.query(Patient)
             .options(
                 joinedload(Patient.appointments)
                 .joinedload(Appointment.treatment),
@@ -95,18 +148,16 @@ def patient_history(patient_id: int):
         if not patient:
             abort(404, description="Patient not found")
 
-        # For simplicity, assume all appointments are with the same doctor & department (like your example)
         doctor = patient.appointments[0].doctor if patient.appointments else None
         department = doctor.department if doctor and doctor.department else None
 
-        # Build visit history
         visits = []
         for idx, appt in enumerate(patient.appointments, start=1):
             t = appt.treatment
             visits.append({
                 "no": idx,
-                "visit_type": appt.visit_type if appt.visit_type else "N/A",
-                "tests_done": appt.test_done if appt.test_done else "N/A",
+                "visit_type": appt.visit_type or "N/A",
+                "tests_done": appt.test_done or "N/A",
                 "diagnosis": t.diagnosis if t else "N/A",
                 "prescription": t.prescription if t else "N/A",
                 "medicines": t.notes if t else "N/A",
@@ -120,30 +171,54 @@ def patient_history(patient_id: int):
             visits=visits,
         )
 
-@api_bp.route("doctor/appointment/<int:appointment_id>/complete", methods=["POST"])
+@api_bp.route("/doctor/appointment/<int:appointment_id>/complete", methods=["POST"])
+@require_role(UserTypes.ADMIN, UserTypes.DOCTOR)
 def mark_complete(appointment_id):
-    with SessionLocal() as db_session:
-        appt = db_session.query(Appointment).get(appointment_id)
+    with SessionLocal() as db:
+        appt = db.get(Appointment, appointment_id)
+        if not appt:
+            return abort(404)
+
+        user_type = session.get(SessionInfo.USER_TYPE)
+
+        if user_type == UserTypes.DOCTOR and not ensure_doctor_owns(appt):
+            return abort(403)
+
         appt.status = AppointmentStatus.COMPLETED
-        db_session.commit()
+        db.commit()
+
     flash("Appointment marked as complete!", "success")
-    return redirect(url_for("dashboard.dashboard"))
+    return redirect(url_for(Routes.DASHBOARD_ROUTE))
 
-
-@api_bp.route("appointment/<int:appointment_id>/cancel", methods=["POST"])
+@api_bp.route("/appointment/<int:appointment_id>/cancel", methods=["POST"])
+@require_login
 def cancel_appointment(appointment_id):
-    with SessionLocal() as db_session:
-        appt = db_session.query(Appointment).get(appointment_id)
+    with SessionLocal() as db:
+        appt = db.get(Appointment, appointment_id)
+        if not appt:
+            return abort(404)
+
+        user_type = session.get(SessionInfo.USER_TYPE)
+
+        if user_type == UserTypes.ADMIN:
+            pass
+        elif user_type == UserTypes.DOCTOR:
+            if not ensure_doctor_owns(appt):
+                return abort(403)
+        elif user_type == UserTypes.PATIENT:
+            if not ensure_patient_owns(appt):
+                return abort(403)
+
         appt.status = AppointmentStatus.CANCELLED
-        db_session.commit()
+        db.commit()
+
     flash("Appointment cancelled.", "info")
-    return redirect(url_for("dashboard.dashboard"))
+    return redirect(url_for(Routes.DASHBOARD_ROUTE))
 
-
-@api_bp.route("appointment/<int:appointment_id>/reschedule", methods=["POST"])
+@api_bp.route("/appointment/<int:appointment_id>/reschedule", methods=["POST"])
+@require_login
 def reschedule_appointment(appointment_id):
     data = request.get_json()
-
     new_date_str = data.get("new_date")
     new_time_str = data.get("new_time")
 
@@ -156,13 +231,24 @@ def reschedule_appointment(appointment_id):
     except ValueError:
         return jsonify({"error": "Invalid date/time format"}), 400
 
-    with SessionLocal() as db_session:
-        appointment = db_session.get(Appointment, appointment_id)
-        if not appointment:
-            return jsonify({"error": "Appointment not found"}), 404
+    with SessionLocal() as db:
+        appt = db.get(Appointment, appointment_id)
+        if not appt:
+            return abort(404)
 
-        conflict = db_session.query(Appointment).filter_by(
-            doctor_id=appointment.doctor_id,
+        user_type = session.get(SessionInfo.USER_TYPE)
+
+        if user_type == UserTypes.ADMIN:
+            pass
+        elif user_type == UserTypes.DOCTOR:
+            if not ensure_doctor_owns(appt):
+                return abort(403)
+        elif user_type == UserTypes.PATIENT:
+            if not ensure_patient_owns(appt):
+                return abort(403)
+
+        conflict = db.query(Appointment).filter_by(
+            doctor_id=appt.doctor_id,
             date=new_date,
             time=new_time
         ).first()
@@ -170,22 +256,21 @@ def reschedule_appointment(appointment_id):
         if conflict:
             return jsonify({"error": "Slot already booked"}), 409
 
-        if appointment.reschedule_count == 0:
-            appointment.original_date = appointment.date
-            appointment.original_time = appointment.time
+        if appt.reschedule_count == 0:
+            appt.original_date = appt.date
+            appt.original_time = appt.time
 
-        appointment.date = new_date
-        appointment.time = new_time
-        appointment.reschedule_count += 1
+        appt.date = new_date
+        appt.time = new_time
+        appt.reschedule_count += 1
+        appt.status = AppointmentStatus.BOOKED
 
-        appointment.status = AppointmentStatus.BOOKED
+        db.commit()
 
-        db_session.commit()
-
-    flash("Appointment rescheduled successfully!", "success")
     return jsonify({"status": "success"})
 
-@api_bp.route("doctor/update_availability", methods=["POST"])
+@api_bp.route("/doctor/update_availability", methods=["POST"])
+@require_role(UserTypes.DOCTOR)
 def update_availability():
     data = request.get_json()
 
@@ -206,13 +291,10 @@ def update_availability():
     except ValueError:
         return jsonify({"error": f"Invalid slot '{slot_str}'"}), 400
 
-    if session.get(SessionInfo.USER_TYPE) != UserTypes.DOCTOR:
-        return jsonify({"error": "Only doctors can update availability"}), 403
-
     doctor_id = session.get(SessionInfo.USER_ID)
 
-    with SessionLocal() as db_session:
-        availability = db_session.query(DoctorAvailability).filter_by(
+    with SessionLocal() as db:
+        availability = db.query(DoctorAvailability).filter_by(
             doctor_id=doctor_id,
             date=date,
             slot=slot_enum
@@ -227,8 +309,9 @@ def update_availability():
                 slot=slot_enum,
                 enabled=bool(enabled)
             )
-            db_session.add(availability)
-        db_session.commit()
+            db.add(availability)
+
+        db.commit()
 
     return jsonify({
         "status": "success",
@@ -238,12 +321,9 @@ def update_availability():
     })
 
 @api_bp.route("/book_appointment", methods=["POST"])
+@require_role(UserTypes.PATIENT)
 def book_appointment():
-    if session.get(SessionInfo.USER_TYPE) != UserTypes.PATIENT:
-        return jsonify({"error": "Only patients can book appointments"}), 403
-
     patient_id = session.get(SessionInfo.USER_ID)
-
     data = request.get_json()
 
     doctor_id = data.get("doctor_id")
@@ -252,29 +332,30 @@ def book_appointment():
     visit_type = data.get("visit_type", "Checkup")
 
     if not doctor_id or not date_str or not time_str:
-        return jsonify({"error": "doctor_id, date, and time are required"}), 400
+        return jsonify({"error": "doctor_id, date, time required"}), 400
 
     try:
-        appointment_date = datetime.date.fromisoformat(date_str)
-        appointment_time = datetime.time.fromisoformat(time_str)
+        appt_date = datetime.date.fromisoformat(date_str)
+        appt_time = datetime.time.fromisoformat(time_str)
     except ValueError:
-        return jsonify({"error": "Invalid date/time format"}), 400
+        return jsonify({"error": "Invalid date/time"}), 400
 
-    with SessionLocal() as db_session:
-        doctor = db_session.get(Doctor, doctor_id)
+    with SessionLocal() as db:
+        doctor = db.get(Doctor, doctor_id)
         if not doctor:
             return jsonify({"error": "Doctor not found"}), 404
 
-        hour = appointment_time.hour
+        hour = appt_time.hour
         if hour < 12:
             slot = AvailabilitySlot.MORNING
         elif hour < 16:
             slot = AvailabilitySlot.AFTERNOON
         else:
             slot = AvailabilitySlot.EVENING
-        availability = db_session.query(DoctorAvailability).filter_by(
+
+        availability = db.query(DoctorAvailability).filter_by(
             doctor_id=doctor_id,
-            date=appointment_date,
+            date=appt_date,
             slot=slot,
             enabled=True
         ).first()
@@ -282,130 +363,150 @@ def book_appointment():
         if not availability:
             return jsonify({"error": f"Doctor unavailable on {date_str} ({slot})"}), 409
 
-        conflict = db_session.query(Appointment).filter_by(
+        conflict = db.query(Appointment).filter_by(
             doctor_id=doctor_id,
-            date=appointment_date,
-            time=appointment_time,
+            date=appt_date,
+            time=appt_time,
             status=AppointmentStatus.BOOKED
         ).first()
 
         if conflict:
-            return jsonify({"error": "This slot is already booked"}), 409
+            return jsonify({"error": "Slot booked"}), 409
 
-        conflict_self = db_session.query(Appointment).filter_by(
+        conflict_self = db.query(Appointment).filter_by(
             patient_id=patient_id,
-            date=appointment_date,
-            time=appointment_time,
+            date=appt_date,
+            time=appt_time,
             status=AppointmentStatus.BOOKED
         ).first()
 
         if conflict_self:
-            return jsonify({"error": "You already have an appointment booked at this time slot!"}), 409
+            return jsonify({"error": "You already have appointment at this time"}), 409
 
-        new_appointment = Appointment(
+        new_appt = Appointment(
             patient_id=patient_id,
             doctor_id=doctor_id,
-            date=appointment_date,
-            time=appointment_time,
+            date=appt_date,
+            time=appt_time,
             visit_type=visit_type,
             status=AppointmentStatus.BOOKED
         )
 
-        db_session.add(new_appointment)
-        db_session.commit()
+        db.add(new_appt)
+        db.commit()
 
         return jsonify({
             "message": "Appointment booked successfully!",
-            "appointment_id": new_appointment.id,
+            "appointment_id": new_appt.id,
             "doctor_id": doctor_id,
             "date": date_str,
             "time": time_str
         }), 201
 
 @api_bp.route("/doctor/<int:doctor_id>/availability_json")
+@require_login
 def availability_json(doctor_id):
-    from datetime import date, timedelta
-
-    with SessionLocal() as db_session:
-        entries = db_session.query(DoctorAvailability).filter_by(
+    from datetime import timedelta
+    with SessionLocal() as db:
+        entries = db.query(DoctorAvailability).filter_by(
             doctor_id=doctor_id
         ).all()
 
-        avail_map = {
-            (a.date, a.slot): a.enabled
-            for a in entries
-        }
+        avail_map = {(a.date, a.slot): a.enabled for a in entries}
 
-    today = datetime.datetime.today().date()
+    today = datetime.date.today()
     start_of_week = today - timedelta(days=(today.weekday() + 1) % 7)
-    days = [(start_of_week + timedelta(days=i)) for i in range(7)]
+    days = [start_of_week + timedelta(days=i) for i in range(7)]
     schedule = []
 
     for d in days:
-        morning = avail_map.get((d, AvailabilitySlot.MORNING), False)
-        afternoon = avail_map.get((d, AvailabilitySlot.AFTERNOON), False)
-        evening = avail_map.get((d, AvailabilitySlot.EVENING), False)
-
         schedule.append({
             "doctor_id": doctor_id,
             "date": d.isoformat(),
             "date_display": d.strftime("%d/%m/%Y"),
             "morning": {
                 "label": "08:00 - 12:00 am",
-                "available": morning
-            },
-            "evening": {
-                "label": "04:00 - 09:00 pm",
-                "available": evening
+                "available": avail_map.get((d, AvailabilitySlot.MORNING), False)
             },
             "afternoon": {
                 "label": "12:00 - 04:00",
-                "available": afternoon
+                "available": avail_map.get((d, AvailabilitySlot.AFTERNOON), False)
+            },
+            "evening": {
+                "label": "04:00 - 09:00 pm",
+                "available": avail_map.get((d, AvailabilitySlot.EVENING), False)
             }
         })
 
     return jsonify(schedule)
 
-
 @api_bp.route("/appointments/upcoming", methods=["GET"])
+@require_login
 def get_upcoming_appointments():
-    with (SessionLocal() as db_session):
-        upcoming = db_session.query(Appointment).filter(Appointment.status != AppointmentStatus.COMPLETED).all()
+    user_type = session.get(SessionInfo.USER_TYPE)
+    user_id = session.get(SessionInfo.USER_ID)
+
+    with SessionLocal() as db:
+        query = db.query(Appointment).filter(
+            Appointment.status != AppointmentStatus.COMPLETED
+        )
+
+        if user_type == UserTypes.DOCTOR:
+            query = query.filter(Appointment.doctor_id == user_id)
+        elif user_type == UserTypes.PATIENT:
+            query = query.filter(Appointment.patient_id == user_id)
+
+        upcoming = query.all()
+
         data = [
             {
-                "id": app.id,
-                "patient_name": app.patient.name,
-                "doctor_name": app.doctor.name,
-                "doctor_dep": app.doctor.department.name,
-                "patient_id": app.patient.id,
-                "date": app.date.isoformat(),
-                "time": app.time.isoformat(),
-                "status": app.status.value,
+                "id": a.id,
+                "patient_name": a.patient.name,
+                "doctor_name": a.doctor.name,
+                "doctor_dep": a.doctor.department.name,
+                "patient_id": a.patient.id,
+                "date": a.date.isoformat(),
+                "time": a.time.isoformat(),
+                "status": a.status.value,
             }
-            for app in upcoming
+            for a in upcoming
         ]
-        return jsonify(data)
 
+        return jsonify(data)
 
 @api_bp.route("/appointments/past", methods=["GET"])
+@require_login
 def get_past_appointments():
-    with SessionLocal() as db_session:
-        completed = db_session.query(Appointment).filter(Appointment.status == AppointmentStatus.COMPLETED).all()
+    user_type = session.get(SessionInfo.USER_TYPE)
+    user_id = session.get(SessionInfo.USER_ID)
+
+    with SessionLocal() as db:
+        query = db.query(Appointment).filter(
+            Appointment.status == AppointmentStatus.COMPLETED
+        )
+
+        if user_type == UserTypes.DOCTOR:
+            query = query.filter(Appointment.doctor_id == user_id)
+        elif user_type == UserTypes.PATIENT:
+            query = query.filter(Appointment.patient_id == user_id)
+
+        completed = query.all()
+
         data = [
             {
-                "id": app.id,
-                "patient_name": app.patient.name,
-                "doctor_name": app.doctor.name,
-                "doctor_dep": app.doctor.department.name,
-                "patient_id": app.patient.id,
-                "date": app.date.isoformat(),
-                "time": app.time.isoformat(),
-                "status": app.status.value,
+                "id": a.id,
+                "patient_name": a.patient.name,
+                "doctor_name": a.doctor.name,
+                "doctor_dep": a.doctor.department.name,
+                "patient_id": a.patient.id,
+                "date": a.date.isoformat(),
+                "time": a.time.isoformat(),
+                "status": a.status.value,
             }
-            for app in completed
+            for a in completed
         ]
-        return jsonify(data)
 
+        return jsonify(data)
 
 def _admin_search(db, query, today):
     doctors = db.query(Doctor).filter(
@@ -468,8 +569,7 @@ def _admin_search(db, query, today):
         ]
     }
 
-
-def _patient_search(db, query, department:str=None, date_str=None, slot=None):
+def _patient_search(db, query, department=None, date_str=None, slot=None):
     doctors = (
         db.query(Doctor)
         .join(Department)
@@ -482,7 +582,7 @@ def _patient_search(db, query, department:str=None, date_str=None, slot=None):
     )
 
     if department:
-        doctors = (d for d in doctors if str(d.department.id) == department)
+        doctors = [d for d in doctors if str(d.department.id) == department]
 
     if not date_str or not slot:
         return {
@@ -507,15 +607,19 @@ def _patient_search(db, query, department:str=None, date_str=None, slot=None):
 
     match slot:
         case "morning":
-            slot = AvailabilitySlot.MORNING
+            slot_enum = AvailabilitySlot.MORNING
         case "afternoon":
-            slot = AvailabilitySlot.AFTERNOON
+            slot_enum = AvailabilitySlot.AFTERNOON
+        case "evenening":
+            slot_enum = AvailabilitySlot.EVENING
         case "evening":
-            slot = AvailabilitySlot.EVENING
+            slot_enum = AvailabilitySlot.EVENING
+        case _:
+            return {"doctors": []}
 
     availability = db.query(DoctorAvailability).filter(
         DoctorAvailability.date == selected_date,
-        DoctorAvailability.slot == slot,
+        DoctorAvailability.slot == slot_enum,
         DoctorAvailability.enabled == True
     ).all()
 
@@ -537,8 +641,8 @@ def _patient_search(db, query, department:str=None, date_str=None, slot=None):
         ]
     }
 
-
 @api_bp.route("/search", methods=["GET"])
+@require_login
 def search():
     q = request.args.get("q", "").strip()
     query = f"%{q}%"
@@ -555,7 +659,6 @@ def search():
     with SessionLocal() as db:
         if user_type == UserTypes.ADMIN:
             return jsonify(_admin_search(db, query, today))
-
         elif user_type == UserTypes.PATIENT:
             return jsonify(
                 _patient_search(
@@ -566,15 +669,12 @@ def search():
                     request.args.get("slot")
                 )
             )
-
         else:
-            return jsonify({"error": "Unknown or unauthorized user"}), 403
+            return jsonify({"error": "forbidden"}), 403
 
 @api_bp.route("/blacklist/<entity>/<int:user_id>", methods=["POST"])
+@require_role(UserTypes.ADMIN)
 def blacklist_user(entity, user_id):
-    if session.get(SessionInfo.USER_TYPE) != UserTypes.ADMIN:
-        return jsonify({"error": "Only admin can blacklist users"}), 403
-
     model_map = {"doctor": Doctor, "patient": Patient}
     model = model_map.get(entity)
 
@@ -591,12 +691,9 @@ def blacklist_user(entity, user_id):
 
     return jsonify({"status": "blacklisted"})
 
-
 @api_bp.route("/unblacklist/<entity>/<int:user_id>", methods=["POST"])
+@require_role(UserTypes.ADMIN)
 def unblacklist_user(entity, user_id):
-    if session.get(SessionInfo.USER_TYPE) != UserTypes.ADMIN:
-        return jsonify({"error": "Only admin can unblacklist users"}), 403
-
     model_map = {"doctor": Doctor, "patient": Patient}
     model = model_map.get(entity)
 
