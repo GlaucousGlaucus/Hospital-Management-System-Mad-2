@@ -386,66 +386,158 @@ def get_past_appointments():
         return jsonify(data)
 
 
+def _admin_search(db, query, today):
+    doctors = db.query(Doctor).filter(
+        (Doctor.name.ilike(query)) |
+        (Doctor.specialization.ilike(query)) |
+        (Doctor.email.ilike(query)) |
+        (Doctor.contact.ilike(query))
+    ).all()
+
+    patients = db.query(Patient).filter(
+        (Patient.name.ilike(query)) |
+        (Patient.email.ilike(query)) |
+        (Patient.contact.ilike(query))
+    ).all()
+
+    appointments = (
+        db.query(Appointment)
+        .join(Appointment.patient)
+        .join(Appointment.doctor)
+        .join(Doctor.department)
+        .filter(
+            (Patient.name.ilike(query)) |
+            (Doctor.name.ilike(query)) |
+            (Department.name.ilike(query))
+        ).all()
+    )
+
+    return {
+        "doctors": [
+            {
+                "id": d.id,
+                "name": d.name,
+                "specialization": d.specialization or "",
+                "age": d.age,
+                "email": d.email,
+                "contact": d.contact,
+            }
+            for d in doctors
+        ],
+        "patients": [
+            {
+                "id": p.id,
+                "name": p.name,
+                "contact": p.contact,
+                "email": p.email
+            }
+            for p in patients
+        ],
+        "appointments": [
+            {
+                "id": a.id,
+                "patient_name": a.patient.name,
+                "patient_id": a.patient.id,
+                "doctor_name": a.doctor.name,
+                "doctor_dep": a.doctor.department.name,
+                "date": a.date.isoformat(),
+                "is_upcoming": a.date >= today
+            }
+            for a in appointments
+        ]
+    }
+
+
+def _patient_search(db, query, department:str=None, date_str=None, slot=None):
+    doctors = (
+        db.query(Doctor)
+        .join(Department)
+        .filter(
+            (Doctor.name.ilike(query)) |
+            (Doctor.specialization.ilike(query)) |
+            (Department.name.ilike(query))
+        )
+        .all()
+    )
+
+    if department:
+        doctors = (d for d in doctors if str(d.department.id) == department)
+
+    if not date_str or not slot:
+        return {
+            "doctors": [
+                {
+                    "id": d.id,
+                    "name": d.name,
+                    "specialization": d.specialization or "",
+                    "age": d.age,
+                    "contact": d.contact,
+                    "department_id": d.department.id,
+                    "department_name": d.department.name
+                }
+                for d in doctors
+            ]
+        }
+
+    try:
+        selected_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        return {"doctors": []}
+
+    availability = db.query(DoctorAvailability).filter(
+        DoctorAvailability.date == selected_date,
+        DoctorAvailability.slot == slot,
+        DoctorAvailability.enabled == True
+    ).all()
+
+    available_ids = {a.doctor_id for a in availability}
+    filtered_doctors = [d for d in doctors if d.id in available_ids]
+
+    return {
+        "doctors": [
+            {
+                "id": d.id,
+                "name": d.name,
+                "specialization": d.specialization or "",
+                "age": d.age,
+                "contact": d.contact,
+                "department_id": d.department.id,
+                "department_name": d.department.name
+            }
+            for d in filtered_doctors
+        ]
+    }
+
+
 @api_bp.route("/search", methods=["GET"])
 def search():
     q = request.args.get("q", "").strip()
     query = f"%{q}%"
     today = datetime.date.today()
+    user_type = session.get(SessionInfo.USER_TYPE)
 
     if not q:
-        return jsonify({
-            "doctors": [],
-            "patients": [],
-            "appointments": [],
-        })
+        if user_type == UserTypes.ADMIN:
+            return jsonify({"doctors": [], "patients": [], "appointments": []})
+        if user_type == UserTypes.PATIENT:
+            return jsonify({"doctors": []})
+        return jsonify({"error": "invalid user"}), 400
 
     with SessionLocal() as db:
-        doctors = db.query(Doctor).filter(
-            (Doctor.name.ilike(query)) |
-            (Doctor.specialization.ilike(query)) |
-            (Doctor.email.ilike(query)) |
-            (Doctor.contact.ilike(query))
-        ).all()
+        if user_type == UserTypes.ADMIN:
+            return jsonify(_admin_search(db, query, today))
 
-        patients = db.query(Patient).filter(
-            (Patient.name.ilike(query)) |
-            (Patient.email.ilike(query)) |
-            (Patient.contact.ilike(query))
-        ).all()
-
-        appointments = (
-            db.query(Appointment)
-            .join(Appointment.patient)
-            .join(Appointment.doctor)
-            .join(Doctor.department)
-            .filter(
-                (Patient.name.ilike(query)) |
-                (Doctor.name.ilike(query)) |
-                (Department.name.ilike(query))
+        elif user_type == UserTypes.PATIENT:
+            return jsonify(
+                _patient_search(
+                    db,
+                    query,
+                    request.args.get("department"),
+                    request.args.get("date"),
+                    request.args.get("slot")
+                )
             )
-            .all()
-        )
-        return jsonify({
-            "doctors": [
-                {"id": d.id, "name": d.name, "specialization": d.specialization}
-                for d in doctors
-            ],
-            "patients": [
-                {"id": p.id, "name": p.name, "contact": p.contact}
-                for p in patients
-            ],
-            "appointments": [
-                {
-                    "id": a.id,
-                    "patient_id": a.patient.id,
-                    "patient_name": a.patient.name,
-                    "doctor_name": a.doctor.name,
-                    "doctor_dep": a.doctor.department.name,
-                    "date": a.date.isoformat(),
-                    "is_upcoming": a.date >= today
-                }
-                for a in appointments
-            ]
-        })
 
+        else:
+            return jsonify({"error": "Unknown or unauthorized user"}), 403
 

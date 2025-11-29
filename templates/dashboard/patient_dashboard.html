@@ -96,37 +96,108 @@
     </section>
 
     <section class="dashboard-section">
-    <h3>Find Doctors</h3>
+        <h3>Find Doctors</h3>
 
-    <div style="margin-bottom:1rem; display:flex; gap:1rem;">
-        <input type="text"
-               class="dashboard-search"
-               placeholder="Search for doctor, patients, departments, etc.">
+        <div style="margin-bottom:1rem; display:flex; gap:1rem;">
+            <input type="text"
+                   class="dashboard-search"
+                   placeholder="Search for doctors or departments">
 
-        <select id="deptFilter" class="form-select">
-            <option value="">All Departments</option>
-            {% for d in departments %}
-            <option value="{{ d.id }}">{{ d.name }}</option>
-            {% endfor %}
-        </select>
+            <select id="deptFilter" class="form-select">
+                <option value="">All Departments</option>
+                {% for d in departments %}
+                <option value="{{ d.id }}">{{ d.name }}</option>
+                {% endfor %}
+            </select>
 
-        <select id="slotFilter" class="form-select">
-            <option value="">Any Time</option>
-            <option value="morning">Morning (8:00 AM to 12:00 PM)</option>
-            <option value="evening">Evening (4:00 PM to 8:00 PM)</option>
-        </select>
-
-    </div>
-
-    <div class="card" style="padding:1rem 1.5rem;">
-        <div class="card-list" id="doctorSearchList"
-             style="grid-template-columns: 1fr; gap:0.75rem; border:none;">
+            <select id="slotFilter" class="form-select">
+                <option value="">Any Time</option>
+                <option value="morning">Morning (8 AM – 12 PM)</option>
+                <option value="evening">Evening (4 PM – 8 PM)</option>
+            </select>
         </div>
-    </div>
 
-</section>
+        <div class="card" style="padding:1rem 1.5rem;">
+            <div class="card-list"
+                 id="doctorSearchList"
+                 style="grid-template-columns: 1fr; gap:0.75rem; border:none;">
+            </div>
+        </div>
+    </section>
+
+    <script src="{{ url_for('static', filename='js/actions/search_patient.js') }}"></script>
+
 
 </div>
 
 {% include "components/availability_modal.html" %}
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const searchInput = document.querySelector(".dashboard-search");
+        const deptFilter = document.getElementById("deptFilter");
+        const slotFilter = document.getElementById("slotFilter");
+        const container = document.getElementById("doctorSearchList");
+
+        async function performSearch() {
+            const q = searchInput.value.trim();
+            const slot = slotFilter.value || "";
+            const date = new Date().toISOString().split("T")[0];  // default today
+
+            container.innerHTML = `<p class="empty-text">Searching...</p>`;
+
+            const params = new URLSearchParams({
+                q,
+                department: deptFilter.value,
+                slot: slot || "",
+                date: date || ""
+            });
+
+            const res = await fetch(`/api/search?${params.toString()}`);
+            const data = await res.json();
+
+            const doctors = data.doctors || [];
+
+            if (!doctors.length) {
+                container.innerHTML = `<p class="empty-text">No doctors found.</p>`;
+                return;
+            }
+
+            container.innerHTML = doctors.map(d => `
+            <div class="card-item"
+                style="flex-direction:row; justify-content:space-between; align-items:center; padding:0.75rem 1rem;">
+
+                <span style="font-size:1rem; color:#777;">Dr. ${d.name}</span>
+
+                <span style="font-size:1rem; color:#777;">${d.department_name}</span>
+
+                <div class="card-buttons">
+                    <a class="btn btn-filled"
+                       onclick="openAvailabilityModal(${d.id}, { type: 'booking' })">
+                       Check Availability
+                    </a>
+
+                    <button class="btn btn-outline doctor-view-btn"
+                        data-doctor='${JSON.stringify({
+                id: d.id,
+                name: d.name,
+                specialization: d.specialization,
+                age: d.age,
+                contact: d.contact
+            })}'>
+                        View Details
+                    </button>
+                </div>
+            </div>
+        `).join("");
+        }
+
+        searchInput.addEventListener("keyup", (e) => {
+            if (e.key === "Enter") { performSearch(); }
+        });
+        deptFilter.addEventListener("change", performSearch);
+        slotFilter.addEventListener("change", performSearch);
+    });
+</script>
+
 {% endblock %}
