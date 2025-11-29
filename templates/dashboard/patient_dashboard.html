@@ -95,6 +95,37 @@
         {% endif %}
     </section>
 
+    <section class="dashboard-section">
+    <h3>Find Doctors</h3>
+
+    <div style="margin-bottom:1rem; display:flex; gap:1rem;">
+        <input type="text"
+               class="dashboard-search"
+               placeholder="Search for doctor, patients, departments, etc.">
+
+        <select id="deptFilter" class="form-select">
+            <option value="">All Departments</option>
+            {% for d in departments %}
+            <option value="{{ d.id }}">{{ d.name }}</option>
+            {% endfor %}
+        </select>
+
+        <select id="slotFilter" class="form-select">
+            <option value="">Any Time</option>
+            <option value="morning">Morning (8:00 AM to 12:00 PM)</option>
+            <option value="evening">Evening (4:00 PM to 8:00 PM)</option>
+        </select>
+
+    </div>
+
+    <div class="card" style="padding:1rem 1.5rem;">
+        <div class="card-list" id="doctorSearchList"
+             style="grid-template-columns: 1fr; gap:0.75rem; border:none;">
+        </div>
+    </div>
+
+</section>
+
 </div>
 
 {% include "components/availability_modal.html" %}
