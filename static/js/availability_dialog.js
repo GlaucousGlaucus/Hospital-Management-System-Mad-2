@@ -58,7 +58,7 @@ function buildAvailabilityGrid(data, mode = "booking") {
             slotBox.innerText = slotInfo.label;
 
             slotBox.onclick = () => {
-                if (mode === "booking") {
+                if (mode === "booking" || mode === "reschedule") {
                     if (!slotInfo.available) return;
 
                     document.querySelectorAll(".av-slot").forEach(e =>

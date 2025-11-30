@@ -63,6 +63,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (type === "patient") loadPatients();
             }
         }
+        else if (action === "reschedule") {
+            openAvailabilityModal(btn.dataset.doctor, {
+                type: "reschedule",
+                data: { appointment_id: id }
+            });
+        }
+        else if (action === "complete") {
+            await fetch(`/api/doctor/appointment/${id}/complete`, { method: "POST" });
+            loadAppointments();
+            loadPastAppointments();
+        }
+        else if (action === "cancel") {
+            await fetch(`/api/appointment/${id}/cancel`, { method: "POST" });
+            loadAppointments();
+            loadPastAppointments();
+        }
     });
 });
 
@@ -155,7 +171,7 @@ async function loadPastAppointments(list = null) {
         return;
     }
 
-    container.innerHTML = data.map(d => createAppointmentRow(d)).join("");
+    container.innerHTML = data.map(d => createAppointmentRow(d, true)).join("");
 }
 
 async function performSearch() {

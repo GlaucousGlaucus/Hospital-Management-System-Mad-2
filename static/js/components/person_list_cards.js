@@ -24,18 +24,50 @@ export function createPersonListCard(entity, role) {
 }
 
 
-export function createAppointmentRow(data) {
-    return `
-    <tr>
-        <td>${data.id}</td>
-        <td>${data.patient_name ?? "N/A"}</td>
-        <td>${data.doctor_name ?? "N/A"}</td>
-        <td>${data.doctor_dep ?? "N/A"}</td>
-        <td>
-            <a href="/api/patient/${data.patient_id}/history"
-               class="btn btn-filled btn-view">View</a>
+export function createAppointmentRow(appt, hide = false) {
+
+    const actionCell = hide ? "" : `
+        <td id="buttons-actions">
+            <div class="card-buttons">
+                <button class="btn btn-filled"
+                        style="background-color:#fff3cd; color:#856404;"
+                        data-action="reschedule"
+                        data-id="${appt.id}"
+                        data-doctor="${appt.doctor_id}">
+                    Reschedule
+                </button>
+
+                <button class="btn btn-filled"
+                        style="background-color:#d4edda; color:#155724;"
+                        data-action="complete"
+                        data-id="${appt.id}">
+                    Complete
+                </button>
+
+                <button class="btn btn-filled"
+                        style="background-color:#f8d7da; color:#721c24;"
+                        data-action="cancel"
+                        data-id="${appt.id}">
+                    Cancel
+                </button>
+            </div>
         </td>
-    </tr>
+    `;
+
+    return `
+        <tr>
+            <td>${appt.id}</td>
+            <td>${appt.patient_name}</td>
+            <td>${appt.doctor_name}</td>
+            <td>${appt.doctor_dep}</td>
+            <td>
+                <a class="btn btn-outline"
+                   href="/api/patient/${appt.patient_id}/history">
+                    View
+                </a>
+            </td>
+            ${actionCell}
+        </tr>
     `;
 }
 

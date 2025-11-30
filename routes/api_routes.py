@@ -448,7 +448,7 @@ def get_upcoming_appointments():
 
     with SessionLocal() as db:
         query = db.query(Appointment).filter(
-            Appointment.status != AppointmentStatus.COMPLETED
+            Appointment.status == AppointmentStatus.BOOKED
         )
 
         if user_type == UserTypes.DOCTOR:
@@ -465,6 +465,7 @@ def get_upcoming_appointments():
                 "doctor_name": a.doctor.name,
                 "doctor_dep": a.doctor.department.name,
                 "patient_id": a.patient.id,
+                "doctor_id": a.doctor.id,
                 "date": a.date.isoformat(),
                 "time": a.time.isoformat(),
                 "status": a.status.value,
@@ -499,6 +500,7 @@ def get_past_appointments():
                 "doctor_name": a.doctor.name,
                 "doctor_dep": a.doctor.department.name,
                 "patient_id": a.patient.id,
+                "doctor_id": a.doctor.id,
                 "date": a.date.isoformat(),
                 "time": a.time.isoformat(),
                 "status": a.status.value,

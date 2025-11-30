@@ -2,6 +2,7 @@
 {% block content %}
 
 <script type="module" src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/actions/appointments.js') }}"></script>
 
 <div class="dashboard">
 
@@ -44,6 +45,7 @@
                         <th>Doctor Name</th>
                         <th>Department</th>
                         <th>Patient History</th>
+                        <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody id="appointments-table">
@@ -76,4 +78,5 @@
 
 </div>
 
+{% include "components/availability_modal.html" %}
 {% endblock %}
