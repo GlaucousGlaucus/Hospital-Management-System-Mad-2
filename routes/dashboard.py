@@ -212,7 +212,7 @@ def new_doctor():
             flash("Doctor added successfully!", "success")
             return redirect(url_for(Routes.DASHBOARD_ROUTE))
         departments = db.query(Department).all()
-    return render_template("admin/new_doctor.html", departments=departments)
+    return render_template("admin/new_doctor.html", doctor=None, departments=departments)
 
 
 @admin_bp.route("/edit/doctor/<int:doctor_id>/", methods=["GET", "POST"])

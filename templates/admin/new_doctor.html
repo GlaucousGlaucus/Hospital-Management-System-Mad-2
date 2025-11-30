@@ -69,10 +69,12 @@
       {{ "Update Doctor" if doctor else "Create Doctor Account" }}
     </button>
 
+    {% if doctor %}
     <button type="button" class="btn btn-filled"
             onclick="openAvailabilityModal({{ doctor.id }}, { type: 'edit' })">
       Edit Availability
     </button>
+    {% endif %}
 
     <p class="alt-link">
       Return to <a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a>
