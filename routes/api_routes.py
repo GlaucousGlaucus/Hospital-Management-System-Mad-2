@@ -270,7 +270,7 @@ def reschedule_appointment(appointment_id):
     return jsonify({"status": "success"})
 
 @api_bp.route("/doctor/update_availability", methods=["POST"])
-@require_role(UserTypes.DOCTOR)
+@require_role(UserTypes.DOCTOR, UserTypes.ADMIN)
 def update_availability():
     data = request.get_json()
 

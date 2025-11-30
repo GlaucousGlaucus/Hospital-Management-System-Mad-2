@@ -21,8 +21,11 @@ function openAvailabilityModal(doctorId, context) {
 
     fetch(`/api/doctor/${doctorId}/availability_json`)
         .then(resp => resp.json())
-        .then(data => buildAvailabilityGrid(data));
+        .then(data => buildAvailabilityGrid(data, dialog_context.type));
 
+    if (dialog_context.type === "edit") {
+        document.getElementById("bookBtn").style.display = "none";
+    }
     document.getElementById("availabilityModal").style.display = "flex";
 }
 
@@ -34,7 +37,7 @@ function closeAvailabilityModal() {
     document.getElementById("bookBtn").disabled = true;
 }
 
-function buildAvailabilityGrid(data) {
+function buildAvailabilityGrid(data, mode = "booking") {
     const grid = document.getElementById("availabilityGrid");
     grid.innerHTML = "";
 
@@ -49,31 +52,68 @@ function buildAvailabilityGrid(data) {
 
         SLOT_KEYS.forEach(slot => {
             const slotInfo = day[slot];
-            console.log(slotInfo, slot);
             const slotBox = document.createElement("div");
             slotBox.className =
                 "av-slot " + (slotInfo.available ? "av-available" : "av-unavailable");
             slotBox.innerText = slotInfo.label;
 
             slotBox.onclick = () => {
-                if (!slotInfo.available) return;
+                if (mode === "booking") {
+                    if (!slotInfo.available) return;
 
-                document.querySelectorAll(".av-slot").forEach(e =>
-                    e.classList.remove("av-selected")
-                );
+                    document.querySelectorAll(".av-slot").forEach(e =>
+                        e.classList.remove("av-selected")
+                    );
 
-                slotBox.classList.add("av-selected");
-                selectedSlot = slot;
+                    slotBox.classList.add("av-selected");
+                    selectedSlot = slot;
 
-                selectedData = {
-                    doctor_id: day.doctor_id,
-                    date: day.date,
-                    slot: slot,
-                    start_time: SLOT_TIME_MAP[slot],
-                    end_time: null
-                };
+                    selectedData = {
+                        doctor_id: day.doctor_id,
+                        date: day.date,
+                        slot: slot,
+                        start_time: SLOT_TIME_MAP[slot],
+                        end_time: null
+                    };
 
-                document.getElementById("bookBtn").disabled = false;
+                    document.getElementById("bookBtn").disabled = false;
+                }
+
+                else if (mode === "edit") {
+                    slotInfo.available = !slotInfo.available;
+
+                    slotBox.classList.toggle("av-available", slotInfo.available);
+                    slotBox.classList.toggle("av-unavailable", !slotInfo.available);
+
+                    const slotKey = `${day.date}_${slot}`;
+
+                    fetch(UPDATE_AVAILABILITY_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            slot: slotKey,
+                            enabled: slotInfo.available
+                        })
+                    })
+                        .then(resp => resp.json())
+                        .then(res => {
+
+                            if (res.status === "success") {
+                                slotBox.classList.add("av-saved");
+                                setTimeout(() => slotBox.classList.remove("av-saved"), 400);
+                            } else {
+                                alert("Error updating availability");
+                                console.log(res);
+                            }
+                        })
+                        .catch(() => {
+                            alert("Network error");
+
+                            slotInfo.available = !slotInfo.available;
+                            slotBox.classList.toggle("av-available", slotInfo.available);
+                            slotBox.classList.toggle("av-unavailable", !slotInfo.available);
+                        });
+                }
             };
 
             row.appendChild(slotBox);
