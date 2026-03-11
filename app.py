@@ -1,21 +1,25 @@
 from logging import getLogger
+
 from flask import Flask, render_template
 
 import models.main_models as db_util
+from config import get_config
 from routes.dashboard import patient_bp
 from utils.setup import setup_db
 
 logger = getLogger(__name__)
 
+
 def create_app() -> Flask:
     app = Flask(__name__)
-    app.secret_key = "SECRET"
-    # app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
+    app.config.from_object(get_config())
+
     setup_db()
 
     from routes.auth import auth_login_bp, auth_signup_bp
     from routes.dashboard import dashboard_bp, admin_bp, doctor_bp
     from routes.api_routes import api_bp
+
     app.register_blueprint(auth_signup_bp)
     app.register_blueprint(auth_login_bp)
     app.register_blueprint(dashboard_bp)
@@ -32,13 +36,16 @@ def create_app() -> Flask:
         """
         db_util.SessionLocal.remove()
 
-    @app.route('/')
+    @app.route("/")
     def index():
-        return render_template('index.html')
+        # Single Jinja entry point that bootstraps the Vue UI.
+        return render_template("index.html")
 
     return app
 
+
 app = create_app()
+
 
 if __name__ == "__main__":
     app.run(debug=True)
