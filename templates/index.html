@@ -2,100 +2,869 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CliniTrak</title>
-
-    <!-- Bootstrap CSS (required framework for styling) -->
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
         rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
         crossorigin="anonymous"
     >
-
-    <!-- Project specific styles (can customize on top of Bootstrap) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
-    <!-- Vue 3 via CDN (UI framework) -->
+    <link rel="icon" href="{{ url_for('static', filename='Resources/logo.png') }}" type="image/png">
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 </head>
-<body class="bg-light">
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="#">CliniTrak</a>
-    </div>
-</nav>
-
-{% raw %}
-<div id="app" class="container pb-5">
-    <!-- Vue will control this area -->
-    <div class="row">
-        <div class="col-12 text-center mb-4">
-            <h1 class="display-4">Manage Less. Care More.</h1>
-            <p class="lead">Your complete hospital management solution.</p>
+<body class="app-body">
+<div id="app">
+    <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
+        <div class="container">
+            <button class="navbar-brand btn btn-link text-decoration-none text-white fw-semibold p-0 border-0"
+                    @click="goHome">
+                CliniTrak
+            </button>
+            <div class="ms-auto d-flex align-items-center gap-2">
+                <template v-if="bootstrap.user">
+                    <span class="badge text-bg-light text-uppercase px-3 py-2">[[ bootstrap.user.user_type ]]</span>
+                    <button class="btn btn-outline-light" @click="navigate('/dashboard/')">
+                        Dashboard
+                    </button>
+                    <button class="btn btn-light" @click="logout">
+                        Logout
+                    </button>
+                </template>
+                <template v-else>
+                    <button class="btn btn-outline-light" @click="navigate('/login/')">
+                        Login
+                    </button>
+                    <button class="btn btn-light" @click="navigate('/signup/')">
+                        Sign Up
+                    </button>
+                </template>
+            </div>
         </div>
-    </div>
+    </nav>
 
-    <div class="row g-4 mb-5">
-        <div class="col-md-4" v-for="feature in features" :key="feature.title">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">{{ feature.title }}</h5>
-                    <p class="card-text">{{ feature.description }}</p>
+    <main class="container py-4 py-lg-5">
+        <div v-if="alerts.length" class="mb-4">
+            <div v-for="alert in alerts" :key="alert.id" class="alert d-flex justify-content-between align-items-center"
+                 :class="'alert-' + alert.variant">
+                <span>[[ alert.message ]]</span>
+                <button type="button" class="btn-close" @click="dismissAlert(alert.id)"></button>
+            </div>
+        </div>
+
+        <div v-if="loading" class="py-5 text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-secondary mt-3 mb-0">Loading application data...</p>
+        </div>
+
+        <template v-else-if="!bootstrap.user">
+            <section class="hero-shell mb-5">
+                <div class="row g-4 align-items-center">
+                    <div class="col-lg-7">
+                        <span class="eyebrow">Flask API + Vue UI</span>
+                        <h1 class="display-4 fw-semibold mt-3 mb-3">Hospital operations rebuilt as a single-page application.</h1>
+                        <p class="lead text-secondary">
+                            This repo now uses Flask for JSON APIs, Vue 3 for the full UI, Bootstrap for the component system,
+                            SQLite for persistence, Redis for caching, and Celery for background jobs.
+                        </p>
+                        <div class="d-flex gap-3 flex-wrap mt-4">
+                            <button class="btn btn-primary btn-lg px-4" @click="navigate('/login/')">Access Portal</button>
+                            <button class="btn btn-outline-primary btn-lg px-4" @click="navigate('/signup/')">Create Patient Account</button>
+                        </div>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="card shadow-sm border-0 hero-card">
+                            <div class="card-body p-4 p-lg-5">
+                                <div class="d-flex gap-2 mb-4">
+                                    <button class="btn flex-fill" :class="authMode === 'login' ? 'btn-primary' : 'btn-outline-primary'"
+                                            @click="setAuthMode('login')">
+                                        Login
+                                    </button>
+                                    <button class="btn flex-fill" :class="authMode === 'signup' ? 'btn-primary' : 'btn-outline-primary'"
+                                            @click="setAuthMode('signup')">
+                                        Sign Up
+                                    </button>
+                                </div>
+
+                                <form v-if="authMode === 'login'" @submit.prevent="submitLogin" class="vstack gap-3">
+                                    <div>
+                                        <label class="form-label">Role</label>
+                                        <select class="form-select" v-model="authForm.user_type">
+                                            <option value="patient">Patient</option>
+                                            <option value="doctor">Doctor</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Email</label>
+                                        <input class="form-control" type="email" v-model="authForm.email" required>
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Password</label>
+                                        <input class="form-control" type="password" v-model="authForm.password" required>
+                                    </div>
+                                    <button class="btn btn-primary btn-lg" type="submit">Login</button>
+                                </form>
+
+                                <form v-else @submit.prevent="submitSignup" class="vstack gap-3">
+                                    <div>
+                                        <label class="form-label">Full Name</label>
+                                        <input class="form-control" type="text" v-model="signupForm.name" required>
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Email</label>
+                                        <input class="form-control" type="email" v-model="signupForm.email" required>
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Password</label>
+                                        <input class="form-control" type="password" v-model="signupForm.password" required>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Date of Birth</label>
+                                            <input class="form-control" type="date" v-model="signupForm.dob" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Contact</label>
+                                            <input class="form-control" type="text" v-model="signupForm.contact" required>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary btn-lg" type="submit">Create Account</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="row g-4">
+                <div class="col-md-4" v-for="feature in features" :key="feature.title">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h2 class="h5">[[ feature.title ]]</h2>
+                            <p class="text-secondary mb-0">[[ feature.description ]]</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </template>
+
+        <template v-else>
+            <div class="d-flex justify-content-between align-items-start flex-column flex-lg-row gap-3 mb-4">
+                <div>
+                    <span class="eyebrow">Workspace</span>
+                    <h1 class="h2 mt-2 mb-1">[[ viewTitle ]]</h1>
+                    <p class="text-secondary mb-0">[[ viewSubtitle ]]</p>
+                </div>
+                <div class="text-lg-end">
+                    <div class="fw-semibold">[[ bootstrap.user.name ]]</div>
+                    <div class="text-secondary">[[ bootstrap.user.email ]]</div>
+                </div>
+            </div>
+
+            <template v-if="route.name === 'dashboard' && bootstrap.user.user_type === 'admin' && dashboard">
+                <section class="row g-4 mb-4">
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-body">
+                                <div class="text-secondary small">Doctors</div>
+                                <div class="display-6 fw-semibold">[[ dashboard.doctors.length ]]</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-body">
+                                <div class="text-secondary small">Patients</div>
+                                <div class="display-6 fw-semibold">[[ dashboard.patients.length ]]</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-body">
+                                <div class="text-secondary small">Upcoming Appointments</div>
+                                <div class="display-6 fw-semibold">[[ dashboard.upcoming_appointments.length ]]</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-lg-5">
+                                <label class="form-label">Search doctors, patients, or appointments</label>
+                                <input class="form-control" type="text" v-model="adminSearch.q" @keyup.enter="runAdminSearch">
+                            </div>
+                            <div class="col-lg-7 d-flex flex-wrap gap-2">
+                                <button class="btn btn-primary" @click="runAdminSearch">Search</button>
+                                <button class="btn btn-outline-primary" @click="navigate('/admin/new/doctor')">Add Doctor</button>
+                                <button class="btn btn-outline-primary" @click="navigate('/admin/new/patient')">Add Patient</button>
+                                <button class="btn btn-outline-secondary" @click="startBatchReport">Run Daily Batch Summary</button>
+                            </div>
+                        </div>
+                        <div v-if="batchTask" class="mt-3 small">
+                            <span class="fw-semibold">Batch Task:</span> [[ batchTask.state ]]
+                            <span v-if="batchTask.result"> | [[ JSON.stringify(batchTask.result) ]]</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section v-if="adminSearch.results" class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">Search Results</h2>
+                        <div class="row g-3">
+                            <div class="col-lg-4">
+                                <h3 class="h6">Doctors</h3>
+                                <ul class="list-group">
+                                    <li class="list-group-item" v-for="doctor in adminSearch.results.doctors" :key="'s-doc-' + doctor.id">
+                                        [[ doctor.name ]] <span class="text-secondary">([[ doctor.department_name || 'No department' ]])</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-lg-4">
+                                <h3 class="h6">Patients</h3>
+                                <ul class="list-group">
+                                    <li class="list-group-item" v-for="patient in adminSearch.results.patients" :key="'s-pat-' + patient.id">
+                                        [[ patient.name ]] <span class="text-secondary">([[ patient.email ]])</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-lg-4">
+                                <h3 class="h6">Appointments</h3>
+                                <ul class="list-group">
+                                    <li class="list-group-item" v-for="appt in adminSearch.results.appointments" :key="'s-app-' + appt.id">
+                                        [[ appt.patient.name ]] with [[ appt.doctor.name ]]
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 class="h5 mb-0">Doctors</h2>
+                            <button class="btn btn-sm btn-outline-primary" @click="navigate('/admin/new/doctor')">New Doctor</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Department</th>
+                                    <th>Contact</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="doctor in dashboard.doctors" :key="'doctor-' + doctor.id">
+                                    <td>[[ doctor.name ]]</td>
+                                    <td>[[ doctor.department_name || 'Unassigned' ]]</td>
+                                    <td>[[ doctor.contact ]]</td>
+                                    <td>
+                                        <span class="badge" :class="doctor.is_blacklisted ? 'text-bg-danger' : 'text-bg-success'">
+                                            [[ doctor.is_blacklisted ? 'Blacklisted' : 'Active' ]]
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end flex-wrap gap-2">
+                                            <button class="btn btn-sm btn-outline-primary" @click="navigate('/admin/edit/doctor/' + doctor.id + '/')">Edit</button>
+                                            <button class="btn btn-sm btn-outline-warning"
+                                                    @click="toggleBlacklist('doctor', doctor.id, !doctor.is_blacklisted)">
+                                                [[ doctor.is_blacklisted ? 'Restore' : 'Blacklist' ]]
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" @click="deleteEntity('doctor', doctor.id)">Delete</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 class="h5 mb-0">Patients</h2>
+                            <button class="btn btn-sm btn-outline-primary" @click="navigate('/admin/new/patient')">New Patient</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="patient in dashboard.patients" :key="'patient-' + patient.id">
+                                    <td>[[ patient.name ]]</td>
+                                    <td>[[ patient.email ]]</td>
+                                    <td>
+                                        <span class="badge" :class="patient.is_blacklisted ? 'text-bg-danger' : 'text-bg-success'">
+                                            [[ patient.is_blacklisted ? 'Blacklisted' : 'Active' ]]
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end flex-wrap gap-2">
+                                            <button class="btn btn-sm btn-outline-primary" @click="navigate('/admin/edit/patient/' + patient.id)">Edit</button>
+                                            <button class="btn btn-sm btn-outline-secondary" @click="openPatientHistory(patient.id)">History</button>
+                                            <button class="btn btn-sm btn-outline-warning"
+                                                    @click="toggleBlacklist('patient', patient.id, !patient.is_blacklisted)">
+                                                [[ patient.is_blacklisted ? 'Restore' : 'Blacklist' ]]
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" @click="deleteEntity('patient', patient.id)">Delete</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">Upcoming Appointments</h2>
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Doctor</th>
+                                    <th>Department</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="appt in dashboard.upcoming_appointments" :key="'upcoming-' + appt.id">
+                                    <td>[[ appt.patient.name ]]</td>
+                                    <td>[[ appt.doctor.name ]]</td>
+                                    <td>[[ appt.doctor.department_name ]]</td>
+                                    <td>[[ formatDate(appt.date) ]]</td>
+                                    <td>[[ formatTime(appt.time) ]]</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </template>
+
+            <template v-else-if="route.name === 'dashboard' && bootstrap.user.user_type === 'doctor' && dashboard">
+                <section class="row g-4 mb-4">
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <h2 class="h5">Profile</h2>
+                                <p class="mb-1 fw-semibold">[[ dashboard.doctor.name ]]</p>
+                                <p class="text-secondary mb-1">[[ dashboard.doctor.specialization ]]</p>
+                                <p class="text-secondary mb-3">[[ dashboard.doctor.department_name ]]</p>
+                                <button class="btn btn-outline-primary" @click="navigate('/doctor/edit')">Edit Profile</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="text-secondary small">Upcoming Appointments</div>
+                                <div class="display-6 fw-semibold">[[ dashboard.upcoming_appointments.length ]]</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="text-secondary small">Assigned Patients</div>
+                                <div class="display-6 fw-semibold">[[ dashboard.patients.length ]]</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">Upcoming Appointments</h2>
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="appt in dashboard.upcoming_appointments" :key="'doc-appt-' + appt.id">
+                                    <td>[[ appt.patient.name ]]</td>
+                                    <td>[[ formatDate(appt.date) ]]</td>
+                                    <td>[[ formatTime(appt.time) ]]</td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end flex-wrap gap-2">
+                                            <button class="btn btn-sm btn-outline-primary" @click="navigate('/doctor/update_history/' + appt.id)">Update History</button>
+                                            <button class="btn btn-sm btn-outline-secondary" @click="openAvailabilityModal(appt.doctor.id, 'reschedule', appt.id)">Reschedule</button>
+                                            <button class="btn btn-sm btn-outline-success" @click="markComplete(appt.id)">Complete</button>
+                                            <button class="btn btn-sm btn-outline-danger" @click="cancelAppointment(appt.id)">Cancel</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">Assigned Patients</h2>
+                        <div class="row g-3">
+                            <div class="col-md-6 col-xl-4" v-for="patient in dashboard.patients" :key="'doc-patient-' + patient.id">
+                                <div class="border rounded-4 p-3 h-100">
+                                    <div class="fw-semibold">[[ patient.name ]]</div>
+                                    <div class="text-secondary mb-3">[[ patient.email ]]</div>
+                                    <button class="btn btn-outline-primary btn-sm" @click="openPatientHistory(patient.id)">View History</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">Weekly Availability</h2>
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Morning</th>
+                                    <th>Afternoon</th>
+                                    <th>Evening</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="row in dashboard.availability" :key="'availability-' + row.date">
+                                    <td>[[ row.date_display ]]</td>
+                                    <td><input class="form-check-input" type="checkbox" :checked="row.morning" @change="toggleAvailability(row.date, 'morning', $event.target.checked)"></td>
+                                    <td><input class="form-check-input" type="checkbox" :checked="row.afternoon" @change="toggleAvailability(row.date, 'afternoon', $event.target.checked)"></td>
+                                    <td><input class="form-check-input" type="checkbox" :checked="row.evening" @change="toggleAvailability(row.date, 'evening', $event.target.checked)"></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </template>
+
+            <template v-else-if="route.name === 'dashboard' && bootstrap.user.user_type === 'patient' && dashboard">
+                <section class="row g-4 mb-4">
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <h2 class="h5">Profile</h2>
+                                <p class="mb-1 fw-semibold">[[ dashboard.patient.name ]]</p>
+                                <p class="text-secondary mb-1">[[ dashboard.patient.email ]]</p>
+                                <p class="text-secondary mb-3">[[ dashboard.patient.contact ]]</p>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button class="btn btn-outline-primary" @click="navigate('/patient/edit/profile')">Edit Profile</button>
+                                    <button class="btn btn-outline-secondary" @click="openPatientHistory(dashboard.patient.id)">Medical History</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <h2 class="h5 mb-3">Upcoming Appointments</h2>
+                                <div class="table-responsive">
+                                    <table class="table align-middle">
+                                        <thead>
+                                        <tr>
+                                            <th>Doctor</th>
+                                            <th>Department</th>
+                                            <th>Date</th>
+                                            <th>Time</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr v-for="appt in dashboard.upcoming_appointments" :key="'patient-appt-' + appt.id">
+                                            <td>[[ appt.doctor.name ]]</td>
+                                            <td>[[ appt.doctor.department_name ]]</td>
+                                            <td>[[ formatDate(appt.date) ]]</td>
+                                            <td>[[ formatTime(appt.time) ]]</td>
+                                            <td class="text-end">
+                                                <div class="d-flex justify-content-end flex-wrap gap-2">
+                                                    <button class="btn btn-sm btn-outline-secondary" @click="openAvailabilityModal(appt.doctor.id, 'reschedule', appt.id)">Reschedule</button>
+                                                    <button class="btn btn-sm btn-outline-danger" @click="cancelAppointment(appt.id)">Cancel</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">Departments</h2>
+                        <div class="row g-3">
+                            <div class="col-md-6 col-xl-4" v-for="department in dashboard.departments" :key="'dept-' + department.id">
+                                <button class="btn btn-light department-tile text-start w-100 h-100" @click="navigate('/patient/department/' + department.id)">
+                                    <span class="fw-semibold d-block">[[ department.name ]]</span>
+                                    <span class="text-secondary small">Browse doctors and availability</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">Find Doctors</h2>
+                        <div class="row g-3 mb-4">
+                            <div class="col-lg-4">
+                                <input class="form-control" type="text" v-model="patientSearch.q" placeholder="Name, specialization, or department">
+                            </div>
+                            <div class="col-lg-3">
+                                <select class="form-select" v-model="patientSearch.department">
+                                    <option value="">All departments</option>
+                                    <option v-for="department in bootstrap.departments" :key="'search-dept-' + department.id" :value="String(department.id)">
+                                        [[ department.name ]]
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-lg-2">
+                                <select class="form-select" v-model="patientSearch.slot">
+                                    <option value="">Any slot</option>
+                                    <option value="morning">Morning</option>
+                                    <option value="afternoon">Afternoon</option>
+                                    <option value="evening">Evening</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-3">
+                                <input class="form-control" type="date" v-model="patientSearch.date">
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 mb-4">
+                            <button class="btn btn-primary" @click="runPatientSearch">Search Doctors</button>
+                            <button class="btn btn-outline-secondary" @click="resetPatientSearch">Reset</button>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-lg-6" v-for="doctor in patientSearch.results" :key="'search-doc-' + doctor.id">
+                                <div class="border rounded-4 p-3 h-100">
+                                    <div class="d-flex justify-content-between gap-3">
+                                        <div>
+                                            <div class="fw-semibold">[[ doctor.name ]]</div>
+                                            <div class="text-secondary">[[ doctor.specialization ]]</div>
+                                            <div class="small text-secondary">[[ doctor.department_name ]]</div>
+                                        </div>
+                                        <div class="text-end small text-secondary">
+                                            <div>Age: [[ doctor.age || 'N/A' ]]</div>
+                                            <div>[[ doctor.contact || 'No contact' ]]</div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <button class="btn btn-outline-primary btn-sm" @click="openAvailabilityModal(doctor.id, 'book')">Check Availability</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </template>
+
+            <template v-else-if="route.name === 'department' && selectedDepartment">
+                <section class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-4 gap-3">
+                            <div>
+                                <h2 class="h4 mb-2">[[ selectedDepartment.department.name ]]</h2>
+                                <p class="text-secondary mb-0">[[ selectedDepartment.department.description ]]</p>
+                            </div>
+                            <button class="btn btn-outline-primary" @click="navigate('/dashboard/')">Back to Dashboard</button>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-lg-6" v-for="doctor in selectedDepartment.doctors" :key="'dept-doc-' + doctor.id">
+                                <div class="border rounded-4 p-3 h-100">
+                                    <div class="fw-semibold">[[ doctor.name ]]</div>
+                                    <div class="text-secondary">[[ doctor.specialization ]]</div>
+                                    <div class="small text-secondary mb-3">[[ doctor.contact ]]</div>
+                                    <button class="btn btn-outline-primary btn-sm" @click="openAvailabilityModal(doctor.id, 'book')">Check Availability</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </template>
+
+            <template v-else-if="route.name === 'history' && patientHistory">
+                <section class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-4 gap-3">
+                            <div>
+                                <h2 class="h4 mb-1">[[ patientHistory.patient.name ]]</h2>
+                                <div class="text-secondary">
+                                    Doctors: [[ patientHistory.doctor_names.join(', ') || 'None' ]]
+                                </div>
+                                <div class="text-secondary">
+                                    Departments: [[ patientHistory.departments.join(', ') || 'None' ]]
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary" @click="navigate('/dashboard/')">Back</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Visit</th>
+                                    <th>Date</th>
+                                    <th>Doctor</th>
+                                    <th>Diagnosis</th>
+                                    <th>Prescription</th>
+                                    <th>Medicines</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="visit in patientHistory.visits" :key="'visit-' + visit.appointment_id">
+                                    <td>[[ visit.no ]]</td>
+                                    <td>[[ formatDate(visit.date) ]]</td>
+                                    <td>[[ visit.doctor_name || 'N/A' ]]</td>
+                                    <td>[[ visit.diagnosis || 'N/A' ]]</td>
+                                    <td>[[ visit.prescription || 'N/A' ]]</td>
+                                    <td>
+                                        <div v-if="visit.medicines.length">
+                                            <div v-for="medicine in visit.medicines" :key="visit.appointment_id + '-' + medicine.name">
+                                                [[ medicine.name ]] ([[ medicine.morning ]]/[[ medicine.afternoon ]]/[[ medicine.night ]])
+                                            </div>
+                                        </div>
+                                        <span v-else class="text-secondary">None</span>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </template>
+
+            <template v-else-if="(route.name === 'doctorForm' || route.name === 'patientForm' || route.name === 'profileForm') && activeForm">
+                <section class="card border-0 shadow-sm">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2 class="h4 mb-0">[[ formMeta.title ]]</h2>
+                            <button class="btn btn-outline-primary" @click="navigate('/dashboard/')">Back</button>
+                        </div>
+                        <form @submit.prevent="submitActiveForm" class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Name</label>
+                                <input class="form-control" type="text" v-model="activeForm.name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input class="form-control" type="email" v-model="activeForm.email" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date of Birth</label>
+                                <input class="form-control" type="date" v-model="activeForm.dob" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Contact</label>
+                                <input class="form-control" type="text" v-model="activeForm.contact" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Password <span class="text-secondary" v-if="activeForm.id">(optional on edit)</span></label>
+                                <input class="form-control" type="password" v-model="activeForm.password" :required="!activeForm.id && route.name !== 'profileForm'">
+                            </div>
+                            <div class="col-md-6" v-if="showDoctorFields">
+                                <label class="form-label">Specialization</label>
+                                <input class="form-control" type="text" v-model="activeForm.specialization">
+                            </div>
+                            <div class="col-md-6" v-if="showDoctorFields">
+                                <label class="form-label">Department</label>
+                                <select class="form-select" v-model="activeForm.department_id">
+                                    <option value="">Select Department</option>
+                                    <option v-for="department in bootstrap.departments" :key="'form-dept-' + department.id" :value="department.id">
+                                        [[ department.name ]]
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <button class="btn btn-primary" type="submit">[[ formMeta.submitLabel ]]</button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+            </template>
+
+            <template v-else-if="route.name === 'treatmentForm' && treatmentForm.appointment">
+                <section class="card border-0 shadow-sm">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h2 class="h4 mb-1">Update Patient History</h2>
+                                <p class="text-secondary mb-0">
+                                    [[ treatmentForm.appointment.patient.name ]] with [[ treatmentForm.appointment.doctor.name ]]
+                                </p>
+                            </div>
+                            <button class="btn btn-outline-primary" @click="navigate('/dashboard/')">Back</button>
+                        </div>
+                        <form @submit.prevent="submitTreatmentForm" class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Visit Type</label>
+                                <input class="form-control" type="text" v-model="treatmentForm.visit_type">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Test Done</label>
+                                <input class="form-control" type="text" v-model="treatmentForm.test_done">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Diagnosis</label>
+                                <textarea class="form-control" rows="4" v-model="treatmentForm.diagnosis"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Prescription</label>
+                                <textarea class="form-control" rows="4" v-model="treatmentForm.prescription"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Doctor Notes</label>
+                                <textarea class="form-control" rows="3" v-model="treatmentForm.notes"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h3 class="h5 mb-0">Medicines</h3>
+                                    <button class="btn btn-outline-primary btn-sm" type="button" @click="addMedicineRow">Add Medicine</button>
+                                </div>
+                                <div class="vstack gap-3">
+                                    <div class="border rounded-4 p-3" v-for="(medicine, index) in treatmentForm.medicines" :key="'medicine-' + index">
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Name</label>
+                                                <input class="form-control" type="text" v-model="medicine.name">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Morning</label>
+                                                <input class="form-control" type="number" min="0" max="3" v-model.number="medicine.morning">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Afternoon</label>
+                                                <input class="form-control" type="number" min="0" max="3" v-model.number="medicine.afternoon">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Night</label>
+                                                <input class="form-control" type="number" min="0" max="3" v-model.number="medicine.night">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">Days</label>
+                                                <input class="form-control" type="number" min="1" v-model.number="medicine.duration_days">
+                                            </div>
+                                            <div class="col-md-10">
+                                                <label class="form-label">Instructions</label>
+                                                <input class="form-control" type="text" v-model="medicine.instructions">
+                                            </div>
+                                            <div class="col-md-2 d-flex align-items-end">
+                                                <button class="btn btn-outline-danger w-100" type="button" @click="removeMedicineRow(index)">Remove</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p v-if="!treatmentForm.medicines.length" class="text-secondary mb-0">No medicines added.</p>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button class="btn btn-primary" type="submit">Save History</button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+            </template>
+        </template>
+    </main>
+
+    <div v-if="availabilityModal.open" class="modal-backdrop fade show"></div>
+    <div v-if="availabilityModal.open" class="modal d-block" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h2 class="modal-title h5 mb-0">Doctor Availability</h2>
+                    <button type="button" class="btn-close" @click="closeAvailabilityModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Morning</th>
+                                <th>Afternoon</th>
+                                <th>Evening</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="row in availabilityModal.schedule" :key="'modal-' + row.date">
+                                <td>[[ row.date_display ]]</td>
+                                <td>
+                                    <button class="btn btn-sm w-100"
+                                            :class="availabilityButtonClass(row, 'morning')"
+                                            :disabled="!row.morning"
+                                            @click="selectAvailability(row.date, 'morning')">
+                                        [[ row.morning ? 'Select' : 'Unavailable' ]]
+                                    </button>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm w-100"
+                                            :class="availabilityButtonClass(row, 'afternoon')"
+                                            :disabled="!row.afternoon"
+                                            @click="selectAvailability(row.date, 'afternoon')">
+                                        [[ row.afternoon ? 'Select' : 'Unavailable' ]]
+                                    </button>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm w-100"
+                                            :class="availabilityButtonClass(row, 'evening')"
+                                            :disabled="!row.evening"
+                                            @click="selectAvailability(row.date, 'evening')">
+                                        [[ row.evening ? 'Select' : 'Unavailable' ]]
+                                    </button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3" v-if="availabilityModal.selectedDate">
+                        <label class="form-label">Visit Type</label>
+                        <input class="form-control" type="text" v-model="availabilityModal.visitType"
+                               :disabled="availabilityModal.action !== 'book'">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" @click="closeAvailabilityModal">Close</button>
+                    <button class="btn btn-primary" :disabled="!availabilityModal.selectedDate" @click="confirmAvailabilityAction">
+                        [[ availabilityModal.action === 'reschedule' ? 'Reschedule Appointment' : 'Book Appointment' ]]
+                    </button>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="row justify-content-center">
-        <div class="col-md-8 text-center">
-            <h2 class="h4 mb-3">Get Started</h2>
-            <p class="text-muted mb-4">
-                Use the existing login and signup pages while the API-first Vue UI is being expanded.
-            </p>
-            <div class="d-flex justify-content-center gap-3 flex-wrap">
-                <a href="{{ url_for('auth_login.login') }}" class="btn btn-outline-primary btn-lg">
-                    Login
-                </a>
-                <a href="{{ url_for('auth_signup.signup') }}" class="btn btn-primary btn-lg">
-                    Sign Up
-                </a>
-            </div>
-        </div>
-    </div>
 </div>
-{% endraw %}
 
-<script>
-    const { createApp } = Vue;
-
-    createApp({
-        data() {
-            return {
-                features: [
-                    {
-                        title: "Fast & Efficient",
-                        description: "Reduce paperwork, avoid mistakes and speed up operations."
-                    },
-                    {
-                        title: "Secure by Design",
-                        description: "Role-based access to safeguard patient and hospital data."
-                    },
-                    {
-                        title: "User Friendly",
-                        description: "Clean, intuitive interface designed for all skill levels."
-                    }
-                ]
-            };
-        }
-    }).mount("#app");
-</script>
-
-<!-- Bootstrap JS (optional, for interactive components) -->
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
     integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
     crossorigin="anonymous"
 ></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

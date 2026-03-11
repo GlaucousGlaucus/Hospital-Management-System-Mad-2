@@ -1,224 +1,64 @@
-# CliniTrak — Hospital Management System
+# CliniTrak
 
-CliniTrak is a full-stack Hospital Management System (HMS) built using Flask, SQLite, SQLAlchemy ORM, Bootstrap, and Jinja2. It provides operational workflows for Admins, Doctors, and Patients, including appointment scheduling, departmental management, patient history, and availability handling.
+CliniTrak is now structured as a Flask API with a Vue 3 single-page frontend mounted from one Jinja2 entry template. The active stack is:
 
-This project is fully modular, organized using Flask Blueprints, and includes a supporting REST-style API for asynchronous front-end interactions.
+- Flask for the API layer
+- Vue 3 via CDN for the UI
+- Jinja2 only for the SPA entry point
+- Bootstrap 5 for layout and styling
+- SQLite through SQLAlchemy for persistence
+- Redis for cache storage
+- Redis + Celery for background batch jobs
 
----
+## Architecture
 
-## Features Overview
+- `templates/index.html`: the only active template entry point
+- `static/js/app.js`: Vue application for auth, dashboards, forms, history, and scheduling
+- `routes/auth.py`: SPA entry routes plus JSON auth endpoints
+- `routes/api_routes.py`: API-first business endpoints for admin, doctor, and patient workflows
+- `routes/dashboard.py`: legacy page URLs mapped to the SPA entry for compatibility
+- `tasks.py`: Celery batch task for a daily operational summary
+- `utils/cache.py`: Redis-backed caching helpers with graceful fallback if Redis is unavailable
 
-### Admin
+## Primary API Endpoints
 
-* Manage departments, doctors, and patients
-* View and audit all appointments
-* Blacklist or unblacklist users
-* Adjust doctor availability
-* Global search across system data
+- `POST /api/auth/login`
+- `POST /api/auth/signup`
+- `POST /api/auth/logout`
+- `GET /api/bootstrap`
+- `GET /api/dashboard`
+- `GET /api/departments/<id>`
+- `GET /api/patients/<id>/history`
+- `GET/PUT /api/appointments/<id>/history`
+- `POST /api/appointments/book`
+- `POST /api/appointment/<id>/reschedule`
+- `POST /api/appointment/<id>/cancel`
+- `POST /api/doctor/appointment/<id>/complete`
+- `POST /api/doctor/update_availability`
+- `GET /api/doctor/<id>/availability_json`
+- `GET /api/search`
+- `POST /api/batch/reports/daily-summary`
+- `GET /api/batch/tasks/<task_id>`
 
-### Doctor
+## Run
 
-* View upcoming appointments
-* Update patient history
-* Reschedule appointments
-* Manage availability slots
-
-### Patient
-
-* Book new appointments
-* Reschedule or cancel existing ones
-* View medical history
-* Manage profile details
-
----
-
-## Technology Stack
-
-| Technology         | Purpose                                  |
-| ------------------ | ---------------------------------------- |
-| Flask              | Backend framework                        |
-| SQLite             | Database                                 |
-| SQLAlchemy         | ORM for Python–DB mapping                |
-| Jinja2             | Templating engine                        |
-| Bootstrap 5        | Styling and layout                       |
-| Chart.js           | Dashboard charts                         |
-| BrowserSync + Gulp | Front-end auto-reload during development |
-
----
-
-## Project Structure
-
-```
-Hospital-Management-System/
-│
-├── app.py
-├── gulpfile.js
-├── hospital.db
-├── package.json
-├── package-lock.json
-├── requirements.txt
-├── README.md
-├── .gitignore
-│
-├── models/
-│   └── main_models.py
-│
-├── routes/
-│   ├── __init__.py
-│   ├── api_routes.py
-│   ├── auth.py
-│   └── dashboard.py
-│
-├── services/
-│   └── doctor_service.py
-│
-├── static/
-│   ├── css/
-│   ├── js/
-│   └── Resources/
-│
-├── templates/
-│   ├── admin/
-│   │   ├── new_doctor.html
-│   │   └── patient_update.html
-│   │
-│   ├── components/
-│   │   ├── availability_modal.html
-│   │   └── doctor_modal.html
-│   │
-│   ├── dashboard/
-│   │   └── (dashboard templates...)
-│   │
-│   ├── doctor/
-│   │   └── (doctor templates...)
-│   │
-│   ├── patient/
-│   │   ├── base.html
-│   │   ├── base_account_login.html
-│   │   ├── index.html
-│   │   ├── login.html
-│   │   └── signup.html
-│
-└── utils/
-    ├── constants.py
-    ├── helper_functions.py
-    ├── sample_data.py
-    └── setup.py
-```
-
----
-
-## API Routes (Important Endpoints)
-
-The project is organized into modular Flask blueprints:
-
-### **Authentication**
-
-* `/login` – login
-* `/logout` – logout
-* `/signup` – patient registration
-
-### **Dashboard**
-
-* `/dashboard` – loads Admin / Doctor / Patient dashboard based on role
-
-### **Admin**
-
-* `/admin/new/doctor` – add doctor
-* `/admin/edit/doctor/<id>` – edit doctor
-* `/admin/new/patient` – add patient
-* `/admin/edit/patient/<id>` – edit patient
-
-### **Doctor**
-
-* `/doctor/update_history/<appointment_id>` – update patient treatment
-* `/doctor/edit` – edit own profile (redirects to admin edit)
-
-### **Patient**
-
-* `/patient/department/<id>` – view department
-* `/patient/edit/profile` – edit profile
-
-### **API (`/api/...`)**
-
-* `/api/<entity>/all` – list doctors/patients/appointments
-* `/api/book_appointment` – book appointment
-* `/api/appointment/<id>/reschedule`
-* `/api/appointment/<id>/cancel`
-* `/api/doctor/update_availability`
-* `/api/doctor/<id>/availability_json`
-* `/api/search` – admin/patient search
-* `/api/blacklist/<entity>/<id>`
-* `/api/unblacklist/<entity>/<id>`
-
-
----
-
-## Running the Project
-
-### 1. Install Dependencies
-
-The project uses a standard `requirements.txt` file.
-
-Install everything using:
+Install Python dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-If using a virtual environment:
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
----
-
-## Running the Flask Application
-
-Run the development server:
+Start Flask:
 
 ```bash
 python app.py
 ```
 
-The backend will run on:
-
-```
-http://localhost:5000
-```
-
----
-
-## Gulp + BrowserSync Auto-Reload Setup
-
-This project includes a Gulp pipeline for automatic page reload during development.
-Files watched include:
-
-* All HTML templates
-* Static CSS and JS files
-* Python source files
-
-### Running Gulp
-
-Install Node dependencies once:
+Optional Redis + Celery setup for cache and batch jobs:
 
 ```bash
-npm install
+redis-server
+celery -A celery_app.celery_app worker --loglevel=info
 ```
 
-Run BrowserSync:
-
-```bash
-gulp
-```
-
-Now access:
-
-```
-http://localhost:5001
-```
-
-BrowserSync will proxy Flask’s server and automatically reload the browser when templates, static files, or Python files change.
+Then open `http://localhost:5000`.

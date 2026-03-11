@@ -1,117 +1,143 @@
+from __future__ import annotations
+
 from datetime import date
 from logging import getLogger
 
-from flask import (
-    Blueprint, flash, redirect, render_template,
-    request, session, url_for
-)
+from flask import Blueprint, jsonify, render_template, request, session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from models.main_models import Admin, Department, Doctor, Patient, SessionLocal
-from utils.constants import Routes, UserTypes, SessionInfo
+from models.main_models import Admin, Patient, Doctor, SessionLocal
+from utils.constants import SessionInfo, UserTypes
 
 logger = getLogger(__name__)
+
 auth_signup_bp = Blueprint("auth_signup", __name__, url_prefix="/signup")
 auth_login_bp = Blueprint("auth_login", __name__, url_prefix="/login")
+auth_api_bp = Blueprint("auth_api", __name__, url_prefix="/api/auth")
 
-@auth_login_bp.route("/logout")
+
+def _serialize_session_user():
+    user_id = session.get(SessionInfo.USER_ID)
+    if not user_id:
+        return None
+
+    return {
+        "id": user_id,
+        "name": session.get(SessionInfo.USER_NAME),
+        "email": session.get(SessionInfo.USER_EMAIL),
+        "user_type": session.get(SessionInfo.USER_TYPE),
+    }
+
+
+def _find_user(db, email: str, user_type: str):
+    model_map = {
+        UserTypes.ADMIN: Admin,
+        UserTypes.DOCTOR: Doctor,
+        UserTypes.PATIENT: Patient,
+    }
+    model = model_map.get(user_type)
+    if not model:
+        return None
+    return db.query(model).filter_by(email=email).first()
+
+
+def _set_session_for(user, user_type: str):
+    session.clear()
+    session[SessionInfo.USER_ID] = user.id
+    session[SessionInfo.USER_NAME] = user.name
+    session[SessionInfo.USER_EMAIL] = user.email
+    session[SessionInfo.USER_TYPE] = user_type
+
+
+@auth_login_bp.route("/", methods=["GET"])
+def login():
+    return render_template("index.html")
+
+
+@auth_signup_bp.route("/", methods=["GET"])
+def signup():
+    return render_template("index.html")
+
+
+@auth_login_bp.route("/logout", methods=["GET"])
 def logout():
     session.clear()
-    return redirect(url_for("auth_login.login"))
+    return render_template("index.html")
 
-@auth_login_bp.route("/", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        email: str = request.form.get("email", "").strip()
-        password: str = request.form.get("password", "")
-        user_type: str = request.form.get("user_type", "")
 
-        if not email or not password or not user_type:
-            flash("Please fill all fields", "error")
-            return redirect(url_for("auth_login.login"))
+@auth_api_bp.route("/session", methods=["GET"])
+def current_session():
+    return jsonify({"user": _serialize_session_user()})
 
-        if user_type not in (UserTypes.ADMIN, UserTypes.DOCTOR, UserTypes.PATIENT):
-            flash("Invalid user type", "error")
-            return redirect(url_for("auth_login.login"))
 
-        with SessionLocal() as db:
-            match user_type:
-                case UserTypes.DOCTOR:
-                    user = db.query(Doctor).filter_by(email=email).first()
-                case UserTypes.PATIENT:
-                    user = db.query(Patient).filter_by(email=email).first()
-                case UserTypes.ADMIN:
-                    user = db.query(Admin).filter_by(email=email).first()
-                case _:
-                    user = None
+@auth_api_bp.route("/login", methods=["POST"])
+def login_api():
+    data = request.get_json(silent=True) or {}
+    email = data.get("email", "").strip()
+    password = data.get("password", "")
+    user_type = data.get("user_type", "")
 
-        if not user:
-            flash("Invalid credentials", "error")
-            return redirect(url_for("auth_login.login"))
-
-        if hasattr(user, "is_blacklisted") and user.is_blacklisted:
-            flash("Your account has been disabled by admin.", "error")
-            return redirect(url_for("auth_login.login"))
-
-        if not check_password_hash(user.password, password):
-            flash("Invalid credentials", "error")
-            return redirect(url_for("auth_login.login"))
-
-        session.clear()
-        session[SessionInfo.USER_ID] = user.id
-        session[SessionInfo.USER_NAME] = user.name
-        session[SessionInfo.USER_EMAIL] = user.email
-        session[SessionInfo.USER_TYPE] = user_type
-
-        return redirect(url_for(Routes.DASHBOARD_ROUTE))
-
-    return render_template("login.html")
-
-@auth_signup_bp.route("/", methods=["GET", "POST"])
-def signup():
-    if request.method == "POST":
-
-        role = request.form.get("role", "").strip()
-        if role != UserTypes.PATIENT:
-            flash("Only patients can register.", "error")
-            return redirect(url_for("auth_signup.signup"))
-
-        name: str = request.form.get("name", "").strip()
-        email: str = request.form.get("email", "").strip()
-        raw_password: str = request.form.get("password", "")
-        dob_str: str = request.form.get("dob", "")
-        contact: str = request.form.get("contact", "").strip()
-
-        if not name or not email or not raw_password or not dob_str or not contact:
-            flash("All fields are required.", "error")
-            return redirect(url_for("auth_signup.signup"))
-
-        try:
-            dob = date.fromisoformat(dob_str)
-        except ValueError:
-            flash("Invalid date of birth format.", "error")
-            return redirect(url_for("auth_signup.signup"))
-
-        password = generate_password_hash(raw_password)
-
-        with SessionLocal() as db:
-            if db.query(Patient).filter_by(email=email).first():
-                flash(f"Account with email {email} already exists!", "error")
-                return redirect(url_for("auth_signup.signup"))
-
-            Patient.create_user(
-                db,
-                name=name,
-                email=email,
-                password=password,
-                dob=dob,
-                contact=contact,
-            )
-
-        flash("Account created successfully! Please login.", "success")
-        return redirect(url_for(Routes.LOGIN_ROUTE))
+    if not email or not password or user_type not in (
+        UserTypes.ADMIN,
+        UserTypes.DOCTOR,
+        UserTypes.PATIENT,
+    ):
+        return jsonify({"error": "Valid email, password and role are required."}), 400
 
     with SessionLocal() as db:
-        deps = db.query(Department).all()
+        user = _find_user(db, email, user_type)
+        if not user or not check_password_hash(user.password, password):
+            return jsonify({"error": "Invalid credentials."}), 401
+        if getattr(user, "is_blacklisted", False):
+            return jsonify({"error": "This account has been disabled by the admin."}), 403
+        _set_session_for(user, user_type)
 
-    return render_template("signup.html", departments=deps)
+    return jsonify({
+        "message": "Logged in successfully.",
+        "user": _serialize_session_user(),
+    })
+
+
+@auth_api_bp.route("/signup", methods=["POST"])
+def signup_api():
+    data = request.get_json(silent=True) or {}
+    name = data.get("name", "").strip()
+    email = data.get("email", "").strip()
+    password = data.get("password", "")
+    dob_raw = data.get("dob", "")
+    contact = data.get("contact", "").strip()
+
+    if not all([name, email, password, dob_raw, contact]):
+        return jsonify({"error": "All signup fields are required."}), 400
+
+    try:
+        dob = date.fromisoformat(dob_raw)
+    except ValueError:
+        return jsonify({"error": "Date of birth must be a valid ISO date."}), 400
+
+    with SessionLocal() as db:
+        existing = db.query(Patient).filter_by(email=email).first()
+        if existing:
+            return jsonify({"error": "A patient account already exists for that email."}), 409
+
+        patient = Patient.create_user(
+            db,
+            name=name,
+            email=email,
+            password=generate_password_hash(password),
+            dob=dob,
+            contact=contact,
+            is_blacklisted=False,
+        )
+        _set_session_for(patient, UserTypes.PATIENT)
+
+    return jsonify({
+        "message": "Account created successfully.",
+        "user": _serialize_session_user(),
+    }), 201
+
+
+@auth_api_bp.route("/logout", methods=["POST"])
+def logout_api():
+    session.clear()
+    return jsonify({"message": "Logged out successfully."})
