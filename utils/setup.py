@@ -8,9 +8,11 @@ from utils.sample_data import create_dummy_data
 
 
 def setup_db():
-    if DB_PATH.exists():
-        return
+    db_exists = DB_PATH.exists()
     Base.metadata.create_all(engine)
+
+    if db_exists:
+        return
 
     with SessionLocal() as session:
         session.add(Admin(

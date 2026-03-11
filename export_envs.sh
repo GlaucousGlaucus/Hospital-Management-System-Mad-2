@@ -1,0 +1,10 @@
+export SMTP_HOST=smtp.example.com
+export SMTP_PORT=587
+export SMTP_USERNAME=your-user
+export SMTP_PASSWORD=your-password
+export MAIL_DEFAULT_SENDER=noreply@example.com
+export GOOGLE_CHAT_WEBHOOK_URL='https://chat.googleapis.com/...'
+export DAILY_REMINDER_HOUR=8
+export DAILY_REMINDER_MINUTE=0
+export MONTHLY_REPORT_HOUR=7
+export MONTHLY_REPORT_MINUTE=0

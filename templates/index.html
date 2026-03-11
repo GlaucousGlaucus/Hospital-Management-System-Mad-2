@@ -203,6 +203,8 @@
                                 <button class="btn btn-outline-primary" @click="navigate('/admin/new/doctor')">Add Doctor</button>
                                 <button class="btn btn-outline-primary" @click="navigate('/admin/new/patient')">Add Patient</button>
                                 <button class="btn btn-outline-secondary" @click="startBatchReport">Run Daily Batch Summary</button>
+                                <button class="btn btn-outline-secondary" @click="startDailyReminders">Run Daily Reminders</button>
+                                <button class="btn btn-outline-secondary" @click="startMonthlyActivityReport">Run Monthly Reports</button>
                             </div>
                         </div>
                         <div v-if="batchTask" class="mt-3 small">
@@ -482,7 +484,18 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-8">
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <h2 class="h5 mb-3">Treatment Export</h2>
+                                <p class="text-secondary small mb-3">
+                                    Queue a CSV with all treatments, diagnosis, doctor details, and appointment history.
+                                </p>
+                                <button class="btn btn-outline-primary" @click="startTreatmentExport">Export as CSV</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
                         <div class="card border-0 shadow-sm h-100">
                             <div class="card-body">
                                 <h2 class="h5 mb-3">Upcoming Appointments</h2>
@@ -515,6 +528,39 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </section>
+
+                <section class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 class="h5 mb-0">CSV Export Jobs</h2>
+                            <button class="btn btn-sm btn-outline-secondary" @click="refreshPatientExports">Refresh</button>
+                        </div>
+                        <div v-if="patientExports.length" class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Created</th>
+                                    <th>Status</th>
+                                    <th>File</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="exportJob in patientExports" :key="'export-' + exportJob.id">
+                                    <td>[[ new Date(exportJob.created_at).toLocaleString() ]]</td>
+                                    <td>[[ exportJob.status ]]</td>
+                                    <td>[[ exportJob.file_name || 'Pending generation' ]]</td>
+                                    <td class="text-end">
+                                        <a v-if="exportJob.download_url" class="btn btn-sm btn-outline-success" :href="exportJob.download_url">Download</a>
+                                        <span v-else class="text-secondary small">Waiting for completion</span>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p v-else class="text-secondary mb-0">No exports generated yet.</p>
                     </div>
                 </section>
 

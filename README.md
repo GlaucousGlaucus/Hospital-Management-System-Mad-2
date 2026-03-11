@@ -18,6 +18,7 @@ CliniTrak is now structured as a Flask API with a Vue 3 single-page frontend mou
 - `routes/api_routes.py`: API-first business endpoints for admin, doctor, and patient workflows
 - `routes/dashboard.py`: legacy page URLs mapped to the SPA entry for compatibility
 - `tasks.py`: Celery batch task for a daily operational summary
+- `tasks.py`: Celery beat schedules for reminders and monthly reports, plus async patient CSV exports
 - `utils/cache.py`: Redis-backed caching helpers with graceful fallback if Redis is unavailable
 
 ## Primary API Endpoints
@@ -38,7 +39,13 @@ CliniTrak is now structured as a Flask API with a Vue 3 single-page frontend mou
 - `GET /api/doctor/<id>/availability_json`
 - `GET /api/search`
 - `POST /api/batch/reports/daily-summary`
+- `POST /api/batch/reports/daily-reminders`
+- `POST /api/batch/reports/monthly-activity`
 - `GET /api/batch/tasks/<task_id>`
+- `GET /api/patient/exports`
+- `POST /api/patient/exports/treatments`
+- `GET /api/patient/exports/<id>`
+- `GET /api/patient/exports/<id>/download`
 
 ## Run
 
@@ -59,6 +66,22 @@ Optional Redis + Celery setup for cache and batch jobs:
 ```bash
 redis-server
 celery -A celery_app.celery_app worker --loglevel=info
+celery -A celery_app.celery_app beat --loglevel=info
+```
+
+Useful environment variables:
+
+```bash
+export SMTP_HOST=smtp.example.com
+export SMTP_PORT=587
+export SMTP_USERNAME=your-user
+export SMTP_PASSWORD=your-password
+export MAIL_DEFAULT_SENDER=noreply@example.com
+export GOOGLE_CHAT_WEBHOOK_URL=https://chat.googleapis.com/...
+export DAILY_REMINDER_HOUR=8
+export DAILY_REMINDER_MINUTE=0
+export MONTHLY_REPORT_HOUR=7
+export MONTHLY_REPORT_MINUTE=0
 ```
 
 Then open `http://localhost:5000`.

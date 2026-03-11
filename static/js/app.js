@@ -78,6 +78,8 @@ createApp({
             },
             batchTask: null,
             pollHandle: null,
+            patientExports: [],
+            exportPollHandle: null,
         };
     },
     computed: {
@@ -126,6 +128,9 @@ createApp({
         window.removeEventListener("popstate", this.handlePopState);
         if (this.pollHandle) {
             clearTimeout(this.pollHandle);
+        }
+        if (this.exportPollHandle) {
+            clearTimeout(this.exportPollHandle);
         }
     },
     methods: {
@@ -261,6 +266,9 @@ createApp({
         },
         async loadDashboard() {
             this.dashboard = await this.api("/api/dashboard");
+            if (this.bootstrap.user?.user_type === "patient") {
+                this.patientExports = this.dashboard.export_jobs || [];
+            }
         },
         async loadRouteData() {
             this.resetTransientState();
@@ -628,6 +636,26 @@ createApp({
                 this.handleError(error);
             }
         },
+        async startDailyReminders() {
+            try {
+                const payload = await this.api("/api/batch/reports/daily-reminders", { method: "POST" });
+                this.batchTask = { task_id: payload.task_id, state: payload.status };
+                this.pushAlert("Daily reminders queued.", "info");
+                this.pollBatchTask(payload.task_id);
+            } catch (error) {
+                this.handleError(error);
+            }
+        },
+        async startMonthlyActivityReport() {
+            try {
+                const payload = await this.api("/api/batch/reports/monthly-activity", { method: "POST" });
+                this.batchTask = { task_id: payload.task_id, state: payload.status };
+                this.pushAlert("Monthly activity reports queued.", "info");
+                this.pollBatchTask(payload.task_id);
+            } catch (error) {
+                this.handleError(error);
+            }
+        },
         async pollBatchTask(taskId) {
             if (this.pollHandle) {
                 clearTimeout(this.pollHandle);
@@ -638,6 +666,51 @@ createApp({
                 if (!["SUCCESS", "FAILURE"].includes(payload.state)) {
                     this.pollHandle = setTimeout(() => this.pollBatchTask(taskId), 2000);
                 }
+            } catch (error) {
+                this.handleError(error);
+            }
+        },
+        async refreshPatientExports() {
+            try {
+                const payload = await this.api("/api/patient/exports");
+                this.patientExports = payload.exports || [];
+            } catch (error) {
+                this.handleError(error);
+            }
+        },
+        async startTreatmentExport() {
+            try {
+                const payload = await this.api("/api/patient/exports/treatments", { method: "POST" });
+                this.pushAlert("Treatment export queued.", "info");
+                await this.refreshPatientExports();
+                this.pollPatientExport(payload.export.id);
+            } catch (error) {
+                this.handleError(error);
+            }
+        },
+        async pollPatientExport(exportId) {
+            if (this.exportPollHandle) {
+                clearTimeout(this.exportPollHandle);
+            }
+            try {
+                const payload = await this.api(`/api/patient/exports/${exportId}`);
+                const exportJob = payload.export;
+                const existingIndex = this.patientExports.findIndex((item) => item.id === exportJob.id);
+                if (existingIndex >= 0) {
+                    this.patientExports.splice(existingIndex, 1, exportJob);
+                } else {
+                    this.patientExports.unshift(exportJob);
+                }
+                if (exportJob.status === "Completed") {
+                    this.pushAlert("Treatment export is ready.", "success");
+                    await this.loadDashboard();
+                    return;
+                }
+                if (exportJob.status === "Failed") {
+                    this.pushAlert(exportJob.error_message || "Treatment export failed.", "danger");
+                    return;
+                }
+                this.exportPollHandle = setTimeout(() => this.pollPatientExport(exportId), 2000);
             } catch (error) {
                 this.handleError(error);
             }

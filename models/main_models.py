@@ -59,6 +59,13 @@ class AvailabilitySlot(enum.Enum):
     EVENING = "Evening"
 
 
+class ExportJobStatus(enum.Enum):
+    QUEUED = "Queued"
+    PROCESSING = "Processing"
+    COMPLETED = "Completed"
+    FAILED = "Failed"
+
+
 class UserMixin:
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
@@ -132,6 +139,11 @@ class Patient(UserMixin, Base):
     __tablename__ = "patients"
 
     appointments: Mapped[List["Appointment"]] = relationship(
+        back_populates="patient",
+        cascade="all, delete-orphan"
+    )
+
+    export_jobs: Mapped[List["ExportJob"]] = relationship(
         back_populates="patient",
         cascade="all, delete-orphan"
     )
@@ -239,3 +251,26 @@ class DoctorAvailability(Base):
     enabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
     doctor: Mapped[Doctor] = relationship(back_populates="availability")
+
+
+class ExportJob(Base):
+    __tablename__ = "export_jobs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    patient_id: Mapped[int] = mapped_column(
+        ForeignKey("patients.id", ondelete="CASCADE")
+    )
+
+    task_id: Mapped[Optional[str]] = mapped_column(String(255), unique=True)
+    status: Mapped[ExportJobStatus] = mapped_column(
+        Enum(ExportJobStatus),
+        default=ExportJobStatus.QUEUED
+    )
+    file_name: Mapped[Optional[str]] = mapped_column(String(255))
+    file_path: Mapped[Optional[str]] = mapped_column(String(512))
+    error_message: Mapped[Optional[str]] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+
+    patient: Mapped["Patient"] = relationship(back_populates="export_jobs")

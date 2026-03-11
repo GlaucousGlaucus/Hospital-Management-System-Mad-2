@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import datetime
+from pathlib import Path
 from functools import wraps
 from logging import getLogger
 
-from flask import Blueprint, abort, jsonify, request, session
+from flask import Blueprint, abort, jsonify, request, session, send_file
 from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash
 
@@ -15,6 +16,8 @@ from models.main_models import (
     Department,
     Doctor,
     DoctorAvailability,
+    ExportJob,
+    ExportJobStatus,
     Medicine,
     Patient,
     SessionLocal,
@@ -136,6 +139,23 @@ def _schedule_for_doctor(db, doctor_id: int):
     entries = db.query(DoctorAvailability).filter_by(doctor_id=doctor_id).all()
     availability_map = {(entry.date, entry.slot): entry.enabled for entry in entries}
     return [_serialize_schedule_row(day, availability_map) for day in days]
+
+
+def _serialize_export_job(export_job: ExportJob):
+    return {
+        "id": export_job.id,
+        "task_id": export_job.task_id,
+        "status": export_job.status.value,
+        "file_name": export_job.file_name,
+        "error_message": export_job.error_message,
+        "created_at": export_job.created_at.isoformat() if export_job.created_at else None,
+        "completed_at": export_job.completed_at.isoformat() if export_job.completed_at else None,
+        "download_url": (
+            f"/api/patient/exports/{export_job.id}/download"
+            if export_job.status == ExportJobStatus.COMPLETED and export_job.file_path
+            else None
+        ),
+    }
 
 
 def _appointment_owner_ok(appt: Appointment):
@@ -408,11 +428,19 @@ def dashboard_data():
                 .order_by(Appointment.date, Appointment.time)
                 .all()
             )
+            export_jobs = (
+                db.query(ExportJob)
+                .filter(ExportJob.patient_id == user_id)
+                .order_by(ExportJob.created_at.desc())
+                .limit(5)
+                .all()
+            )
             payload = {
                 "role": user_type,
                 "patient": _serialize_patient(patient),
                 "departments": [_serialize_department(dep) for dep in db.query(Department).order_by(Department.name).all()],
                 "upcoming_appointments": [_serialize_appointment(appt) for appt in upcoming],
+                "export_jobs": [_serialize_export_job(job) for job in export_jobs],
             }
 
     set_cache(cache_key, payload, ttl_seconds=120)
@@ -1001,12 +1029,95 @@ def delete_patient(item_id: int):
     return jsonify({"message": "Patient deleted successfully."})
 
 
+@api_bp.route("/patient/exports", methods=["GET"])
+@require_role(UserTypes.PATIENT)
+def list_patient_exports():
+    patient_id = session.get(SessionInfo.USER_ID)
+    with SessionLocal() as db:
+        exports = (
+            db.query(ExportJob)
+            .filter(ExportJob.patient_id == patient_id)
+            .order_by(ExportJob.created_at.desc())
+            .all()
+        )
+        return jsonify({"exports": [_serialize_export_job(export_job) for export_job in exports]})
+
+
+@api_bp.route("/patient/exports/treatments", methods=["POST"])
+@require_role(UserTypes.PATIENT)
+def queue_patient_treatment_export():
+    from tasks import generate_patient_treatment_csv_export
+
+    patient_id = session.get(SessionInfo.USER_ID)
+    with SessionLocal() as db:
+        export_job = ExportJob(
+            patient_id=patient_id,
+            status=ExportJobStatus.QUEUED,
+        )
+        db.add(export_job)
+        db.commit()
+        db.refresh(export_job)
+        task = generate_patient_treatment_csv_export.delay(export_job.id)
+        export_job.task_id = task.id
+        db.commit()
+        payload = _serialize_export_job(export_job)
+
+    _invalidate_app_cache()
+    return jsonify({"message": "Treatment export queued.", "export": payload}), 202
+
+
+@api_bp.route("/patient/exports/<int:export_job_id>", methods=["GET"])
+@require_role(UserTypes.PATIENT)
+def get_patient_export(export_job_id: int):
+    patient_id = session.get(SessionInfo.USER_ID)
+    with SessionLocal() as db:
+        export_job = db.query(ExportJob).get(export_job_id)
+        if not export_job or export_job.patient_id != patient_id:
+            return jsonify({"error": "Export job not found."}), 404
+        return jsonify({"export": _serialize_export_job(export_job)})
+
+
+@api_bp.route("/patient/exports/<int:export_job_id>/download", methods=["GET"])
+@require_role(UserTypes.PATIENT)
+def download_patient_export(export_job_id: int):
+    patient_id = session.get(SessionInfo.USER_ID)
+    with SessionLocal() as db:
+        export_job = db.query(ExportJob).get(export_job_id)
+        if not export_job or export_job.patient_id != patient_id:
+            return jsonify({"error": "Export job not found."}), 404
+        if export_job.status != ExportJobStatus.COMPLETED or not export_job.file_path:
+            return jsonify({"error": "Export file is not ready yet."}), 409
+        file_path = Path(export_job.file_path)
+
+    if not file_path.exists():
+        return jsonify({"error": "Export file is missing."}), 404
+    return send_file(file_path, as_attachment=True, download_name=export_job.file_name or file_path.name)
+
+
 @api_bp.route("/batch/reports/daily-summary", methods=["POST"])
 @require_role(UserTypes.ADMIN)
 def queue_daily_summary():
     from tasks import generate_daily_summary_report
 
     task = generate_daily_summary_report.delay()
+    return jsonify({"task_id": task.id, "status": "queued"}), 202
+
+
+@api_bp.route("/batch/reports/daily-reminders", methods=["POST"])
+@require_role(UserTypes.ADMIN)
+def queue_daily_reminders():
+    from tasks import send_daily_patient_reminders
+
+    task = send_daily_patient_reminders.delay()
+    return jsonify({"task_id": task.id, "status": "queued"}), 202
+
+
+@api_bp.route("/batch/reports/monthly-activity", methods=["POST"])
+@require_role(UserTypes.ADMIN)
+def queue_monthly_activity_report():
+    from tasks import send_monthly_doctor_activity_reports
+
+    task = send_monthly_doctor_activity_reports.delay()
     return jsonify({"task_id": task.id, "status": "queued"}), 202
 
 
