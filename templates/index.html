@@ -457,9 +457,27 @@
                                 <tbody>
                                 <tr v-for="row in dashboard.availability" :key="'availability-' + row.date">
                                     <td>[[ row.date_display ]]</td>
-                                    <td><input class="form-check-input" type="checkbox" :checked="row.morning" @change="toggleAvailability(row.date, 'morning', $event.target.checked)"></td>
-                                    <td><input class="form-check-input" type="checkbox" :checked="row.afternoon" @change="toggleAvailability(row.date, 'afternoon', $event.target.checked)"></td>
-                                    <td><input class="form-check-input" type="checkbox" :checked="row.evening" @change="toggleAvailability(row.date, 'evening', $event.target.checked)"></td>
+                                    <td>
+                                        <button class="btn btn-sm w-100"
+                                                :class="doctorAvailabilityButtonClass(row.morning)"
+                                                @click="toggleAvailability(row.date, 'morning', !row.morning)">
+                                            [[ row.morning ? 'Available' : 'Not available' ]]
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm w-100"
+                                                :class="doctorAvailabilityButtonClass(row.afternoon)"
+                                                @click="toggleAvailability(row.date, 'afternoon', !row.afternoon)">
+                                            [[ row.afternoon ? 'Available' : 'Not available' ]]
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm w-100"
+                                                :class="doctorAvailabilityButtonClass(row.evening)"
+                                                @click="toggleAvailability(row.date, 'evening', !row.evening)">
+                                            [[ row.evening ? 'Available' : 'Not available' ]]
+                                        </button>
+                                    </td>
                                 </tr>
                                 </tbody>
                             </table>

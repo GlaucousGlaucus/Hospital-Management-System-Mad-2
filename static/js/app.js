@@ -571,8 +571,11 @@ createApp({
         },
         availabilityButtonClass(row, slot) {
             const isSelected = this.availabilityModal.selectedDate === row.date && this.availabilityModal.selectedSlot === slot;
-            if (isSelected) return "btn-primary";
-            return row[slot] ? "btn-outline-primary" : "btn-outline-secondary";
+            if (isSelected) return "btn-success";
+            return row[slot] ? "btn-outline-success" : "btn-outline-danger";
+        },
+        doctorAvailabilityButtonClass(enabled) {
+            return enabled ? "btn-success" : "btn-outline-danger";
         },
         selectAvailability(date, slot) {
             this.availabilityModal.selectedDate = date;
