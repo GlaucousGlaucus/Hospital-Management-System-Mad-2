@@ -134,8 +134,7 @@ def _serialize_schedule_row(day: datetime.date, availability_map: dict[tuple[dat
 
 def _schedule_for_doctor(db, doctor_id: int):
     today = datetime.date.today()
-    start_of_week = today - datetime.timedelta(days=today.weekday())
-    days = [start_of_week + datetime.timedelta(days=index) for index in range(7)]
+    days = [today + datetime.timedelta(days=index) for index in range(7)]
     entries = db.query(DoctorAvailability).filter_by(doctor_id=doctor_id).all()
     availability_map = {(entry.date, entry.slot): entry.enabled for entry in entries}
     return [_serialize_schedule_row(day, availability_map) for day in days]
