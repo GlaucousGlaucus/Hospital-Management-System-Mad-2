@@ -18,6 +18,26 @@ body.app-body {
     box-shadow: 0 10px 30px rgba(22, 50, 79, 0.18);
 }
 
+.app-alert-stack {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1080;
+    width: min(42rem, calc(100vw - 2rem));
+    pointer-events: none;
+}
+
+.app-alert {
+    margin-bottom: 0.75rem;
+    border: 0;
+    pointer-events: auto;
+}
+
+.app-alert:last-child {
+    margin-bottom: 0;
+}
+
 .hero-shell {
     padding: 3rem;
     border: 1px solid rgba(31, 95, 167, 0.12);
@@ -71,6 +91,11 @@ body.app-body {
 }
 
 @media (max-width: 991px) {
+    .app-alert-stack {
+        top: 0.75rem;
+        width: calc(100vw - 1.5rem);
+    }
+
     .hero-shell {
         padding: 1.5rem;
         border-radius: 1.5rem;

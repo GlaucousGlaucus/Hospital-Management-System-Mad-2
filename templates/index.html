@@ -16,6 +16,14 @@
 </head>
 <body class="app-body">
 <div id="app">
+    <div v-if="alerts.length" class="app-alert-stack" aria-live="polite" aria-atomic="true">
+        <div v-for="alert in alerts" :key="alert.id" class="alert app-alert d-flex justify-content-between align-items-center shadow-sm"
+             :class="'alert-' + alert.variant">
+            <span>[[ alert.message ]]</span>
+            <button type="button" class="btn-close" @click="dismissAlert(alert.id)"></button>
+        </div>
+    </div>
+
     <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
         <div class="container">
             <button class="navbar-brand btn btn-link text-decoration-none text-white fw-semibold p-0 border-0"
@@ -45,14 +53,6 @@
     </nav>
 
     <main class="container py-4 py-lg-5">
-        <div v-if="alerts.length" class="mb-4">
-            <div v-for="alert in alerts" :key="alert.id" class="alert d-flex justify-content-between align-items-center"
-                 :class="'alert-' + alert.variant">
-                <span>[[ alert.message ]]</span>
-                <button type="button" class="btn-close" @click="dismissAlert(alert.id)"></button>
-            </div>
-        </div>
-
         <div v-if="loading" class="py-5 text-center">
             <div class="spinner-border text-primary" role="status"></div>
             <p class="text-secondary mt-3 mb-0">Loading application data...</p>
