@@ -488,7 +488,7 @@
 
             <template v-else-if="route.name === 'dashboard' && bootstrap.user.user_type === 'patient' && dashboard">
                 <section class="row g-4 mb-4">
-                    <div class="col-lg-4">
+                    <div class="col-lg-6">
                         <div class="card border-0 shadow-sm h-100">
                             <div class="card-body">
                                 <h2 class="h5">Profile</h2>
@@ -502,7 +502,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-4">
+                    <div class="col-lg-6">
                         <div class="card border-0 shadow-sm h-100">
                             <div class="card-body">
                                 <h2 class="h5 mb-3">Treatment Export</h2>
@@ -513,37 +513,38 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-4">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-body">
-                                <h2 class="h5 mb-3">Upcoming Appointments</h2>
-                                <div class="table-responsive">
-                                    <table class="table align-middle">
-                                        <thead>
-                                        <tr>
-                                            <th>Doctor</th>
-                                            <th>Department</th>
-                                            <th>Date</th>
-                                            <th>Time</th>
-                                            <th class="text-end">Actions</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        <tr v-for="appt in dashboard.upcoming_appointments" :key="'patient-appt-' + appt.id">
-                                            <td>[[ appt.doctor.name ]]</td>
-                                            <td>[[ appt.doctor.department_name ]]</td>
-                                            <td>[[ formatDate(appt.date) ]]</td>
-                                            <td>[[ formatTime(appt.time) ]]</td>
-                                            <td class="text-end">
-                                                <div class="d-flex justify-content-end flex-wrap gap-2">
-                                                    <button class="btn btn-sm btn-outline-secondary" @click="openAvailabilityModal(appt.doctor.id, 'reschedule', appt.id)">Reschedule</button>
-                                                    <button class="btn btn-sm btn-outline-danger" @click="cancelAppointment(appt.id)">Cancel</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                </section>
+
+                <section class="card border-0 shadow-sm mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">Upcoming Appointments</h2>
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead>
+                                    <tr>
+                                        <th>Doctor</th>
+                                        <th>Department</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr v-for="appt in dashboard.upcoming_appointments" :key="'patient-appt-' + appt.id">
+                                        <td>[[ appt.doctor.name ]]</td>
+                                        <td>[[ appt.doctor.department_name ]]</td>
+                                        <td>[[ formatDate(appt.date) ]]</td>
+                                        <td>[[ formatTime(appt.time) ]]</td>
+                                        <td class="text-end">
+                                            <div class="d-flex justify-content-end flex-wrap gap-2">
+                                                <button class="btn btn-sm btn-outline-secondary" @click="openAvailabilityModal(appt.doctor.id, 'reschedule', appt.id)">Reschedule</button>
+                                                <button class="btn btn-sm btn-outline-danger" @click="cancelAppointment(appt.id)">Cancel</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
