@@ -1,0 +1,23 @@
+<script type="text/x-template" id="department-details-template">
+    <section class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-4 gap-3">
+                <div>
+                    <h2 class="h4 mb-2">[[ selectedDepartment.department.name ]]</h2>
+                    <p class="text-secondary mb-0">[[ selectedDepartment.department.description ]]</p>
+                </div>
+                <button class="btn btn-outline-primary" @click="navigate('/dashboard/')">Back to Dashboard</button>
+            </div>
+            <div class="row g-3">
+                <div class="col-lg-6" v-for="doctor in selectedDepartment.doctors" :key="'dept-doc-' + doctor.id">
+                    <div class="border rounded-4 p-3 h-100">
+                        <div class="fw-semibold">[[ doctor.name ]]</div>
+                        <div class="text-secondary">[[ doctor.specialization ]]</div>
+                        <div class="small text-secondary mb-3">[[ doctor.contact ]]</div>
+                        <button class="btn btn-outline-primary btn-sm" @click="openAvailabilityModal(doctor.id, 'book')">Check Availability</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</script>

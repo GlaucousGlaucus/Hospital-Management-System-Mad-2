@@ -1,0 +1,167 @@
+<script type="text/x-template" id="patient-dashboard-template">
+        <section class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h2 class="h5">Profile</h2>
+                        <p class="mb-1 fw-semibold">[[ dashboard.patient.name ]]</p>
+                        <p class="text-secondary mb-1">[[ dashboard.patient.email ]]</p>
+                        <p class="text-secondary mb-3">[[ dashboard.patient.contact ]]</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-outline-primary" @click="navigate('/patient/edit/profile')">Edit Profile</button>
+                            <button class="btn btn-outline-secondary" @click="openPatientHistory(dashboard.patient.id)">Medical History</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h2 class="h5 mb-3">Treatment Export</h2>
+                        <p class="text-secondary small mb-3">
+                            Queue a CSV with all treatments, diagnosis, doctor details, and appointment history.
+                        </p>
+                        <button class="btn btn-outline-primary" @click="startTreatmentExport">Export as CSV</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card border-0 shadow-sm mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Upcoming Appointments</h2>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                            <tr>
+                                <th>Doctor</th>
+                                <th>Department</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="appt in dashboard.upcoming_appointments" :key="'patient-appt-' + appt.id">
+                                <td>[[ appt.doctor.name ]]</td>
+                                <td>[[ appt.doctor.department_name ]]</td>
+                                <td>[[ formatDate(appt.date) ]]</td>
+                                <td>[[ formatTime(appt.time) ]]</td>
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end flex-wrap gap-2">
+                                        <button class="btn btn-sm btn-outline-secondary" @click="openAvailabilityModal(appt.doctor.id, 'reschedule', appt.id)">Reschedule</button>
+                                        <button class="btn btn-sm btn-outline-danger" @click="cancelAppointment(appt.id)">Cancel</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h5 mb-0">CSV Export Jobs</h2>
+                    <button class="btn btn-sm btn-outline-secondary" @click="loadExports()">Refresh</button>
+                </div>
+                <div v-if="exportJobs.length" class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                        <tr>
+                            <th>Created</th>
+                            <th>Status</th>
+                            <th>File</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="exportJob in exportJobs" :key="'export-' + exportJob.id">
+                            <td>[[ formatDateTime(exportJob.created_at) ]]</td>
+                            <td>
+                                <span class="badge" :class="exportStatusClass(exportJob.status)">[[ exportJob.status ]]</span>
+                            </td>
+                            <td>[[ exportJob.file_name || 'Pending generation' ]]</td>
+                            <td class="text-end">
+                                <a v-if="exportJob.download_url" class="btn btn-sm btn-outline-success" :href="exportJob.download_url">Download</a>
+                                <span v-else class="text-secondary small">Waiting for completion</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p v-else class="text-secondary mb-0">No exports generated yet.</p>
+            </div>
+        </section>
+
+        <section class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Departments</h2>
+                <div class="row g-3">
+                    <div class="col-md-6 col-xl-4" v-for="department in dashboard.departments" :key="'dept-' + department.id">
+                        <button class="btn btn-light department-tile text-start w-100 h-100" @click="navigate('/patient/department/' + department.id)">
+                            <span class="fw-semibold d-block">[[ department.name ]]</span>
+                            <span class="text-secondary small">Browse doctors and availability</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Find Doctors</h2>
+                <div class="row g-3 mb-4">
+                    <div class="col-lg-4">
+                        <input class="form-control" type="text" v-model="patientSearch.q" placeholder="Name, specialization, or department">
+                    </div>
+                    <div class="col-lg-3">
+                        <select class="form-select" v-model="patientSearch.department">
+                            <option value="">All departments</option>
+                            <option v-for="department in departments" :key="'search-dept-' + department.id" :value="String(department.id)">
+                                [[ department.name ]]
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2">
+                        <select class="form-select" v-model="patientSearch.slot">
+                            <option value="">Any slot</option>
+                            <option value="morning">Morning</option>
+                            <option value="afternoon">Afternoon</option>
+                            <option value="evening">Evening</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3">
+                        <input class="form-control" type="date" v-model="patientSearch.date">
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mb-4">
+                    <button class="btn btn-primary" @click="runPatientSearch">Search Doctors</button>
+                    <button class="btn btn-outline-secondary" @click="resetPatientSearch">Reset</button>
+                </div>
+                <div class="row g-3">
+                    <div class="col-lg-6" v-for="doctor in patientSearch.results" :key="'search-doc-' + doctor.id">
+                        <div class="border rounded-4 p-3 h-100">
+                            <div class="d-flex justify-content-between gap-3">
+                                <div>
+                                    <div class="fw-semibold">[[ doctor.name ]]</div>
+                                    <div class="text-secondary">[[ doctor.specialization ]]</div>
+                                    <div class="small text-secondary">[[ doctor.department_name ]]</div>
+                                </div>
+                                <div class="text-end small text-secondary">
+                                    <div>Age: [[ doctor.age || 'N/A' ]]</div>
+                                    <div>[[ doctor.contact || 'No contact' ]]</div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-outline-primary btn-sm" @click="openAvailabilityModal(doctor.id, 'book')">Check Availability</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+</script>

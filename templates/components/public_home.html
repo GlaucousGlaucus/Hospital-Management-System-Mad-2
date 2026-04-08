@@ -1,0 +1,97 @@
+<script type="text/x-template" id="public-home-template">
+        <section class="hero-shell mb-5">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-7">
+                    <span class="eyebrow">Flask API + Vue UI</span>
+                    <h1 class="display-4 fw-semibold mt-3 mb-3">Hospital operations rebuilt as a single-page application.</h1>
+                    <p class="lead text-secondary">
+                        This repo now uses Flask for JSON APIs, Vue 3 for the full UI, Bootstrap for the component system,
+                        SQLite for persistence, Redis for caching, and Celery for background jobs.
+                    </p>
+                    <div class="d-flex gap-3 flex-wrap mt-4">
+                        <button class="btn btn-primary btn-lg px-4" @click="navigate('/login/')">Access Portal</button>
+                        <button class="btn btn-outline-primary btn-lg px-4" @click="navigate('/signup/')">Create Patient Account</button>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="card shadow-sm border-0 hero-card">
+                        <div class="card-body p-4 p-lg-5">
+                            <div class="d-flex gap-2 mb-4">
+                                <button
+                                    class="btn flex-fill"
+                                    :class="authMode === 'login' ? 'btn-primary' : 'btn-outline-primary'"
+                                    @click="setAuthMode('login')"
+                                >
+                                    Login
+                                </button>
+                                <button
+                                    class="btn flex-fill"
+                                    :class="authMode === 'signup' ? 'btn-primary' : 'btn-outline-primary'"
+                                    @click="setAuthMode('signup')"
+                                >
+                                    Sign Up
+                                </button>
+                            </div>
+
+                            <form v-if="authMode === 'login'" @submit.prevent="submitLogin" class="vstack gap-3">
+                                <div>
+                                    <label class="form-label">Role</label>
+                                    <select class="form-select" v-model="authForm.user_type">
+                                        <option value="patient">Patient</option>
+                                        <option value="doctor">Doctor</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">Email</label>
+                                    <input class="form-control" type="email" v-model="authForm.email" required>
+                                </div>
+                                <div>
+                                    <label class="form-label">Password</label>
+                                    <input class="form-control" type="password" v-model="authForm.password" required>
+                                </div>
+                                <button class="btn btn-primary btn-lg" type="submit">Login</button>
+                            </form>
+
+                            <form v-else @submit.prevent="submitSignup" class="vstack gap-3">
+                                <div>
+                                    <label class="form-label">Full Name</label>
+                                    <input class="form-control" type="text" v-model="signupForm.name" required>
+                                </div>
+                                <div>
+                                    <label class="form-label">Email</label>
+                                    <input class="form-control" type="email" v-model="signupForm.email" required>
+                                </div>
+                                <div>
+                                    <label class="form-label">Password</label>
+                                    <input class="form-control" type="password" v-model="signupForm.password" required>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Date of Birth</label>
+                                        <input class="form-control" type="date" v-model="signupForm.dob" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Contact</label>
+                                        <input class="form-control" type="text" v-model="signupForm.contact" required>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary btn-lg" type="submit">Create Account</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="row g-4">
+            <div class="col-md-4" v-for="feature in features" :key="feature.title">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h2 class="h5">[[ feature.title ]]</h2>
+                        <p class="text-secondary mb-0">[[ feature.description ]]</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+</script>

@@ -1,0 +1,117 @@
+<script type="text/x-template" id="doctor-dashboard-template">
+        <section class="row g-4 mb-4">
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h2 class="h5">Profile</h2>
+                        <p class="mb-1 fw-semibold">[[ dashboard.doctor.name ]]</p>
+                        <p class="text-secondary mb-1">[[ dashboard.doctor.specialization ]]</p>
+                        <p class="text-secondary mb-3">[[ dashboard.doctor.department_name ]]</p>
+                        <button class="btn btn-outline-primary" @click="navigate('/doctor/edit')">Edit Profile</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">Upcoming Appointments</div>
+                        <div class="display-6 fw-semibold">[[ dashboard.upcoming_appointments.length ]]</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">Assigned Patients</div>
+                        <div class="display-6 fw-semibold">[[ dashboard.patients.length ]]</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Upcoming Appointments</h2>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="appt in dashboard.upcoming_appointments" :key="'doc-appt-' + appt.id">
+                            <td>[[ appt.patient.name ]]</td>
+                            <td>[[ formatDate(appt.date) ]]</td>
+                            <td>[[ formatTime(appt.time) ]]</td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end flex-wrap gap-2">
+                                    <button class="btn btn-sm btn-outline-primary" @click="navigate('/doctor/update_history/' + appt.id)">Update History</button>
+                                    <button class="btn btn-sm btn-outline-secondary" @click="openAvailabilityModal(appt.doctor.id, 'reschedule', appt.id)">Reschedule</button>
+                                    <button class="btn btn-sm btn-outline-success" @click="markComplete(appt.id)">Complete</button>
+                                    <button class="btn btn-sm btn-outline-danger" @click="cancelAppointment(appt.id)">Cancel</button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Assigned Patients</h2>
+                <div class="row g-3">
+                    <div class="col-md-6 col-xl-4" v-for="patient in dashboard.patients" :key="'doc-patient-' + patient.id">
+                        <div class="border rounded-4 p-3 h-100">
+                            <div class="fw-semibold">[[ patient.name ]]</div>
+                            <div class="text-secondary mb-3">[[ patient.email ]]</div>
+                            <button class="btn btn-outline-primary btn-sm" @click="openPatientHistory(patient.id)">View History</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Weekly Availability</h2>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Morning</th>
+                            <th>Afternoon</th>
+                            <th>Evening</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="row in dashboard.availability" :key="'availability-' + row.date">
+                            <td>[[ row.date_display ]]</td>
+                            <td>
+                                <button class="btn btn-sm w-100" :class="doctorAvailabilityButtonClass(row.morning)" @click="toggleAvailability(row.date, 'morning', !row.morning)">
+                                    [[ row.morning ? 'Available' : 'Not available' ]]
+                                </button>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm w-100" :class="doctorAvailabilityButtonClass(row.afternoon)" @click="toggleAvailability(row.date, 'afternoon', !row.afternoon)">
+                                    [[ row.afternoon ? 'Available' : 'Not available' ]]
+                                </button>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm w-100" :class="doctorAvailabilityButtonClass(row.evening)" @click="toggleAvailability(row.date, 'evening', !row.evening)">
+                                    [[ row.evening ? 'Available' : 'Not available' ]]
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+</script>

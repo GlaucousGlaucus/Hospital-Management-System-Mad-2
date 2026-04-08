@@ -1,7 +1,186 @@
 const { createApp } = Vue;
 
-createApp({
+const AppAlerts = {
+    template: "#app-alerts-template",
+    props: {
+        alerts: { type: Array, required: true },
+        dismissAlert: { type: Function, required: true },
+    },
+};
+
+const AppNavbar = {
+    template: "#app-navbar-template",
+    props: {
+        bootstrap: { type: Object, required: true },
+        goHome: { type: Function, required: true },
+        navigate: { type: Function, required: true },
+        logout: { type: Function, required: true },
+    },
+};
+
+const PublicHome = {
+    template: "#public-home-template",
+    props: {
+        authMode: { type: String, required: true },
+        authForm: { type: Object, required: true },
+        signupForm: { type: Object, required: true },
+        features: { type: Array, required: true },
+        setAuthMode: { type: Function, required: true },
+        submitLogin: { type: Function, required: true },
+        submitSignup: { type: Function, required: true },
+        navigate: { type: Function, required: true },
+    },
+};
+
+const WorkspaceHeader = {
+    template: "#workspace-header-template",
+    props: {
+        user: { type: Object, required: true },
+        viewTitle: { type: String, required: true },
+        viewSubtitle: { type: String, required: true },
+    },
+};
+
+const AdminDashboard = {
+    template: "#admin-dashboard-template",
+    props: {
+        dashboard: { type: Object, required: true },
+        adminSearch: { type: Object, required: true },
+        filteredAdminDoctors: { type: Array, required: true },
+        filteredAdminPatients: { type: Array, required: true },
+        filteredAdminAppointments: { type: Array, required: true },
+        batchTask: { type: Object, default: null },
+        runAdminSearch: { type: Function, required: true },
+        navigate: { type: Function, required: true },
+        startBatchReport: { type: Function, required: true },
+        startDailyReminders: { type: Function, required: true },
+        startMonthlyActivityReport: { type: Function, required: true },
+        batchTaskStateClass: { type: Function, required: true },
+        batchTaskSummary: { type: Function, required: true },
+        batchTaskRows: { type: Function, required: true },
+        batchTaskRowKey: { type: Function, required: true },
+        toggleBlacklist: { type: Function, required: true },
+        deleteEntity: { type: Function, required: true },
+        openPatientHistory: { type: Function, required: true },
+        formatDate: { type: Function, required: true },
+        formatTime: { type: Function, required: true },
+    },
+};
+
+const DoctorDashboard = {
+    template: "#doctor-dashboard-template",
+    props: {
+        dashboard: { type: Object, required: true },
+        navigate: { type: Function, required: true },
+        formatDate: { type: Function, required: true },
+        formatTime: { type: Function, required: true },
+        openPatientHistory: { type: Function, required: true },
+        openAvailabilityModal: { type: Function, required: true },
+        markComplete: { type: Function, required: true },
+        cancelAppointment: { type: Function, required: true },
+        doctorAvailabilityButtonClass: { type: Function, required: true },
+        toggleAvailability: { type: Function, required: true },
+    },
+};
+
+const PatientDashboard = {
+    template: "#patient-dashboard-template",
+    props: {
+        dashboard: { type: Object, required: true },
+        departments: { type: Array, required: true },
+        patientSearch: { type: Object, required: true },
+        exportJobs: { type: Array, required: true },
+        navigate: { type: Function, required: true },
+        openPatientHistory: { type: Function, required: true },
+        startTreatmentExport: { type: Function, required: true },
+        loadExports: { type: Function, required: true },
+        formatDate: { type: Function, required: true },
+        formatTime: { type: Function, required: true },
+        formatDateTime: { type: Function, required: true },
+        exportStatusClass: { type: Function, required: true },
+        runPatientSearch: { type: Function, required: true },
+        resetPatientSearch: { type: Function, required: true },
+        openAvailabilityModal: { type: Function, required: true },
+        cancelAppointment: { type: Function, required: true },
+    },
+};
+
+const DepartmentDetails = {
+    template: "#department-details-template",
+    props: {
+        selectedDepartment: { type: Object, required: true },
+        navigate: { type: Function, required: true },
+        openAvailabilityModal: { type: Function, required: true },
+    },
+};
+
+const PatientHistory = {
+    template: "#patient-history-template",
+    props: {
+        patientHistory: { type: Object, required: true },
+        exportJobs: { type: Array, required: true },
+        navigate: { type: Function, required: true },
+        startTreatmentExport: { type: Function, required: true },
+        canQueueTreatmentExport: { type: Function, required: true },
+        loadExports: { type: Function, required: true },
+        historyPatientId: { type: Function, required: true },
+        formatDate: { type: Function, required: true },
+        formatDateTime: { type: Function, required: true },
+        exportStatusClass: { type: Function, required: true },
+    },
+};
+
+const UserForm = {
+    template: "#user-form-template",
+    props: {
+        activeForm: { type: Object, required: true },
+        formMeta: { type: Object, required: true },
+        departments: { type: Array, required: true },
+        showDoctorFields: { type: Boolean, required: true },
+        routeName: { type: String, required: true },
+        navigate: { type: Function, required: true },
+        submitActiveForm: { type: Function, required: true },
+    },
+};
+
+const TreatmentForm = {
+    template: "#treatment-form-template",
+    props: {
+        treatmentForm: { type: Object, required: true },
+        navigate: { type: Function, required: true },
+        submitTreatmentForm: { type: Function, required: true },
+        addMedicineRow: { type: Function, required: true },
+        removeMedicineRow: { type: Function, required: true },
+    },
+};
+
+const AvailabilityModal = {
+    template: "#availability-modal-template",
+    props: {
+        availabilityModal: { type: Object, required: true },
+        closeAvailabilityModal: { type: Function, required: true },
+        availabilityButtonClass: { type: Function, required: true },
+        selectAvailability: { type: Function, required: true },
+        confirmAvailabilityAction: { type: Function, required: true },
+    },
+};
+
+const app = createApp({
     delimiters: ["[[", "]]"],
+    components: {
+        AppAlerts,
+        AppNavbar,
+        PublicHome,
+        WorkspaceHeader,
+        AdminDashboard,
+        DoctorDashboard,
+        PatientDashboard,
+        DepartmentDetails,
+        PatientHistory,
+        UserForm,
+        TreatmentForm,
+        AvailabilityModal,
+    },
     data() {
         return {
             loading: true,
@@ -873,4 +1052,8 @@ createApp({
             }
         },
     },
-}).mount("#app");
+});
+
+app.config.compilerOptions.delimiters = ["[[", "]]"];
+
+app.mount("#app");

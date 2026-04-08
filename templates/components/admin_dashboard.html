@@ -1,0 +1,227 @@
+<script type="text/x-template" id="admin-dashboard-template">
+        <section class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">Doctors</div>
+                        <div class="display-6 fw-semibold">[[ dashboard.doctors.length ]]</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">Patients</div>
+                        <div class="display-6 fw-semibold">[[ dashboard.patients.length ]]</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="text-secondary small">Upcoming Appointments</div>
+                        <div class="display-6 fw-semibold">[[ dashboard.upcoming_appointments.length ]]</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-lg-5">
+                        <label class="form-label">Search doctors, patients, or appointments</label>
+                        <input class="form-control" type="text" v-model="adminSearch.q" @keyup.enter="runAdminSearch">
+                    </div>
+                    <div class="col-lg-7 d-flex flex-wrap gap-2">
+                        <button class="btn btn-primary" @click="runAdminSearch">Search</button>
+                        <button class="btn btn-outline-primary" @click="navigate('/admin/new/doctor')">Add Doctor</button>
+                        <button class="btn btn-outline-primary" @click="navigate('/admin/new/patient')">Add Patient</button>
+                        <button class="btn btn-outline-secondary" @click="startBatchReport">Run Daily Batch Summary</button>
+                        <button class="btn btn-outline-secondary" @click="startDailyReminders">Run Daily Reminders</button>
+                        <button class="btn btn-outline-secondary" @click="startMonthlyActivityReport">Run Monthly Reports</button>
+                    </div>
+                </div>
+                <div v-if="batchTask" class="mt-4 border rounded-4 p-3 bg-light-subtle">
+                    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                        <div>
+                            <div class="fw-semibold">[[ batchTask.label || 'Batch Task' ]]</div>
+                            <div class="small text-secondary">Task ID: [[ batchTask.task_id ]]</div>
+                        </div>
+                        <span class="badge" :class="batchTaskStateClass(batchTask.state)">[[ batchTask.state ]]</span>
+                    </div>
+                    <div v-if="batchTask.error" class="text-danger small mt-3">[[ batchTask.error ]]</div>
+                    <div v-if="batchTask.result" class="mt-3">
+                        <div class="row g-3">
+                            <div class="col-md-4 col-xl-2" v-for="item in batchTaskSummary(batchTask)" :key="batchTask.kind + '-' + item.label">
+                                <div class="border rounded-4 p-3 h-100 bg-white">
+                                    <div class="text-secondary small">[[ item.label ]]</div>
+                                    <div class="fw-semibold">[[ item.value ]]</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="batchTask.kind === 'daily-reminders' && batchTaskRows(batchTask).length" class="table-responsive mt-3">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                <tr>
+                                    <th>Appointment</th>
+                                    <th>Patient</th>
+                                    <th>Channels</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="(row, index) in batchTaskRows(batchTask)" :key="batchTaskRowKey(batchTask, row, index)">
+                                    <td>[[ row.appointment_id ]]</td>
+                                    <td>[[ row.patient_name || row.patient_id ]]</td>
+                                    <td>[[ (row.channels || []).join(', ') ]]</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div v-if="batchTask.kind === 'monthly-activity' && batchTaskRows(batchTask).length" class="table-responsive mt-3">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                <tr>
+                                    <th>Doctor</th>
+                                    <th>Email</th>
+                                    <th>Appointments</th>
+                                    <th>Delivered</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="(row, index) in batchTaskRows(batchTask)" :key="batchTaskRowKey(batchTask, row, index)">
+                                    <td>[[ row.doctor_name || row.doctor_id ]]</td>
+                                    <td>[[ row.doctor_email ]]</td>
+                                    <td>[[ row.appointments ]]</td>
+                                    <td>[[ row.delivered ? 'Yes' : 'No' ]]</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h5 mb-0">Doctors</h2>
+                    <button class="btn btn-sm btn-outline-primary" @click="navigate('/admin/new/doctor')">New Doctor</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Contact</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="doctor in filteredAdminDoctors" :key="'doctor-' + doctor.id">
+                            <td>[[ doctor.name ]]</td>
+                            <td>[[ doctor.department_name || 'Unassigned' ]]</td>
+                            <td>[[ doctor.contact ]]</td>
+                            <td>
+                                <span class="badge" :class="doctor.is_blacklisted ? 'text-bg-danger' : 'text-bg-success'">
+                                    [[ doctor.is_blacklisted ? 'Blacklisted' : 'Active' ]]
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end flex-wrap gap-2">
+                                    <button class="btn btn-sm btn-outline-primary" @click="navigate('/admin/edit/doctor/' + doctor.id + '/')">Edit</button>
+                                    <button class="btn btn-sm btn-outline-warning" @click="toggleBlacklist('doctor', doctor.id, !doctor.is_blacklisted)">
+                                        [[ doctor.is_blacklisted ? 'Restore' : 'Blacklist' ]]
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @click="deleteEntity('doctor', doctor.id)">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-if="!filteredAdminDoctors.length">
+                            <td colspan="5" class="text-center text-secondary py-4">No doctors match the current search.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h5 mb-0">Patients</h2>
+                    <button class="btn btn-sm btn-outline-primary" @click="navigate('/admin/new/patient')">New Patient</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="patient in filteredAdminPatients" :key="'patient-' + patient.id">
+                            <td>[[ patient.name ]]</td>
+                            <td>[[ patient.email ]]</td>
+                            <td>
+                                <span class="badge" :class="patient.is_blacklisted ? 'text-bg-danger' : 'text-bg-success'">
+                                    [[ patient.is_blacklisted ? 'Blacklisted' : 'Active' ]]
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end flex-wrap gap-2">
+                                    <button class="btn btn-sm btn-outline-primary" @click="navigate('/admin/edit/patient/' + patient.id)">Edit</button>
+                                    <button class="btn btn-sm btn-outline-secondary" @click="openPatientHistory(patient.id)">History</button>
+                                    <button class="btn btn-sm btn-outline-warning" @click="toggleBlacklist('patient', patient.id, !patient.is_blacklisted)">
+                                        [[ patient.is_blacklisted ? 'Restore' : 'Blacklist' ]]
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @click="deleteEntity('patient', patient.id)">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-if="!filteredAdminPatients.length">
+                            <td colspan="4" class="text-center text-secondary py-4">No patients match the current search.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Upcoming Appointments</h2>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Department</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="appt in filteredAdminAppointments" :key="'upcoming-' + appt.id">
+                            <td>[[ appt.patient.name ]]</td>
+                            <td>[[ appt.doctor.name ]]</td>
+                            <td>[[ appt.doctor.department_name ]]</td>
+                            <td>[[ formatDate(appt.date) ]]</td>
+                            <td>[[ formatTime(appt.time) ]]</td>
+                        </tr>
+                        <tr v-if="!filteredAdminAppointments.length">
+                            <td colspan="5" class="text-center text-secondary py-4">No appointments match the current search.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+</script>

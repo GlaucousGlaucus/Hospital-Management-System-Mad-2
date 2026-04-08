@@ -1,0 +1,31 @@
+<script type="text/x-template" id="app-navbar-template">
+    <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
+        <div class="container">
+            <button
+                class="navbar-brand btn btn-link text-decoration-none text-white fw-semibold p-0 border-0"
+                @click="goHome"
+            >
+                CliniTrak
+            </button>
+            <div class="ms-auto d-flex align-items-center gap-2">
+                <template v-if="bootstrap.user">
+                    <span class="badge text-bg-light text-uppercase px-3 py-2">[[ bootstrap.user.user_type ]]</span>
+                    <button class="btn btn-outline-light" @click="navigate('/dashboard/')">
+                        Dashboard
+                    </button>
+                    <button class="btn btn-light" @click="logout">
+                        Logout
+                    </button>
+                </template>
+                <template v-else>
+                    <button class="btn btn-outline-light" @click="navigate('/login/')">
+                        Login
+                    </button>
+                    <button class="btn btn-light" @click="navigate('/signup/')">
+                        Sign Up
+                    </button>
+                </template>
+            </div>
+        </div>
+    </nav>
+</script>
