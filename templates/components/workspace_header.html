@@ -1,13 +1,12 @@
 <script type="text/x-template" id="workspace-header-template">
-    <div class="d-flex justify-content-between align-items-start flex-column flex-lg-row gap-3 mb-4">
-        <div>
-            <span class="eyebrow">Workspace</span>
-            <h1 class="h2 mt-2 mb-1">[[ viewTitle ]]</h1>
-            <p class="text-secondary mb-0">[[ viewSubtitle ]]</p>
+    <div class="workspace-header">
+        <div class="workspace-header-copy">
+            <h1 class="workspace-title">[[ viewTitle ]]</h1>
+            <p class="text-muted space-b-0">[[ viewSubtitle ]]</p>
         </div>
-        <div class="text-lg-end">
-            <div class="fw-semibold">[[ user.name ]]</div>
-            <div class="text-secondary">[[ user.email ]]</div>
+        <div class="workspace-user">
+            <div class="text-strong">[[ user.name ]]</div>
+            <div class="text-muted">[[ user.email ]]</div>
         </div>
     </div>
 </script>

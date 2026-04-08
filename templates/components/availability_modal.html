@@ -1,56 +1,53 @@
 <script type="text/x-template" id="availability-modal-template">
-        <div v-if="availabilityModal.open" class="modal-backdrop fade show"></div>
-        <div v-if="availabilityModal.open" class="modal d-block" tabindex="-1">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content border-0 shadow">
-                    <div class="modal-header">
-                        <h2 class="modal-title h5 mb-0">Doctor Availability</h2>
-                        <button type="button" class="btn-close" @click="closeAvailabilityModal"></button>
+        <div v-if="availabilityModal.open" class="modal-overlay dialog-open" @click.self="closeAvailabilityModal">
+            <div class="dialog-card availability-dialog-card" role="dialog" aria-modal="true" aria-labelledby="availability-title">
+                <div class="dialog-header">
+                    <h2 id="availability-title" class="dialog-title title-size-sm space-b-0">Doctor Availability</h2>
+                    <button type="button" class="app-alert-close dialog-close" @click="closeAvailabilityModal" aria-label="Close modal">×</button>
+                </div>
+                <div class="dialog-body dialog-body-stack">
+                    <div class="table-scroll">
+                        <table class="data-table">
+                            <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Morning</th>
+                                <th>Afternoon</th>
+                                <th>Evening</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="slotRow in availabilityModal.schedule" :key="'modal-' + slotRow.date">
+                                <td>[[ slotRow.date_display ]]</td>
+                                <td>
+                                    <button class="action-btn action-btn-compact u-full-width" :class="availabilityButtonClass(slotRow, 'morning')" :disabled="!slotRow.morning" @click="selectAvailability(slotRow.date, 'morning')">
+                                        [[ slotRow.morning ? 'Select' : 'Unavailable' ]]
+                                    </button>
+                                </td>
+                                <td>
+                                    <button class="action-btn action-btn-compact u-full-width" :class="availabilityButtonClass(slotRow, 'afternoon')" :disabled="!slotRow.afternoon" @click="selectAvailability(slotRow.date, 'afternoon')">
+                                        [[ slotRow.afternoon ? 'Select' : 'Unavailable' ]]
+                                    </button>
+                                </td>
+                                <td>
+                                    <button class="action-btn action-btn-compact u-full-width" :class="availabilityButtonClass(slotRow, 'evening')" :disabled="!slotRow.evening" @click="selectAvailability(slotRow.date, 'evening')">
+                                        [[ slotRow.evening ? 'Select' : 'Unavailable' ]]
+                                    </button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="modal-body">
-                        <div class="table-responsive">
-                            <table class="table align-middle">
-                                <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Morning</th>
-                                    <th>Afternoon</th>
-                                    <th>Evening</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <tr v-for="row in availabilityModal.schedule" :key="'modal-' + row.date">
-                                    <td>[[ row.date_display ]]</td>
-                                    <td>
-                                        <button class="btn btn-sm w-100" :class="availabilityButtonClass(row, 'morning')" :disabled="!row.morning" @click="selectAvailability(row.date, 'morning')">
-                                            [[ row.morning ? 'Select' : 'Unavailable' ]]
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-sm w-100" :class="availabilityButtonClass(row, 'afternoon')" :disabled="!row.afternoon" @click="selectAvailability(row.date, 'afternoon')">
-                                            [[ row.afternoon ? 'Select' : 'Unavailable' ]]
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-sm w-100" :class="availabilityButtonClass(row, 'evening')" :disabled="!row.evening" @click="selectAvailability(row.date, 'evening')">
-                                            [[ row.evening ? 'Select' : 'Unavailable' ]]
-                                        </button>
-                                    </td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="mt-3" v-if="availabilityModal.selectedDate">
-                            <label class="form-label">Visit Type</label>
-                            <input class="form-control" type="text" v-model="availabilityModal.visitType" :disabled="availabilityModal.action !== 'book'">
-                        </div>
+                    <div class="space-t-3" v-if="availabilityModal.selectedDate">
+                        <label class="form-label">Visit Type</label>
+                        <input class="field-control" type="text" v-model="availabilityModal.visitType" :disabled="availabilityModal.action !== 'book'">
                     </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-outline-secondary" @click="closeAvailabilityModal">Close</button>
-                        <button class="btn btn-primary" :disabled="!availabilityModal.selectedDate" @click="confirmAvailabilityAction">
-                            [[ availabilityModal.action === 'reschedule' ? 'Reschedule Appointment' : 'Book Appointment' ]]
-                        </button>
-                    </div>
+                </div>
+                <div class="dialog-footer">
+                    <button class="action-btn action-btn-ghost-secondary" @click="closeAvailabilityModal">Close</button>
+                    <button class="action-btn action-btn-solid" :disabled="!availabilityModal.selectedDate" @click="confirmAvailabilityAction">
+                        [[ availabilityModal.action === 'reschedule' ? 'Reschedule Appointment' : 'Book Appointment' ]]
+                    </button>
                 </div>
             </div>
         </div>

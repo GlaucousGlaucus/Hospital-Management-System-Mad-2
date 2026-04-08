@@ -1,78 +1,78 @@
 <script type="text/x-template" id="treatment-form-template">
-    <section class="card border-0 shadow-sm">
-        <div class="card-body p-4 p-lg-5">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+    <section class="panel u-border-none surface-shadow-soft">
+        <div class="panel-body pad-4 pad-lg-5">
+            <div class="flex-row justify-between items-center space-b-4">
                 <div>
-                    <h2 class="h4 mb-1">Update Patient History</h2>
-                    <p class="text-secondary mb-0">
+                    <h2 class="title-size-md space-b-1">Update Patient History</h2>
+                    <p class="text-muted space-b-0">
                         [[ treatmentForm.appointment.patient.name ]] with [[ treatmentForm.appointment.doctor.name ]]
                     </p>
                 </div>
-                <button class="btn btn-outline-primary" @click="navigate('/dashboard/')">Back</button>
+                <button class="action-btn action-btn-ghost-primary" @click="navigate('/dashboard/')">Back</button>
             </div>
-            <form @submit.prevent="submitTreatmentForm" class="row g-4">
-                <div class="col-md-6">
+            <form @submit.prevent="submitTreatmentForm" class="layout-grid layout-gap-lg">
+                <div class="span-md-6">
                     <label class="form-label">Visit Type</label>
-                    <input class="form-control" type="text" v-model="treatmentForm.visit_type">
+                    <input class="field-control" type="text" v-model="treatmentForm.visit_type">
                 </div>
-                <div class="col-md-6">
+                <div class="span-md-6">
                     <label class="form-label">Test Done</label>
-                    <input class="form-control" type="text" v-model="treatmentForm.test_done">
+                    <input class="field-control" type="text" v-model="treatmentForm.test_done">
                 </div>
-                <div class="col-md-6">
+                <div class="span-md-6">
                     <label class="form-label">Diagnosis</label>
-                    <textarea class="form-control" rows="4" v-model="treatmentForm.diagnosis"></textarea>
+                    <textarea class="field-control" rows="4" v-model="treatmentForm.diagnosis"></textarea>
                 </div>
-                <div class="col-md-6">
+                <div class="span-md-6">
                     <label class="form-label">Prescription</label>
-                    <textarea class="form-control" rows="4" v-model="treatmentForm.prescription"></textarea>
+                    <textarea class="field-control" rows="4" v-model="treatmentForm.prescription"></textarea>
                 </div>
-                <div class="col-12">
+                <div class="span-12">
                     <label class="form-label">Doctor Notes</label>
-                    <textarea class="form-control" rows="3" v-model="treatmentForm.notes"></textarea>
+                    <textarea class="field-control" rows="3" v-model="treatmentForm.notes"></textarea>
                 </div>
-                <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h3 class="h5 mb-0">Medicines</h3>
-                        <button class="btn btn-outline-primary btn-sm" type="button" @click="addMedicineRow">Add Medicine</button>
+                <div class="span-12">
+                    <div class="flex-row justify-between items-center space-b-3">
+                        <h3 class="title-size-sm space-b-0">Medicines</h3>
+                        <button class="action-btn action-btn-ghost-primary action-btn-compact" type="button" @click="addMedicineRow">Add Medicine</button>
                     </div>
-                    <div class="vstack gap-3">
-                        <div class="border rounded-4 p-3" v-for="(medicine, index) in treatmentForm.medicines" :key="'medicine-' + index">
-                            <div class="row g-3">
-                                <div class="col-md-4">
+                    <div class="stack-col space-gap-md">
+                        <div class="surface-outline surface-rounded-lg pad-3" v-for="(medicine, index) in treatmentForm.medicines" :key="'medicine-' + index">
+                            <div class="layout-grid layout-gap-md">
+                                <div class="span-md-4">
                                     <label class="form-label">Name</label>
-                                    <input class="form-control" type="text" v-model="medicine.name">
+                                    <input class="field-control" type="text" v-model="medicine.name">
                                 </div>
-                                <div class="col-md-2">
+                                <div class="span-md-2">
                                     <label class="form-label">Morning</label>
-                                    <input class="form-control" type="number" min="0" max="3" v-model.number="medicine.morning">
+                                    <input class="field-control" type="number" min="0" max="3" v-model.number="medicine.morning">
                                 </div>
-                                <div class="col-md-2">
+                                <div class="span-md-2">
                                     <label class="form-label">Afternoon</label>
-                                    <input class="form-control" type="number" min="0" max="3" v-model.number="medicine.afternoon">
+                                    <input class="field-control" type="number" min="0" max="3" v-model.number="medicine.afternoon">
                                 </div>
-                                <div class="col-md-2">
+                                <div class="span-md-2">
                                     <label class="form-label">Night</label>
-                                    <input class="form-control" type="number" min="0" max="3" v-model.number="medicine.night">
+                                    <input class="field-control" type="number" min="0" max="3" v-model.number="medicine.night">
                                 </div>
-                                <div class="col-md-2">
+                                <div class="span-md-2">
                                     <label class="form-label">Days</label>
-                                    <input class="form-control" type="number" min="1" v-model.number="medicine.duration_days">
+                                    <input class="field-control" type="number" min="1" v-model.number="medicine.duration_days">
                                 </div>
-                                <div class="col-md-10">
+                                <div class="span-md-10">
                                     <label class="form-label">Instructions</label>
-                                    <input class="form-control" type="text" v-model="medicine.instructions">
+                                    <input class="field-control" type="text" v-model="medicine.instructions">
                                 </div>
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <button class="btn btn-outline-danger w-100" type="button" @click="removeMedicineRow(index)">Remove</button>
+                                <div class="span-md-2 flex-row items-end">
+                                    <button class="action-btn action-btn-ghost-danger u-full-width" type="button" @click="removeMedicineRow(index)">Remove</button>
                                 </div>
                             </div>
                         </div>
-                        <p v-if="!treatmentForm.medicines.length" class="text-secondary mb-0">No medicines added.</p>
+                        <p v-if="!treatmentForm.medicines.length" class="text-muted space-b-0">No medicines added.</p>
                     </div>
                 </div>
-                <div class="col-12">
-                    <button class="btn btn-primary" type="submit">Save History</button>
+                <div class="span-12">
+                    <button class="action-btn action-btn-solid" type="submit">Save History</button>
                 </div>
             </form>
         </div>

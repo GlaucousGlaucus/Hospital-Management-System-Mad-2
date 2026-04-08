@@ -11,7 +11,7 @@ const AppAlerts = {
 const AppNavbar = {
     template: "#app-navbar-template",
     props: {
-        bootstrap: { type: Object, required: true },
+        appContext: { type: Object, required: true },
         goHome: { type: Function, required: true },
         navigate: { type: Function, required: true },
         logout: { type: Function, required: true },
@@ -184,7 +184,7 @@ const app = createApp({
     data() {
         return {
             loading: true,
-            bootstrap: {
+            appContext: {
                 user: null,
                 departments: [],
             },
@@ -202,8 +202,8 @@ const app = createApp({
                     description: "Admins manage users, doctors maintain availability and treatment notes, and patients book care from a unified Vue interface.",
                 },
                 {
-                    title: "Operational Stack Compliance",
-                    description: "Flask, Vue, Bootstrap, SQLite, Redis, and Celery are now the active implementation path in this repository.",
+                    title: "Theme-Driven Interface",
+                    description: "The UI now follows the custom CliniTrak color system and component styling defined in the project stylesheet.",
                 },
             ],
             authForm: {
@@ -262,6 +262,16 @@ const app = createApp({
         };
     },
     computed: {
+        loginLabel() {
+            const role = this.authForm.user_type
+
+            if (!role) return "Login"
+
+            let ret = "Login As " + role.charAt(0).toUpperCase() + role.slice(1);
+            console.log(ret);
+
+            return ret
+        },
         viewTitle() {
             switch (this.route.name) {
                 case "dashboard":
@@ -283,20 +293,20 @@ const app = createApp({
             }
         },
         viewSubtitle() {
-            if (!this.bootstrap.user) {
+            if (!this.appContext.user) {
                 return "Single page hospital operations.";
             }
-            const role = this.bootstrap.user.user_type;
+            const role = this.appContext.user.user_type;
             if (this.route.name === "dashboard") {
                 if (role === "admin") return "Manage doctors, patients, appointments, and batch jobs.";
                 if (role === "doctor") return "Track appointments, update treatment records, and maintain availability.";
                 return "Book appointments, review departments, and manage your profile.";
             }
-            return "Vue-driven frontend on top of the Flask API.";
+            return "";
         },
         showDoctorFields() {
             if (this.route.name === "doctorForm") return true;
-            return this.route.name === "profileForm" && this.bootstrap.user?.user_type === "doctor";
+            return this.route.name === "profileForm" && this.appContext.user?.user_type === "doctor";
         },
         adminSearchTerm() {
             return (this.adminSearch.appliedQuery || "").trim().toLowerCase();
@@ -342,7 +352,7 @@ const app = createApp({
     },
     mounted() {
         window.addEventListener("popstate", this.handlePopState);
-        this.bootstrapApp();
+        this.initializeAppContext();
     },
     beforeUnmount() {
         window.removeEventListener("popstate", this.handlePopState);
@@ -429,7 +439,7 @@ const app = createApp({
                 return { name: pattern.name, params };
             }
 
-            return { name: this.bootstrap.user ? "dashboard" : "home", params: {} };
+            return { name: this.appContext.user ? "dashboard" : "home", params: {} };
         },
         navigate(path, pushState = true) {
             if (pushState) {
@@ -439,7 +449,7 @@ const app = createApp({
             this.loadRouteData();
         },
         goHome() {
-            this.navigate(this.bootstrap.user ? "/dashboard/" : "/");
+            this.navigate(this.appContext.user ? "/dashboard/" : "/");
         },
         handlePopState() {
             this.route = this.resolveRoute(window.location.pathname);
@@ -470,8 +480,8 @@ const app = createApp({
             if (this.route.name === "history") {
                 return this.historyPatientId();
             }
-            if (this.bootstrap.user?.user_type === "patient") {
-                return this.bootstrap.user.id;
+            if (this.appContext.user?.user_type === "patient") {
+                return this.appContext.user.id;
             }
             return null;
         },
@@ -479,16 +489,16 @@ const app = createApp({
             return Boolean(this.currentExportPatientId());
         },
         exportStatusClass(status) {
-            if (status === "Completed") return "text-bg-success";
-            if (status === "Failed") return "text-bg-danger";
-            if (status === "Processing") return "text-bg-primary";
-            return "text-bg-secondary";
+            if (status === "Completed") return "status-pill-success";
+            if (status === "Failed") return "status-pill-danger";
+            if (status === "Processing") return "status-pill-primary";
+            return "status-pill-secondary";
         },
         batchTaskStateClass(state) {
-            if (state === "SUCCESS") return "text-bg-success";
-            if (state === "FAILURE") return "text-bg-danger";
-            if (state === "STARTED" || state === "PROGRESS") return "text-bg-primary";
-            return "text-bg-secondary";
+            if (state === "SUCCESS") return "status-pill-success";
+            if (state === "FAILURE") return "status-pill-danger";
+            if (state === "STARTED" || state === "PROGRESS") return "status-pill-primary";
+            return "status-pill-secondary";
         },
         batchTaskSummary(task) {
             if (!task?.result) return [];
@@ -529,12 +539,12 @@ const app = createApp({
             }
             return [];
         },
-        batchTaskRowKey(task, row, index) {
+        batchTaskRowKey(task, taskRow, index) {
             if (task.kind === "daily-reminders") {
-                return row.appointment_id || index;
+                return taskRow.appointment_id || index;
             }
             if (task.kind === "monthly-activity") {
-                return row.doctor_id || index;
+                return taskRow.doctor_id || index;
             }
             return index;
         },
@@ -564,11 +574,11 @@ const app = createApp({
                 medicines: [],
             };
         },
-        async bootstrapApp() {
+        async initializeAppContext() {
             this.loading = true;
             try {
-                const data = await this.api("/api/bootstrap");
-                this.bootstrap = data;
+                const data = await this.api("/api/app-context");
+                this.appContext = data;
                 this.route = this.resolveRoute(window.location.pathname);
                 await this.loadRouteData();
             } catch (error) {
@@ -579,19 +589,19 @@ const app = createApp({
         },
         async loadDashboard() {
             this.dashboard = await this.api("/api/dashboard");
-            if (this.bootstrap.user?.user_type === "patient") {
+            if (this.appContext.user?.user_type === "patient") {
                 this.exportJobs = this.dashboard.export_jobs || [];
             }
         },
         async loadRouteData() {
             this.resetTransientState();
-            if (!this.bootstrap.user) {
+            if (!this.appContext.user) {
                 return;
             }
 
             if (this.route.name === "dashboard") {
                 await this.loadDashboard();
-                if (this.bootstrap.user.user_type === "patient" && !this.patientSearch.results.length) {
+                if (this.appContext.user.user_type === "patient" && !this.patientSearch.results.length) {
                     await this.runPatientSearch(false);
                 }
                 return;
@@ -638,7 +648,7 @@ const app = createApp({
                     body: this.authForm,
                 });
                 this.authForm.password = "";
-                await this.bootstrapApp();
+                await this.initializeAppContext();
                 this.pushAlert("Logged in successfully.");
                 this.navigate("/dashboard/");
             } catch (error) {
@@ -652,7 +662,7 @@ const app = createApp({
                     body: this.signupForm,
                 });
                 this.signupForm = { name: "", email: "", password: "", dob: "", contact: "" };
-                await this.bootstrapApp();
+                await this.initializeAppContext();
                 this.pushAlert("Account created successfully.");
                 this.navigate("/dashboard/");
             } catch (error) {
@@ -662,7 +672,7 @@ const app = createApp({
         async logout() {
             try {
                 await this.api("/api/auth/logout", { method: "POST" });
-                this.bootstrap = { user: null, departments: this.bootstrap.departments };
+                this.appContext = { user: null, departments: this.appContext.departments };
                 this.dashboard = null;
                 this.patientSearch.results = [];
                 this.pushAlert("Logged out successfully.");
@@ -790,7 +800,7 @@ const app = createApp({
                     await this.api("/api/profile", { method: "PUT", body: this.activeForm });
                 }
                 this.pushAlert("Saved successfully.");
-                await this.bootstrapApp();
+                await this.initializeAppContext();
                 this.navigate("/dashboard/");
             } catch (error) {
                 this.handleError(error);
@@ -878,13 +888,13 @@ const app = createApp({
         closeAvailabilityModal() {
             this.availabilityModal.open = false;
         },
-        availabilityButtonClass(row, slot) {
-            const isSelected = this.availabilityModal.selectedDate === row.date && this.availabilityModal.selectedSlot === slot;
-            if (isSelected) return "btn-success";
-            return row[slot] ? "btn-outline-success" : "btn-outline-danger";
+        availabilityButtonClass(slotRow, slot) {
+            const isSelected = this.availabilityModal.selectedDate === slotRow.date && this.availabilityModal.selectedSlot === slot;
+            if (isSelected) return "action-btn-positive";
+            return slotRow[slot] ? "action-btn-availability" : "action-btn-negative";
         },
         doctorAvailabilityButtonClass(enabled) {
-            return enabled ? "btn-success" : "btn-outline-danger";
+            return enabled ? "action-btn-positive" : "action-btn-negative";
         },
         selectAvailability(date, slot) {
             this.availabilityModal.selectedDate = date;
@@ -1037,7 +1047,7 @@ const app = createApp({
                     this.pushAlert("Treatment export is ready.", "success");
                     const patientId = this.currentExportPatientId();
                     await this.loadExports(patientId);
-                    if (this.bootstrap.user?.user_type === "patient") {
+                    if (this.appContext.user?.user_type === "patient") {
                         await this.loadDashboard();
                     }
                     return;

@@ -1,46 +1,46 @@
 <script type="text/x-template" id="user-form-template">
-    <section class="card border-0 shadow-sm">
-        <div class="card-body p-4 p-lg-5">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="h4 mb-0">[[ formMeta.title ]]</h2>
-                <button class="btn btn-outline-primary" @click="navigate('/dashboard/')">Back</button>
+    <section class="panel u-border-none surface-shadow-soft">
+        <div class="panel-body pad-4 pad-lg-5">
+            <div class="flex-row justify-between items-center space-b-4">
+                <h2 class="title-size-md space-b-0">[[ formMeta.title ]]</h2>
+                <button class="action-btn action-btn-ghost-primary" @click="navigate('/dashboard/')">Back</button>
             </div>
-            <form @submit.prevent="submitActiveForm" class="row g-3">
-                <div class="col-md-6">
+            <form @submit.prevent="submitActiveForm" class="layout-grid layout-gap-md">
+                <div class="span-md-6">
                     <label class="form-label">Name</label>
-                    <input class="form-control" type="text" v-model="activeForm.name" required>
+                    <input class="field-control" type="text" v-model="activeForm.name" required>
                 </div>
-                <div class="col-md-6">
+                <div class="span-md-6">
                     <label class="form-label">Email</label>
-                    <input class="form-control" type="email" v-model="activeForm.email" required>
+                    <input class="field-control" type="email" v-model="activeForm.email" required>
                 </div>
-                <div class="col-md-6">
+                <div class="span-md-6">
                     <label class="form-label">Date of Birth</label>
-                    <input class="form-control" type="date" v-model="activeForm.dob" required>
+                    <input class="field-control" type="date" v-model="activeForm.dob" required>
                 </div>
-                <div class="col-md-6">
+                <div class="span-md-6">
                     <label class="form-label">Contact</label>
-                    <input class="form-control" type="text" v-model="activeForm.contact" required>
+                    <input class="field-control" type="text" v-model="activeForm.contact" required>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">Password <span class="text-secondary" v-if="activeForm.id">(optional on edit)</span></label>
-                    <input class="form-control" type="password" v-model="activeForm.password" :required="!activeForm.id && routeName !== 'profileForm'">
+                <div class="span-md-6">
+                    <label class="form-label">Password <span class="text-muted" v-if="activeForm.id">(optional on edit)</span></label>
+                    <input class="field-control" type="password" v-model="activeForm.password" :required="!activeForm.id && routeName !== 'profileForm'">
                 </div>
-                <div class="col-md-6" v-if="showDoctorFields">
+                <div class="span-md-6" v-if="showDoctorFields">
                     <label class="form-label">Specialization</label>
-                    <input class="form-control" type="text" v-model="activeForm.specialization">
+                    <input class="field-control" type="text" v-model="activeForm.specialization">
                 </div>
-                <div class="col-md-6" v-if="showDoctorFields">
+                <div class="span-md-6" v-if="showDoctorFields">
                     <label class="form-label">Department</label>
-                    <select class="form-select" v-model="activeForm.department_id">
+                    <select class="field-select" v-model="activeForm.department_id">
                         <option value="">Select Department</option>
                         <option v-for="department in departments" :key="'form-dept-' + department.id" :value="department.id">
                             [[ department.name ]]
                         </option>
                     </select>
                 </div>
-                <div class="col-12">
-                    <button class="btn btn-primary" type="submit">[[ formMeta.submitLabel ]]</button>
+                <div class="span-12">
+                    <button class="action-btn action-btn-solid" type="submit">[[ formMeta.submitLabel ]]</button>
                 </div>
             </form>
         </div>

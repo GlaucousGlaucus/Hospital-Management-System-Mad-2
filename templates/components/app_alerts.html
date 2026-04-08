@@ -3,11 +3,11 @@
         <div
             v-for="alert in alerts"
             :key="alert.id"
-            class="alert app-alert d-flex justify-content-between align-items-center shadow-sm"
-            :class="'alert-' + alert.variant"
+            class="app-alert"
+            :class="'app-alert-' + alert.variant"
         >
             <span>[[ alert.message ]]</span>
-            <button type="button" class="btn-close" @click="dismissAlert(alert.id)"></button>
+            <button type="button" class="app-alert-close" @click="dismissAlert(alert.id)" aria-label="Dismiss alert">×</button>
         </div>
     </div>
 </script>

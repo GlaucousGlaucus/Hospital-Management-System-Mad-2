@@ -5,7 +5,7 @@ CliniTrak is now structured as a Flask API with a Vue 3 single-page frontend mou
 - Flask for the API layer
 - Vue 3 via CDN for the UI
 - Jinja2 only for the SPA entry point
-- Bootstrap 5 for layout and styling
+- Custom theme CSS in `static/css/style.css` for layout and styling
 - SQLite through SQLAlchemy for persistence
 - Redis for cache storage
 - Redis + Celery for background batch jobs
@@ -26,7 +26,7 @@ CliniTrak is now structured as a Flask API with a Vue 3 single-page frontend mou
 - `POST /api/auth/login`
 - `POST /api/auth/signup`
 - `POST /api/auth/logout`
-- `GET /api/bootstrap`
+- `GET /api/app-context`
 - `GET /api/dashboard`
 - `GET /api/departments/<id>`
 - `GET /api/patients/<id>/history`

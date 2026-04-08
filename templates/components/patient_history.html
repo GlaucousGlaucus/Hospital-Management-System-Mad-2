@@ -1,62 +1,62 @@
 <script type="text/x-template" id="patient-history-template">
-    <section class="card border-0 shadow-sm">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-4 gap-3 flex-wrap">
+    <section class="panel u-border-none surface-shadow-soft">
+        <div class="panel-body">
+            <div class="flex-row justify-between items-start space-b-4 space-gap-md flex-wrap">
                 <div>
-                    <h2 class="h4 mb-1">[[ patientHistory.patient.name ]]</h2>
-                    <div class="text-secondary">
+                    <h2 class="title-size-md space-b-1">[[ patientHistory.patient.name ]]</h2>
+                    <div class="text-muted">
                         Doctors: [[ patientHistory.doctor_names.join(', ') || 'None' ]]
                     </div>
-                    <div class="text-secondary">
+                    <div class="text-muted">
                         Departments: [[ patientHistory.departments.join(', ') || 'None' ]]
                     </div>
                 </div>
-                <button class="btn btn-outline-primary" @click="navigate('/dashboard/')">Back</button>
+                <button class="action-btn action-btn-ghost-primary" @click="navigate('/dashboard/')">Back</button>
             </div>
-            <div class="border rounded-4 p-3 mb-4 bg-light-subtle">
-                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+            <div class="surface-outline surface-rounded-lg pad-3 space-b-4 surface-tint">
+                <div class="flex-row justify-between items-start space-gap-md flex-wrap">
                     <div>
-                        <h3 class="h5 mb-1">Treatment Exports</h3>
-                        <p class="text-secondary small mb-0">
+                        <h3 class="title-size-sm space-b-1">Treatment Exports</h3>
+                        <p class="text-muted text-small space-b-0">
                             Queue a CSV for this patient's treatment history and download completed files.
                         </p>
                     </div>
-                    <div class="d-flex flex-wrap gap-2">
-                        <button class="btn btn-outline-primary" @click="startTreatmentExport" :disabled="!canQueueTreatmentExport()">Export as CSV</button>
-                        <button class="btn btn-outline-secondary" @click="loadExports(historyPatientId())">Refresh</button>
+                    <div class="flex-row flex-wrap space-gap-sm">
+                        <button class="action-btn action-btn-ghost-primary" @click="startTreatmentExport" :disabled="!canQueueTreatmentExport()">Export as CSV</button>
+                        <button class="action-btn action-btn-ghost-secondary" @click="loadExports(historyPatientId())">Refresh</button>
                     </div>
                 </div>
-                <div v-if="exportJobs.length" class="table-responsive mt-3">
-                    <table class="table align-middle mb-0">
+                <div v-if="exportJobs.length" class="table-scroll space-t-3">
+                    <table class="records-table cell-middle space-b-0">
                         <thead>
                         <tr>
                             <th>Created</th>
                             <th>Status</th>
                             <th>File</th>
                             <th>Completed</th>
-                            <th class="text-end">Action</th>
+                            <th class="text-right">Action</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr v-for="exportJob in exportJobs" :key="'history-export-' + exportJob.id">
                             <td>[[ formatDateTime(exportJob.created_at) ]]</td>
                             <td>
-                                <span class="badge" :class="exportStatusClass(exportJob.status)">[[ exportJob.status ]]</span>
+                                <span class="status-pill" :class="exportStatusClass(exportJob.status)">[[ exportJob.status ]]</span>
                             </td>
                             <td>[[ exportJob.file_name || 'Pending generation' ]]</td>
                             <td>[[ formatDateTime(exportJob.completed_at) || 'Not completed' ]]</td>
-                            <td class="text-end">
-                                <a v-if="exportJob.download_url" class="btn btn-sm btn-outline-success" :href="exportJob.download_url">Download</a>
-                                <span v-else class="text-secondary small">Waiting for completion</span>
+                            <td class="text-right">
+                                <a v-if="exportJob.download_url" class="action-btn action-btn-compact action-btn-ghost-success" :href="exportJob.download_url">Download</a>
+                                <span v-else class="text-muted text-small">Waiting for completion</span>
                             </td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
-                <p v-else class="text-secondary small mb-0 mt-3">No exports generated for this patient yet.</p>
+                <p v-else class="text-muted text-small space-b-0 space-t-3">No exports generated for this patient yet.</p>
             </div>
-            <div class="table-responsive">
-                <table class="table align-middle">
+            <div class="table-scroll">
+                <table class="records-table cell-middle">
                     <thead>
                     <tr>
                         <th>Visit</th>
@@ -80,7 +80,7 @@
                                     [[ medicine.name ]] ([[ medicine.morning ]]/[[ medicine.afternoon ]]/[[ medicine.night ]])
                                 </div>
                             </div>
-                            <span v-else class="text-secondary">None</span>
+                            <span v-else class="text-muted">None</span>
                         </td>
                     </tr>
                     </tbody>

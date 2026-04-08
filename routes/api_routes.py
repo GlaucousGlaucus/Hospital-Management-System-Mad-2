@@ -56,7 +56,7 @@ def require_role(*roles):
 
 
 def _invalidate_app_cache():
-    delete_cache_pattern("bootstrap:*")
+    delete_cache_pattern("app-context:*")
     delete_cache_pattern("dashboard:*")
     delete_cache_pattern("search:*")
 
@@ -351,10 +351,10 @@ def _patient_search(db, query: str, department: str | None, date_str: str | None
     return {"doctors": [_serialize_doctor(doctor) for doctor in doctors]}
 
 
-@api_bp.route("/bootstrap", methods=["GET"])
-def bootstrap():
+@api_bp.route("/app-context", methods=["GET"])
+def app_context():
     user = _user_payload()
-    cache_key = f"bootstrap:{user['user_type']}:{user['id']}" if user else "bootstrap:anonymous"
+    cache_key = f"app-context:{user['user_type']}:{user['id']}" if user else "app-context:anonymous"
     cached = get_cache(cache_key)
     if cached is not None:
         return jsonify(cached)
