@@ -168,6 +168,7 @@ def send_daily_patient_reminders():
             reminders.append({
                 "appointment_id": appointment.id,
                 "patient_id": patient.id,
+                "patient_name": patient.name,
                 "channels": delivered_channels or ["none_configured"],
             })
             if delivered_channels:
@@ -225,6 +226,7 @@ def send_monthly_doctor_activity_reports():
                 delivered = False
             reports.append({
                 "doctor_id": doctor.id,
+                "doctor_name": doctor.name,
                 "doctor_email": doctor.email,
                 "appointments": len(appointments),
                 "delivered": delivered,

@@ -1,0 +1,4 @@
+user_id,username,consulting_doctor,appointment_date,appointment_time,appointment_status,visit_type,diagnosis,treatment_given,doctor_notes,medicines,next_visit_suggested_date,next_visit_suggested_time
+2,Aarav Patel,Sarah Reddy,2025-11-02,16:45,Completed,Emergency,Fever,Paracetamol 500mg,Follow-up required,"Paracetamol 500mg (7d), Paracetamol 500mg (10d)",,
+2,Aarav Patel,Maya Kapoor,2025-11-21,16:45,Completed,Emergency,Flu,Dolo 650,Follow-up required,"Cough Syrup (11d), Dolo 650 (13d)",,
+2,Aarav Patel,Priya Banerjee,2025-12-18,09:30,Booked,Emergency,,,,,,

@@ -207,9 +207,63 @@
                                 <button class="btn btn-outline-secondary" @click="startMonthlyActivityReport">Run Monthly Reports</button>
                             </div>
                         </div>
-                        <div v-if="batchTask" class="mt-3 small">
-                            <span class="fw-semibold">Batch Task:</span> [[ batchTask.state ]]
-                            <span v-if="batchTask.result"> | [[ JSON.stringify(batchTask.result) ]]</span>
+                        <div v-if="batchTask" class="mt-4 border rounded-4 p-3 bg-light-subtle">
+                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                                <div>
+                                    <div class="fw-semibold">[[ batchTask.label || 'Batch Task' ]]</div>
+                                    <div class="small text-secondary">Task ID: [[ batchTask.task_id ]]</div>
+                                </div>
+                                <span class="badge" :class="batchTaskStateClass(batchTask.state)">[[ batchTask.state ]]</span>
+                            </div>
+                            <div v-if="batchTask.error" class="text-danger small mt-3">[[ batchTask.error ]]</div>
+                            <div v-if="batchTask.result" class="mt-3">
+                                <div class="row g-3">
+                                    <div class="col-md-4 col-xl-2" v-for="item in batchTaskSummary(batchTask)" :key="batchTask.kind + '-' + item.label">
+                                        <div class="border rounded-4 p-3 h-100 bg-white">
+                                            <div class="text-secondary small">[[ item.label ]]</div>
+                                            <div class="fw-semibold">[[ item.value ]]</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div v-if="batchTask.kind === 'daily-reminders' && batchTaskRows(batchTask).length" class="table-responsive mt-3">
+                                    <table class="table align-middle mb-0">
+                                        <thead>
+                                        <tr>
+                                            <th>Appointment</th>
+                                            <th>Patient</th>
+                                            <th>Channels</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr v-for="(row, index) in batchTaskRows(batchTask)" :key="batchTaskRowKey(batchTask, row, index)">
+                                            <td>[[ row.appointment_id ]]</td>
+                                            <td>[[ row.patient_name || row.patient_id ]]</td>
+                                            <td>[[ (row.channels || []).join(', ') ]]</td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div v-if="batchTask.kind === 'monthly-activity' && batchTaskRows(batchTask).length" class="table-responsive mt-3">
+                                    <table class="table align-middle mb-0">
+                                        <thead>
+                                        <tr>
+                                            <th>Doctor</th>
+                                            <th>Email</th>
+                                            <th>Appointments</th>
+                                            <th>Delivered</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr v-for="(row, index) in batchTaskRows(batchTask)" :key="batchTaskRowKey(batchTask, row, index)">
+                                            <td>[[ row.doctor_name || row.doctor_id ]]</td>
+                                            <td>[[ row.doctor_email ]]</td>
+                                            <td>[[ row.appointments ]]</td>
+                                            <td>[[ row.delivered ? 'Yes' : 'No' ]]</td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -554,9 +608,9 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h2 class="h5 mb-0">CSV Export Jobs</h2>
-                            <button class="btn btn-sm btn-outline-secondary" @click="refreshPatientExports">Refresh</button>
+                            <button class="btn btn-sm btn-outline-secondary" @click="loadExports()">Refresh</button>
                         </div>
-                        <div v-if="patientExports.length" class="table-responsive">
+                        <div v-if="exportJobs.length" class="table-responsive">
                             <table class="table align-middle">
                                 <thead>
                                 <tr>
@@ -567,9 +621,11 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr v-for="exportJob in patientExports" :key="'export-' + exportJob.id">
-                                    <td>[[ new Date(exportJob.created_at).toLocaleString() ]]</td>
-                                    <td>[[ exportJob.status ]]</td>
+                                <tr v-for="exportJob in exportJobs" :key="'export-' + exportJob.id">
+                                    <td>[[ formatDateTime(exportJob.created_at) ]]</td>
+                                    <td>
+                                        <span class="badge" :class="exportStatusClass(exportJob.status)">[[ exportJob.status ]]</span>
+                                    </td>
                                     <td>[[ exportJob.file_name || 'Pending generation' ]]</td>
                                     <td class="text-end">
                                         <a v-if="exportJob.download_url" class="btn btn-sm btn-outline-success" :href="exportJob.download_url">Download</a>
@@ -679,7 +735,7 @@
             <template v-else-if="route.name === 'history' && patientHistory">
                 <section class="card border-0 shadow-sm">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-4 gap-3">
+                        <div class="d-flex justify-content-between align-items-start mb-4 gap-3 flex-wrap">
                             <div>
                                 <h2 class="h4 mb-1">[[ patientHistory.patient.name ]]</h2>
                                 <div class="text-secondary">
@@ -690,6 +746,48 @@
                                 </div>
                             </div>
                             <button class="btn btn-outline-primary" @click="navigate('/dashboard/')">Back</button>
+                        </div>
+                        <div class="border rounded-4 p-3 mb-4 bg-light-subtle">
+                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                                <div>
+                                    <h3 class="h5 mb-1">Treatment Exports</h3>
+                                    <p class="text-secondary small mb-0">
+                                        Queue a CSV for this patient's treatment history and download completed files.
+                                    </p>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button class="btn btn-outline-primary" @click="startTreatmentExport" :disabled="!canQueueTreatmentExport()">Export as CSV</button>
+                                    <button class="btn btn-outline-secondary" @click="loadExports(historyPatientId())">Refresh</button>
+                                </div>
+                            </div>
+                            <div v-if="exportJobs.length" class="table-responsive mt-3">
+                                <table class="table align-middle mb-0">
+                                    <thead>
+                                    <tr>
+                                        <th>Created</th>
+                                        <th>Status</th>
+                                        <th>File</th>
+                                        <th>Completed</th>
+                                        <th class="text-end">Action</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr v-for="exportJob in exportJobs" :key="'history-export-' + exportJob.id">
+                                        <td>[[ formatDateTime(exportJob.created_at) ]]</td>
+                                        <td>
+                                            <span class="badge" :class="exportStatusClass(exportJob.status)">[[ exportJob.status ]]</span>
+                                        </td>
+                                        <td>[[ exportJob.file_name || 'Pending generation' ]]</td>
+                                        <td>[[ formatDateTime(exportJob.completed_at) || 'Not completed' ]]</td>
+                                        <td class="text-end">
+                                            <a v-if="exportJob.download_url" class="btn btn-sm btn-outline-success" :href="exportJob.download_url">Download</a>
+                                            <span v-else class="text-secondary small">Waiting for completion</span>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p v-else class="text-secondary small mb-0 mt-3">No exports generated for this patient yet.</p>
                         </div>
                         <div class="table-responsive">
                             <table class="table align-middle">

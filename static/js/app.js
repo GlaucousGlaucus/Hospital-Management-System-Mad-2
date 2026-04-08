@@ -78,7 +78,7 @@ createApp({
             },
             batchTask: null,
             pollHandle: null,
-            patientExports: [],
+            exportJobs: [],
             exportPollHandle: null,
         };
     },
@@ -231,10 +231,100 @@ createApp({
             const normalized = value.length === 5 ? `${value}:00` : value;
             return new Date(`1970-01-01T${normalized}`).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         },
+        formatDateTime(value) {
+            if (!value) return "";
+            return new Date(value).toLocaleString();
+        },
         timeForSlot(slot) {
             if (slot === "morning") return "09:00";
             if (slot === "afternoon") return "13:00";
             return "17:00";
+        },
+        historyPatientId() {
+            return this.patientHistory?.patient?.id || null;
+        },
+        currentExportPatientId() {
+            if (this.route.name === "history") {
+                return this.historyPatientId();
+            }
+            if (this.bootstrap.user?.user_type === "patient") {
+                return this.bootstrap.user.id;
+            }
+            return null;
+        },
+        canQueueTreatmentExport() {
+            return Boolean(this.currentExportPatientId());
+        },
+        exportStatusClass(status) {
+            if (status === "Completed") return "text-bg-success";
+            if (status === "Failed") return "text-bg-danger";
+            if (status === "Processing") return "text-bg-primary";
+            return "text-bg-secondary";
+        },
+        batchTaskStateClass(state) {
+            if (state === "SUCCESS") return "text-bg-success";
+            if (state === "FAILURE") return "text-bg-danger";
+            if (state === "STARTED" || state === "PROGRESS") return "text-bg-primary";
+            return "text-bg-secondary";
+        },
+        batchTaskSummary(task) {
+            if (!task?.result) return [];
+            if (task.kind === "daily-summary") {
+                return [
+                    { label: "Doctors", value: task.result.totals?.doctors ?? 0 },
+                    { label: "Patients", value: task.result.totals?.patients ?? 0 },
+                    { label: "Appointments Today", value: task.result.totals?.appointments_today ?? 0 },
+                    { label: "Booked", value: task.result.statuses?.booked ?? 0 },
+                    { label: "Completed", value: task.result.statuses?.completed ?? 0 },
+                    { label: "Cancelled", value: task.result.statuses?.cancelled ?? 0 },
+                ];
+            }
+            if (task.kind === "daily-reminders") {
+                return [
+                    { label: "Date", value: task.result.date || "N/A" },
+                    { label: "Appointments Considered", value: task.result.appointments_considered ?? 0 },
+                    { label: "Notifications Sent", value: task.result.notifications_sent ?? 0 },
+                ];
+            }
+            if (task.kind === "monthly-activity") {
+                return [
+                    { label: "Period Start", value: task.result.period_start || "N/A" },
+                    { label: "Period End", value: task.result.period_end || "N/A" },
+                    { label: "Reports Generated", value: task.result.reports_generated ?? 0 },
+                    { label: "Reports Delivered", value: task.result.reports_delivered ?? 0 },
+                ];
+            }
+            return [];
+        },
+        batchTaskRows(task) {
+            if (!task?.result) return [];
+            if (task.kind === "daily-reminders") {
+                return task.result.reminders || [];
+            }
+            if (task.kind === "monthly-activity") {
+                return task.result.items || [];
+            }
+            return [];
+        },
+        batchTaskRowKey(task, row, index) {
+            if (task.kind === "daily-reminders") {
+                return row.appointment_id || index;
+            }
+            if (task.kind === "monthly-activity") {
+                return row.doctor_id || index;
+            }
+            return index;
+        },
+        async queueBatchTask(url, kind, label, queuedMessage) {
+            const payload = await this.api(url, { method: "POST" });
+            this.batchTask = {
+                task_id: payload.task_id,
+                state: payload.status,
+                kind,
+                label,
+            };
+            this.pushAlert(queuedMessage, "info");
+            this.pollBatchTask(payload.task_id);
         },
         resetTransientState() {
             this.activeForm = null;
@@ -267,7 +357,7 @@ createApp({
         async loadDashboard() {
             this.dashboard = await this.api("/api/dashboard");
             if (this.bootstrap.user?.user_type === "patient") {
-                this.patientExports = this.dashboard.export_jobs || [];
+                this.exportJobs = this.dashboard.export_jobs || [];
             }
         },
         async loadRouteData() {
@@ -292,6 +382,7 @@ createApp({
 
             if (this.route.name === "history") {
                 this.patientHistory = await this.api(`/api/patients/${this.route.params.patientId}/history`);
+                await this.loadExports(this.route.params.patientId);
                 return;
             }
 
@@ -631,30 +722,36 @@ createApp({
         },
         async startBatchReport() {
             try {
-                const payload = await this.api("/api/batch/reports/daily-summary", { method: "POST" });
-                this.batchTask = { task_id: payload.task_id, state: payload.status };
-                this.pushAlert("Batch report queued.", "info");
-                this.pollBatchTask(payload.task_id);
+                await this.queueBatchTask(
+                    "/api/batch/reports/daily-summary",
+                    "daily-summary",
+                    "Daily Summary",
+                    "Batch report queued.",
+                );
             } catch (error) {
                 this.handleError(error);
             }
         },
         async startDailyReminders() {
             try {
-                const payload = await this.api("/api/batch/reports/daily-reminders", { method: "POST" });
-                this.batchTask = { task_id: payload.task_id, state: payload.status };
-                this.pushAlert("Daily reminders queued.", "info");
-                this.pollBatchTask(payload.task_id);
+                await this.queueBatchTask(
+                    "/api/batch/reports/daily-reminders",
+                    "daily-reminders",
+                    "Daily Reminders",
+                    "Daily reminders queued.",
+                );
             } catch (error) {
                 this.handleError(error);
             }
         },
         async startMonthlyActivityReport() {
             try {
-                const payload = await this.api("/api/batch/reports/monthly-activity", { method: "POST" });
-                this.batchTask = { task_id: payload.task_id, state: payload.status };
-                this.pushAlert("Monthly activity reports queued.", "info");
-                this.pollBatchTask(payload.task_id);
+                await this.queueBatchTask(
+                    "/api/batch/reports/monthly-activity",
+                    "monthly-activity",
+                    "Monthly Activity Reports",
+                    "Monthly activity reports queued.",
+                );
             } catch (error) {
                 this.handleError(error);
             }
@@ -665,7 +762,10 @@ createApp({
             }
             try {
                 const payload = await this.api(`/api/batch/tasks/${taskId}`);
-                this.batchTask = payload;
+                this.batchTask = {
+                    ...(this.batchTask || {}),
+                    ...payload,
+                };
                 if (!["SUCCESS", "FAILURE"].includes(payload.state)) {
                     this.pollHandle = setTimeout(() => this.pollBatchTask(taskId), 2000);
                 }
@@ -673,19 +773,35 @@ createApp({
                 this.handleError(error);
             }
         },
-        async refreshPatientExports() {
+        upsertExportJob(exportJob) {
+            const existingIndex = this.exportJobs.findIndex((item) => item.id === exportJob.id);
+            if (existingIndex >= 0) {
+                this.exportJobs.splice(existingIndex, 1, exportJob);
+            } else {
+                this.exportJobs.unshift(exportJob);
+            }
+        },
+        async loadExports(patientId = null) {
             try {
-                const payload = await this.api("/api/patient/exports");
-                this.patientExports = payload.exports || [];
+                const params = new URLSearchParams();
+                if (patientId) {
+                    params.set("patient_id", patientId);
+                }
+                const url = params.toString() ? `/api/exports?${params.toString()}` : "/api/exports";
+                const payload = await this.api(url);
+                this.exportJobs = payload.exports || [];
             } catch (error) {
                 this.handleError(error);
             }
         },
         async startTreatmentExport() {
             try {
-                const payload = await this.api("/api/patient/exports/treatments", { method: "POST" });
+                const patientId = this.currentExportPatientId();
+                const body = patientId ? { patient_id: patientId } : undefined;
+                const payload = await this.api("/api/exports/treatments", { method: "POST", body });
                 this.pushAlert("Treatment export queued.", "info");
-                await this.refreshPatientExports();
+                this.upsertExportJob(payload.export);
+                await this.loadExports(patientId);
                 this.pollPatientExport(payload.export.id);
             } catch (error) {
                 this.handleError(error);
@@ -696,17 +812,16 @@ createApp({
                 clearTimeout(this.exportPollHandle);
             }
             try {
-                const payload = await this.api(`/api/patient/exports/${exportId}`);
+                const payload = await this.api(`/api/exports/${exportId}`);
                 const exportJob = payload.export;
-                const existingIndex = this.patientExports.findIndex((item) => item.id === exportJob.id);
-                if (existingIndex >= 0) {
-                    this.patientExports.splice(existingIndex, 1, exportJob);
-                } else {
-                    this.patientExports.unshift(exportJob);
-                }
+                this.upsertExportJob(exportJob);
                 if (exportJob.status === "Completed") {
                     this.pushAlert("Treatment export is ready.", "success");
-                    await this.loadDashboard();
+                    const patientId = this.currentExportPatientId();
+                    await this.loadExports(patientId);
+                    if (this.bootstrap.user?.user_type === "patient") {
+                        await this.loadDashboard();
+                    }
                     return;
                 }
                 if (exportJob.status === "Failed") {

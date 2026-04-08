@@ -143,6 +143,8 @@ def _schedule_for_doctor(db, doctor_id: int):
 def _serialize_export_job(export_job: ExportJob):
     return {
         "id": export_job.id,
+        "patient_id": export_job.patient_id,
+        "patient_name": export_job.patient.name if export_job.patient else None,
         "task_id": export_job.task_id,
         "status": export_job.status.value,
         "file_name": export_job.file_name,
@@ -150,11 +152,49 @@ def _serialize_export_job(export_job: ExportJob):
         "created_at": export_job.created_at.isoformat() if export_job.created_at else None,
         "completed_at": export_job.completed_at.isoformat() if export_job.completed_at else None,
         "download_url": (
-            f"/api/patient/exports/{export_job.id}/download"
+            f"/api/exports/{export_job.id}/download"
             if export_job.status == ExportJobStatus.COMPLETED and export_job.file_path
             else None
         ),
     }
+
+
+def _resolve_export_patient(db, patient_id: int | None = None):
+    user_id = session.get(SessionInfo.USER_ID)
+    user_type = session.get(SessionInfo.USER_TYPE)
+
+    target_patient_id = patient_id or user_id
+    patient = db.query(Patient).get(target_patient_id)
+    if not patient:
+        return None
+
+    if user_type == UserTypes.ADMIN:
+        return patient
+    if user_type == UserTypes.PATIENT and patient.id == user_id:
+        return patient
+    if user_type == UserTypes.DOCTOR:
+        assigned = db.query(Appointment.id).filter(
+            Appointment.doctor_id == user_id,
+            Appointment.patient_id == patient.id,
+        ).first()
+        if assigned:
+            return patient
+    return None
+
+
+def _get_export_job_for_current_user(db, export_job_id: int):
+    export_job = (
+        db.query(ExportJob)
+        .options(joinedload(ExportJob.patient))
+        .get(export_job_id)
+    )
+    if not export_job:
+        return None
+
+    patient = _resolve_export_patient(db, export_job.patient_id)
+    if not patient:
+        return None
+    return export_job
 
 
 def _appointment_owner_ok(appt: Appointment):
@@ -1028,29 +1068,49 @@ def delete_patient(item_id: int):
     return jsonify({"message": "Patient deleted successfully."})
 
 
+@api_bp.route("/exports", methods=["GET"])
 @api_bp.route("/patient/exports", methods=["GET"])
-@require_role(UserTypes.PATIENT)
-def list_patient_exports():
-    patient_id = session.get(SessionInfo.USER_ID)
+@require_login
+def list_exports():
+    patient_id = request.args.get("patient_id", type=int)
     with SessionLocal() as db:
+        patient = _resolve_export_patient(db, patient_id)
+        if not patient:
+            return jsonify({"error": "Patient not found or access denied."}), 404
+
         exports = (
             db.query(ExportJob)
-            .filter(ExportJob.patient_id == patient_id)
+            .options(joinedload(ExportJob.patient))
+            .filter(ExportJob.patient_id == patient.id)
             .order_by(ExportJob.created_at.desc())
             .all()
         )
-        return jsonify({"exports": [_serialize_export_job(export_job) for export_job in exports]})
+        return jsonify({
+            "patient": _serialize_patient(patient),
+            "exports": [_serialize_export_job(export_job) for export_job in exports],
+        })
 
 
+@api_bp.route("/exports/treatments", methods=["POST"])
 @api_bp.route("/patient/exports/treatments", methods=["POST"])
-@require_role(UserTypes.PATIENT)
-def queue_patient_treatment_export():
+@require_login
+def queue_treatment_export():
     from tasks import generate_patient_treatment_csv_export
 
-    patient_id = session.get(SessionInfo.USER_ID)
+    data = request.get_json(silent=True) or {}
+    requested_patient_id = data.get("patient_id")
+    try:
+        target_patient_id = int(requested_patient_id) if requested_patient_id else None
+    except (TypeError, ValueError):
+        return jsonify({"error": "patient_id must be an integer."}), 400
+
     with SessionLocal() as db:
+        patient = _resolve_export_patient(db, target_patient_id)
+        if not patient:
+            return jsonify({"error": "Patient not found or access denied."}), 404
+
         export_job = ExportJob(
-            patient_id=patient_id,
+            patient_id=patient.id,
             status=ExportJobStatus.QUEUED,
         )
         db.add(export_job)
@@ -1065,24 +1125,24 @@ def queue_patient_treatment_export():
     return jsonify({"message": "Treatment export queued.", "export": payload}), 202
 
 
+@api_bp.route("/exports/<int:export_job_id>", methods=["GET"])
 @api_bp.route("/patient/exports/<int:export_job_id>", methods=["GET"])
-@require_role(UserTypes.PATIENT)
-def get_patient_export(export_job_id: int):
-    patient_id = session.get(SessionInfo.USER_ID)
+@require_login
+def get_export(export_job_id: int):
     with SessionLocal() as db:
-        export_job = db.query(ExportJob).get(export_job_id)
-        if not export_job or export_job.patient_id != patient_id:
+        export_job = _get_export_job_for_current_user(db, export_job_id)
+        if not export_job:
             return jsonify({"error": "Export job not found."}), 404
         return jsonify({"export": _serialize_export_job(export_job)})
 
 
+@api_bp.route("/exports/<int:export_job_id>/download", methods=["GET"])
 @api_bp.route("/patient/exports/<int:export_job_id>/download", methods=["GET"])
-@require_role(UserTypes.PATIENT)
-def download_patient_export(export_job_id: int):
-    patient_id = session.get(SessionInfo.USER_ID)
+@require_login
+def download_export(export_job_id: int):
     with SessionLocal() as db:
-        export_job = db.query(ExportJob).get(export_job_id)
-        if not export_job or export_job.patient_id != patient_id:
+        export_job = _get_export_job_for_current_user(db, export_job_id)
+        if not export_job:
             return jsonify({"error": "Export job not found."}), 404
         if export_job.status != ExportJobStatus.COMPLETED or not export_job.file_path:
             return jsonify({"error": "Export file is not ready yet."}), 409
