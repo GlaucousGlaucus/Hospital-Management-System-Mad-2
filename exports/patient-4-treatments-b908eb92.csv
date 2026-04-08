@@ -1,0 +1,3 @@
+user_id,username,consulting_doctor,appointment_date,appointment_time,appointment_status,visit_type,diagnosis,treatment_given,doctor_notes,medicines,next_visit_suggested_date,next_visit_suggested_time
+4,Riya Patell,Fatima Kapoor,2025-11-07,10:30,Completed,Emergency,Weakness,Paracetamol 500mg,Prescribed rest,Paracetamol (5d),,
+4,Riya Patell,Mira Iyer,2026-03-17,09:00,Booked,Checkup,,,,"HY (4d), Paracetamol (1d)",2026-03-15,13:00

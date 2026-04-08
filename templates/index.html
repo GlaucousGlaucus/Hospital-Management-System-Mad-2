@@ -268,38 +268,6 @@
                     </div>
                 </section>
 
-                <section v-if="adminSearch.results" class="card border-0 shadow-sm mb-4">
-                    <div class="card-body">
-                        <h2 class="h5 mb-3">Search Results</h2>
-                        <div class="row g-3">
-                            <div class="col-lg-4">
-                                <h3 class="h6">Doctors</h3>
-                                <ul class="list-group">
-                                    <li class="list-group-item" v-for="doctor in adminSearch.results.doctors" :key="'s-doc-' + doctor.id">
-                                        [[ doctor.name ]] <span class="text-secondary">([[ doctor.department_name || 'No department' ]])</span>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="col-lg-4">
-                                <h3 class="h6">Patients</h3>
-                                <ul class="list-group">
-                                    <li class="list-group-item" v-for="patient in adminSearch.results.patients" :key="'s-pat-' + patient.id">
-                                        [[ patient.name ]] <span class="text-secondary">([[ patient.email ]])</span>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="col-lg-4">
-                                <h3 class="h6">Appointments</h3>
-                                <ul class="list-group">
-                                    <li class="list-group-item" v-for="appt in adminSearch.results.appointments" :key="'s-app-' + appt.id">
-                                        [[ appt.patient.name ]] with [[ appt.doctor.name ]]
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
                 <section class="card border-0 shadow-sm mb-4">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -318,7 +286,7 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr v-for="doctor in dashboard.doctors" :key="'doctor-' + doctor.id">
+                                <tr v-for="doctor in filteredAdminDoctors" :key="'doctor-' + doctor.id">
                                     <td>[[ doctor.name ]]</td>
                                     <td>[[ doctor.department_name || 'Unassigned' ]]</td>
                                     <td>[[ doctor.contact ]]</td>
@@ -337,6 +305,9 @@
                                             <button class="btn btn-sm btn-outline-danger" @click="deleteEntity('doctor', doctor.id)">Delete</button>
                                         </div>
                                     </td>
+                                </tr>
+                                <tr v-if="!filteredAdminDoctors.length">
+                                    <td colspan="5" class="text-center text-secondary py-4">No doctors match the current search.</td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -361,7 +332,7 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr v-for="patient in dashboard.patients" :key="'patient-' + patient.id">
+                                <tr v-for="patient in filteredAdminPatients" :key="'patient-' + patient.id">
                                     <td>[[ patient.name ]]</td>
                                     <td>[[ patient.email ]]</td>
                                     <td>
@@ -380,6 +351,9 @@
                                             <button class="btn btn-sm btn-outline-danger" @click="deleteEntity('patient', patient.id)">Delete</button>
                                         </div>
                                     </td>
+                                </tr>
+                                <tr v-if="!filteredAdminPatients.length">
+                                    <td colspan="4" class="text-center text-secondary py-4">No patients match the current search.</td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -402,12 +376,15 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr v-for="appt in dashboard.upcoming_appointments" :key="'upcoming-' + appt.id">
+                                <tr v-for="appt in filteredAdminAppointments" :key="'upcoming-' + appt.id">
                                     <td>[[ appt.patient.name ]]</td>
                                     <td>[[ appt.doctor.name ]]</td>
                                     <td>[[ appt.doctor.department_name ]]</td>
                                     <td>[[ formatDate(appt.date) ]]</td>
                                     <td>[[ formatTime(appt.time) ]]</td>
+                                </tr>
+                                <tr v-if="!filteredAdminAppointments.length">
+                                    <td colspan="5" class="text-center text-secondary py-4">No appointments match the current search.</td>
                                 </tr>
                                 </tbody>
                             </table>

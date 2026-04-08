@@ -41,7 +41,7 @@ createApp({
             },
             adminSearch: {
                 q: "",
-                results: null,
+                appliedQuery: "",
             },
             patientSearch: {
                 q: "",
@@ -119,6 +119,47 @@ createApp({
             if (this.route.name === "doctorForm") return true;
             return this.route.name === "profileForm" && this.bootstrap.user?.user_type === "doctor";
         },
+        adminSearchTerm() {
+            return (this.adminSearch.appliedQuery || "").trim().toLowerCase();
+        },
+        filteredAdminDoctors() {
+            const doctors = this.dashboard?.doctors || [];
+            if (!this.adminSearchTerm) return doctors;
+            return doctors.filter((doctor) => this.matchesAdminSearch(doctor, [
+                doctor.name,
+                doctor.email,
+                doctor.contact,
+                doctor.specialization,
+                doctor.department_name,
+                doctor.is_blacklisted ? "blacklisted" : "active",
+            ]));
+        },
+        filteredAdminPatients() {
+            const patients = this.dashboard?.patients || [];
+            if (!this.adminSearchTerm) return patients;
+            return patients.filter((patient) => this.matchesAdminSearch(patient, [
+                patient.name,
+                patient.email,
+                patient.contact,
+                patient.is_blacklisted ? "blacklisted" : "active",
+            ]));
+        },
+        filteredAdminAppointments() {
+            const appointments = this.dashboard?.upcoming_appointments || [];
+            if (!this.adminSearchTerm) return appointments;
+            return appointments.filter((appointment) => this.matchesAdminSearch(appointment, [
+                appointment.patient?.name,
+                appointment.patient?.email,
+                appointment.doctor?.name,
+                appointment.doctor?.email,
+                appointment.doctor?.specialization,
+                appointment.doctor?.department_name,
+                appointment.visit_type,
+                appointment.status,
+                appointment.date,
+                appointment.time,
+            ]));
+        },
     },
     mounted() {
         window.addEventListener("popstate", this.handlePopState);
@@ -168,6 +209,9 @@ createApp({
         },
         dismissAlert(id) {
             this.alerts = this.alerts.filter((alert) => alert.id !== id);
+        },
+        matchesAdminSearch(_, fields) {
+            return fields.some((field) => String(field || "").toLowerCase().includes(this.adminSearchTerm));
         },
         handleError(error) {
             this.pushAlert(error.message || "Unexpected error.", "danger");
@@ -449,12 +493,7 @@ createApp({
             }
         },
         async runAdminSearch() {
-            try {
-                const params = new URLSearchParams({ q: this.adminSearch.q });
-                this.adminSearch.results = await this.api(`/api/search?${params.toString()}`);
-            } catch (error) {
-                this.handleError(error);
-            }
+            this.adminSearch.appliedQuery = this.adminSearch.q;
         },
         async runPatientSearch(notify = true) {
             try {
