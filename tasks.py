@@ -331,20 +331,3 @@ def generate_patient_treatment_csv_export(self, export_job_id: int):
             "file_name": file_name,
             "completed_at": export_job.completed_at.isoformat(),
         }
-
-
-@generate_patient_treatment_csv_export.on_failure
-def _mark_export_failure(exc, task_id, args, kwargs, einfo):
-    export_job_id = args[0] if args else None
-    if export_job_id is None:
-        return
-
-    with SessionLocal() as db:
-        export_job = db.query(ExportJob).get(export_job_id)
-        if not export_job:
-            return
-        export_job.task_id = task_id
-        export_job.status = ExportJobStatus.FAILED
-        export_job.error_message = str(exc)
-        export_job.completed_at = datetime.utcnow()
-        db.commit()

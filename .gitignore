@@ -132,3 +132,5 @@ dmypy.json
 cython_debug/
 identifier.sqlite
 *test*.db
+celerybeat-schedule-shm
+celerybeat-schedule-wal
