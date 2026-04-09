@@ -49,6 +49,7 @@ const AdminDashboard = {
         filteredAdminDoctors: { type: Array, required: true },
         filteredAdminPatients: { type: Array, required: true },
         filteredAdminAppointments: { type: Array, required: true },
+        filteredAdminPastAppointments: { type: Array, required: true },
         batchTask: { type: Object, default: null },
         runAdminSearch: { type: Function, required: true },
         navigate: { type: Function, required: true },
@@ -335,6 +336,22 @@ const app = createApp({
         },
         filteredAdminAppointments() {
             const appointments = this.dashboard?.upcoming_appointments || [];
+            if (!this.adminSearchTerm) return appointments;
+            return appointments.filter((appointment) => this.matchesAdminSearch(appointment, [
+                appointment.patient?.name,
+                appointment.patient?.email,
+                appointment.doctor?.name,
+                appointment.doctor?.email,
+                appointment.doctor?.specialization,
+                appointment.doctor?.department_name,
+                appointment.visit_type,
+                appointment.status,
+                appointment.date,
+                appointment.time,
+            ]));
+        },
+        filteredAdminPastAppointments() {
+            const appointments = this.dashboard?.past_appointments || [];
             if (!this.adminSearchTerm) return appointments;
             return appointments.filter((appointment) => this.matchesAdminSearch(appointment, [
                 appointment.patient?.name,

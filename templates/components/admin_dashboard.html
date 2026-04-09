@@ -1,6 +1,6 @@
 <script type="text/x-template" id="admin-dashboard-template">
         <section class="row g-4 mb-4">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card app-card h-100">
                     <div class="card-body">
                         <div class="text-muted small">Doctors</div>
@@ -8,7 +8,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card app-card h-100">
                     <div class="card-body">
                         <div class="text-muted small">Patients</div>
@@ -16,7 +16,15 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <div class="card app-card h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Total Appointments</div>
+                        <div class="metric-value fw-semibold">[[ dashboard.total_appointments ]]</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
                 <div class="card app-card h-100">
                     <div class="card-body">
                         <div class="text-muted small">Upcoming Appointments</div>
@@ -202,7 +210,7 @@
             </div>
         </section>
 
-        <section class="card app-card">
+        <section class="card app-card mb-4">
             <div class="card-body">
                 <h2 class="card-title h5 mb-3">Upcoming Appointments</h2>
                 <div class="table-responsive">
@@ -226,6 +234,39 @@
                         </tr>
                         <tr v-if="!filteredAdminAppointments.length">
                             <td colspan="5" class="text-center text-muted py-4">No appointments match the current search.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="card app-card">
+            <div class="card-body">
+                <h2 class="card-title h5 mb-3">Past Appointments</h2>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Department</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="appt in filteredAdminPastAppointments" :key="'past-' + appt.id">
+                            <td>[[ appt.patient.name ]]</td>
+                            <td>[[ appt.doctor.name ]]</td>
+                            <td>[[ appt.doctor.department_name ]]</td>
+                            <td>[[ formatDate(appt.date) ]]</td>
+                            <td>[[ formatTime(appt.time) ]]</td>
+                            <td>[[ appt.status ]]</td>
+                        </tr>
+                        <tr v-if="!filteredAdminPastAppointments.length">
+                            <td colspan="6" class="text-center text-muted py-4">No past appointments match the current search.</td>
                         </tr>
                         </tbody>
                     </table>

@@ -393,6 +393,7 @@ def dashboard_data():
         if user_type == UserTypes.ADMIN:
             doctors = db.query(Doctor).options(joinedload(Doctor.department)).order_by(Doctor.name).all()
             patients = db.query(Patient).order_by(Patient.name).all()
+            total_appointments = db.query(Appointment).count()
             upcoming = (
                 db.query(Appointment)
                 .options(
@@ -417,6 +418,7 @@ def dashboard_data():
                 "role": user_type,
                 "doctors": [_serialize_doctor(doc) for doc in doctors],
                 "patients": [_serialize_patient(patient) for patient in patients],
+                "total_appointments": total_appointments,
                 "upcoming_appointments": [_serialize_appointment(appt) for appt in upcoming],
                 "past_appointments": [_serialize_appointment(appt) for appt in past],
             }
@@ -938,12 +940,23 @@ def reschedule_appointment(appointment_id: int):
     except ValueError:
         return jsonify({"error": "Invalid date or time."}), 400
 
+    new_slot = _slot_for_time(new_time)
+
     with SessionLocal() as db:
         appt = db.query(Appointment).get(appointment_id)
         if not appt:
             return jsonify({"error": "Appointment not found."}), 404
         if not _appointment_owner_ok(appt):
             return jsonify({"error": "Forbidden."}), 403
+
+        availability = db.query(DoctorAvailability).filter_by(
+            doctor_id=appt.doctor_id,
+            date=new_date,
+            slot=new_slot,
+            enabled=True,
+        ).first()
+        if not availability:
+            return jsonify({"error": "Doctor is unavailable for that slot."}), 409
 
         conflict = db.query(Appointment).filter_by(
             doctor_id=appt.doctor_id,
