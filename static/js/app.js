@@ -863,7 +863,6 @@ const app = createApp({
                     },
                 });
                 await this.loadDashboard();
-                this.pushAlert("Availability updated.");
             } catch (error) {
                 this.handleError(error);
             }

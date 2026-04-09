@@ -1,0 +1,2 @@
+user_id,username,consulting_doctor,appointment_date,appointment_time,appointment_status,visit_type,diagnosis,treatment_given,doctor_notes,medicines,next_visit_suggested_date,next_visit_suggested_time
+56,Arjun Kapoor,Omar Das,2026-04-14,13:00,Booked,Checkup,Heart Blockage,Surgery,EMERGENCY,RIP (4d),2025-12-12,16:00

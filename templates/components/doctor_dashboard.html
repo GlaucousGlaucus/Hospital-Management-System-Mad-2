@@ -33,7 +33,8 @@
             <div class="panel-body">
                 <h2 class="title-size-sm space-b-3">Upcoming Appointments</h2>
                 <div class="table-scroll">
-                    <table class="records-table cell-middle">
+                    <span class="hero-subtitle" v-if="dashboard.upcoming_appointments && dashboard.upcoming_appointments.length === 0">No Appointments Today</span>
+                    <table class="records-table cell-middle" v-if="dashboard.upcoming_appointments && dashboard.upcoming_appointments.length > 0">
                         <thead>
                         <tr>
                             <th>Patient</th>
