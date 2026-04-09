@@ -116,7 +116,7 @@
                         <input class="form-control" type="text" v-model="patientSearch.q" placeholder="Name, specialization, or department" @keyup="runPatientSearch">
                     </div>
                     <div class="col-lg-3">
-                        <select class="form-select" v-model="patientSearch.department">
+                        <select class="form-select" v-model="patientSearch.department" @change="runPatientSearch">
                             <option value="">All departments</option>
                             <option v-for="department in departments" :key="'search-dept-' + department.id" :value="String(department.id)">
                                 [[ department.name ]]
@@ -124,7 +124,7 @@
                         </select>
                     </div>
                     <div class="col-lg-2">
-                        <select class="form-select" v-model="patientSearch.slot">
+                        <select class="form-select" v-model="patientSearch.slot" @change="runPatientSearch">
                             <option value="">Any slot</option>
                             <option value="morning">Morning</option>
                             <option value="afternoon">Afternoon</option>
@@ -132,7 +132,7 @@
                         </select>
                     </div>
                     <div class="col-lg-3">
-                        <input class="form-control" type="date" v-model="patientSearch.date">
+                        <input class="form-control" type="date" v-model="patientSearch.date" @change="runPatientSearch">
                     </div>
                 </div>
                 <div class="row g-3">

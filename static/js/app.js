@@ -24,11 +24,9 @@ const PublicHome = {
         authMode: { type: String, required: true },
         authForm: { type: Object, required: true },
         signupForm: { type: Object, required: true },
-        features: { type: Array, required: true },
         setAuthMode: { type: Function, required: true },
         submitLogin: { type: Function, required: true },
         submitSignup: { type: Function, required: true },
-        navigate: { type: Function, required: true },
     },
 };
 
@@ -183,6 +181,16 @@ const app = createApp({
         AvailabilityModal,
     },
     data() {
+        const emptyTreatmentForm = () => ({
+            appointment: null,
+            visit_type: "",
+            test_done: "",
+            diagnosis: "",
+            prescription: "",
+            notes: "",
+            medicines: [],
+        });
+
         return {
             loading: true,
             appContext: {
@@ -193,20 +201,6 @@ const app = createApp({
             route: { name: "home", params: {} },
             alerts: [],
             authMode: "login",
-            features: [
-                {
-                    title: "API-First Workflows",
-                    description: "Authentication, dashboards, forms, and appointment actions now run over JSON endpoints instead of server-rendered pages.",
-                },
-                {
-                    title: "Role-Based Operations",
-                    description: "Admins manage users, doctors maintain availability and treatment notes, and patients book care from a unified Vue interface.",
-                },
-                {
-                    title: "Theme-Driven Interface",
-                    description: "The UI now follows the custom CliniTrak color system and component styling defined in the project stylesheet.",
-                },
-            ],
             authForm: {
                 email: "",
                 password: "",
@@ -237,15 +231,7 @@ const app = createApp({
             },
             selectedDepartment: null,
             patientHistory: null,
-            treatmentForm: {
-                appointment: null,
-                visit_type: "",
-                test_done: "",
-                diagnosis: "",
-                prescription: "",
-                notes: "",
-                medicines: [],
-            },
+            treatmentForm: emptyTreatmentForm(),
             availabilityModal: {
                 open: false,
                 doctorId: null,
@@ -260,19 +246,10 @@ const app = createApp({
             pollHandle: null,
             exportJobs: [],
             exportPollHandle: null,
+            emptyTreatmentForm,
         };
     },
     computed: {
-        loginLabel() {
-            const role = this.authForm.user_type
-
-            if (!role) return "Login"
-
-            let ret = "Login As " + role.charAt(0).toUpperCase() + role.slice(1);
-            console.log(ret);
-
-            return ret
-        },
         viewTitle() {
             switch (this.route.name) {
                 case "dashboard":
@@ -306,8 +283,8 @@ const app = createApp({
             return "";
         },
         showDoctorFields() {
-            if (this.route.name === "doctorForm") return true;
-            return this.route.name === "profileForm" && this.appContext.user?.user_type === "doctor";
+            return this.route.name === "doctorForm"
+                || (this.route.name === "profileForm" && this.appContext.user?.user_type === "doctor");
         },
         adminSearchTerm() {
             return (this.adminSearch.appliedQuery || "").trim().toLowerCase();
@@ -494,13 +471,8 @@ const app = createApp({
             return this.patientHistory?.patient?.id || null;
         },
         currentExportPatientId() {
-            if (this.route.name === "history") {
-                return this.historyPatientId();
-            }
-            if (this.appContext.user?.user_type === "patient") {
-                return this.appContext.user.id;
-            }
-            return null;
+            if (this.route.name === "history") return this.historyPatientId();
+            return this.appContext.user?.user_type === "patient" ? this.appContext.user.id : null;
         },
         canQueueTreatmentExport() {
             return Boolean(this.currentExportPatientId());
@@ -581,15 +553,7 @@ const app = createApp({
             this.formMeta = { title: "", submitLabel: "" };
             this.selectedDepartment = null;
             this.patientHistory = null;
-            this.treatmentForm = {
-                appointment: null,
-                visit_type: "",
-                test_done: "",
-                diagnosis: "",
-                prescription: "",
-                notes: "",
-                medicines: [],
-            };
+            this.treatmentForm = this.emptyTreatmentForm();
         },
         async initializeAppContext() {
             this.loading = true;
@@ -698,7 +662,7 @@ const app = createApp({
                 this.handleError(error);
             }
         },
-        async runAdminSearch() {
+        runAdminSearch() {
             this.adminSearch.appliedQuery = this.adminSearch.q;
         },
         async runPatientSearch() {
@@ -864,7 +828,7 @@ const app = createApp({
                 this.handleError(error);
             }
         },
-        async openPatientHistory(patientId) {
+        openPatientHistory(patientId) {
             this.navigate(`/history/patient/${patientId}`);
         },
         async toggleAvailability(date, slot, enabled) {

@@ -21,7 +21,7 @@ def new_doctor():
 
 
 @admin_bp.route("/edit/doctor/<int:doctor_id>/", methods=["GET"])
-def edit_doctor(doctor_id):
+def edit_doctor(_doctor_id):
     return _spa_entry()
 
 
@@ -31,12 +31,12 @@ def new_patient():
 
 
 @admin_bp.route("/edit/patient/<int:patient_id>", methods=["GET"])
-def edit_patient(patient_id):
+def edit_patient(_patient_id):
     return _spa_entry()
 
 
 @doctor_bp.route("/update_history/<int:appointment_id>", methods=["GET"])
-def update_history(appointment_id):
+def update_history(_appointment_id):
     return _spa_entry()
 
 
@@ -46,7 +46,7 @@ def edit_doctor_self():
 
 
 @patient_bp.route("/department/<int:dept_id>", methods=["GET"])
-def department_details(dept_id):
+def department_details(_dept_id):
     return _spa_entry()
 
 

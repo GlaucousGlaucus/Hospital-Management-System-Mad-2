@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from calendar import month_name
 from datetime import date, datetime, time, timedelta
 from uuid import uuid4
@@ -19,6 +20,7 @@ from models.main_models import (
     Treatment,
 )
 from utils.notifications import ensure_exports_dir, send_email, write_csv
+logger = logging.getLogger(__name__)
 
 
 def _display_time(value: time) -> str:
@@ -151,10 +153,11 @@ def send_daily_patient_reminders():
 
             delivered_channels = []
             try:
+                logger.info(f"Sending reminder for appointment: {patient.name}")
                 if send_email(subject, [patient.email], text_body, html_body):
                     delivered_channels.append("email")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.exception(e)
 
             reminders.append({
                 "appointment_id": appointment.id,

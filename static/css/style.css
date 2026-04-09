@@ -265,6 +265,111 @@ textarea {
     color: #c92a2a;
 }
 
+.admin-entity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.admin-section-toggle {
+    border-radius: inherit;
+}
+
+.admin-section-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+.admin-section-summary::-webkit-details-marker {
+    display: none;
+}
+
+.admin-section-summary::after {
+    content: "▾";
+    flex-shrink: 0;
+    color: var(--primary-color);
+    font-size: 1.15rem;
+    transition: transform 0.2s ease;
+}
+
+.admin-section-toggle:not([open]) .admin-section-summary::after {
+    transform: rotate(-90deg);
+}
+
+.admin-entity-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 100%;
+    padding: 1rem 1rem 1.2rem;
+    border: 1px solid rgba(19, 70, 134, 0.1);
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(25, 42, 70, 0.08);
+    text-align: center;
+}
+
+.admin-entity-card-blacklisted {
+    background: #fff1f1;
+    border-color: rgba(201, 42, 42, 0.2);
+}
+
+.admin-entity-card-header {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.admin-entity-avatar {
+    width: 128px;
+    height: 128px;
+    object-fit: cover;
+    border-radius: 50%;
+    background: #fff;
+    padding: 0.75rem;
+    box-shadow: 0 12px 28px rgba(25, 42, 70, 0.08);
+}
+
+.admin-entity-name {
+    color: #c45454;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.admin-entity-meta {
+    color: #5f6c7b;
+    line-height: 1.4;
+}
+
+.admin-entity-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.55rem;
+    margin-top: auto;
+    padding-top: 0.35rem;
+}
+
+@media (max-width: 575.98px) {
+    .admin-entity-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-entity-actions {
+        width: 100%;
+    }
+
+    .admin-entity-actions .btn {
+        flex: 1 1 calc(50% - 0.55rem);
+    }
+}
+
 .btn {
     border-radius: 0.7rem;
     font-weight: 600;

@@ -42,14 +42,6 @@ def set_cache(key: str, value: Any, ttl_seconds: int = 300) -> None:
         return
 
 
-def delete_cache(key: str) -> None:
-    """Delete a cache key if it exists."""
-    try:
-        _get_client().delete(key)
-    except RedisError:
-        return
-
-
 def delete_cache_pattern(pattern: str) -> None:
     """Delete all keys matching a Redis pattern."""
     try:

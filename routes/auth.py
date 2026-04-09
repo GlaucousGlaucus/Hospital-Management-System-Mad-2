@@ -1,19 +1,21 @@
 from __future__ import annotations
 
 from datetime import date
-from logging import getLogger
 
 from flask import Blueprint, jsonify, render_template, request, session
-from werkzeug.security import check_password_hash, generate_password_hash
 
 from models.main_models import Admin, Patient, Doctor, SessionLocal
 from utils.constants import SessionInfo, UserTypes
 
-logger = getLogger(__name__)
-
 auth_signup_bp = Blueprint("auth_signup", __name__, url_prefix="/signup")
 auth_login_bp = Blueprint("auth_login", __name__, url_prefix="/login")
 auth_api_bp = Blueprint("auth_api", __name__, url_prefix="/api/auth")
+
+ROLE_MODELS = {
+    UserTypes.ADMIN: Admin,
+    UserTypes.DOCTOR: Doctor,
+    UserTypes.PATIENT: Patient,
+}
 
 
 def _serialize_session_user():
@@ -30,12 +32,7 @@ def _serialize_session_user():
 
 
 def _find_user(db, email: str, user_type: str):
-    model_map = {
-        UserTypes.ADMIN: Admin,
-        UserTypes.DOCTOR: Doctor,
-        UserTypes.PATIENT: Patient,
-    }
-    model = model_map.get(user_type)
+    model = ROLE_MODELS.get(user_type)
     if not model:
         return None
     return db.query(model).filter_by(email=email).first()
@@ -86,7 +83,7 @@ def login_api():
 
     with SessionLocal() as db:
         user = _find_user(db, email, user_type)
-        if not user or not check_password_hash(user.password, password):
+        if not user or not user.check_password(password):
             return jsonify({"error": "Invalid credentials."}), 401
         if getattr(user, "is_blacklisted", False):
             return jsonify({"error": "This account has been disabled by the admin."}), 403
@@ -124,7 +121,7 @@ def signup_api():
             db,
             name=name,
             email=email,
-            password=generate_password_hash(password),
+            password=password,
             dob=dob,
             contact=contact,
             is_blacklisted=False,

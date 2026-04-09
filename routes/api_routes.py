@@ -3,9 +3,8 @@ from __future__ import annotations
 import datetime
 from pathlib import Path
 from functools import wraps
-from logging import getLogger
 
-from flask import Blueprint, abort, jsonify, request, session, send_file
+from flask import Blueprint, jsonify, request, send_file, session
 from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash
 
@@ -28,8 +27,8 @@ from utils.cache import delete_cache_pattern, get_cache, set_cache
 from utils.constants import SessionInfo, UserTypes
 from utils.helper_functions import update_session_if_self
 
-logger = getLogger(__name__)
 api_bp = Blueprint("api", __name__, url_prefix="/api")
+ENTITY_MODELS = {"doctor": Doctor, "patient": Patient}
 
 
 def require_login(fn):
@@ -106,6 +105,17 @@ def _serialize_patient(patient: Patient):
         "dob": patient.dob.isoformat() if patient.dob else None,
         "is_blacklisted": patient.is_blacklisted,
     }
+
+
+def _apply_user_updates(entity, data: dict):
+    entity.name = data.get("name", entity.name).strip()
+    entity.email = data.get("email", entity.email).strip()
+    entity.contact = data.get("contact", entity.contact).strip()
+
+    if data.get("dob"):
+        entity.dob = datetime.date.fromisoformat(data["dob"])
+    if data.get("password"):
+        entity.password = generate_password_hash(data["password"])
 
 
 def _serialize_appointment(appt: Appointment):
@@ -659,15 +669,7 @@ def update_profile():
         else:
             return jsonify({"error": "Profile editing is not supported for admins."}), 400
 
-        entity.name = data.get("name", entity.name).strip()
-        entity.email = data.get("email", entity.email).strip()
-        entity.contact = data.get("contact", entity.contact).strip()
-
-        if data.get("dob"):
-            entity.dob = datetime.date.fromisoformat(data["dob"])
-        if data.get("password"):
-            entity.password = generate_password_hash(data["password"])
-
+        _apply_user_updates(entity, data)
         db.commit()
         update_session_if_self(entity, user_type)
 
@@ -685,7 +687,7 @@ def create_doctor_api():
                 db,
                 name=data["name"].strip(),
                 email=data["email"].strip(),
-                password=generate_password_hash(data["password"]),
+                password=data["password"],
                 dob=datetime.date.fromisoformat(data["dob"]),
                 contact=data["contact"].strip(),
                 specialization=data["specialization"].strip(),
@@ -720,16 +722,10 @@ def update_doctor(doctor_id: int):
         if not doctor:
             return jsonify({"error": "Doctor not found."}), 404
 
-        doctor.name = data.get("name", doctor.name).strip()
-        doctor.email = data.get("email", doctor.email).strip()
-        doctor.contact = data.get("contact", doctor.contact).strip()
+        _apply_user_updates(doctor, data)
         doctor.specialization = data.get("specialization", doctor.specialization).strip()
-        if data.get("dob"):
-            doctor.dob = datetime.date.fromisoformat(data["dob"])
         if data.get("department_id"):
             doctor.department_id = int(data["department_id"])
-        if data.get("password"):
-            doctor.password = generate_password_hash(data["password"])
         db.commit()
 
         payload = _serialize_doctor(doctor)
@@ -748,16 +744,15 @@ def create_patient():
         return jsonify({"error": f"Missing field(s): {', '.join(missing)}"}), 400
 
     with SessionLocal() as db:
-        patient = Patient(
+        patient = Patient.create_user(
+            db,
             name=data["name"].strip(),
             email=data["email"].strip(),
-            password=generate_password_hash(data["password"]),
+            password=data["password"],
             dob=datetime.date.fromisoformat(data["dob"]),
             contact=data["contact"].strip(),
             is_blacklisted=False,
         )
-        db.add(patient)
-        db.commit()
         payload = _serialize_patient(patient)
 
     _invalidate_app_cache()
@@ -783,13 +778,7 @@ def update_patient(patient_id: int):
         if not patient:
             return jsonify({"error": "Patient not found."}), 404
 
-        patient.name = data.get("name", patient.name).strip()
-        patient.email = data.get("email", patient.email).strip()
-        patient.contact = data.get("contact", patient.contact).strip()
-        if data.get("dob"):
-            patient.dob = datetime.date.fromisoformat(data["dob"])
-        if data.get("password"):
-            patient.password = generate_password_hash(data["password"])
+        _apply_user_updates(patient, data)
         db.commit()
         payload = _serialize_patient(patient)
 
@@ -1045,8 +1034,7 @@ def search():
 @api_bp.route("/blacklist/<entity>/<int:user_id>", methods=["POST"])
 @require_role(UserTypes.ADMIN)
 def blacklist_user(entity: str, user_id: int):
-    model_map = {"doctor": Doctor, "patient": Patient}
-    model = model_map.get(entity)
+    model = ENTITY_MODELS.get(entity)
     if not model:
         return jsonify({"error": "Invalid entity."}), 400
 
@@ -1064,8 +1052,7 @@ def blacklist_user(entity: str, user_id: int):
 @api_bp.route("/unblacklist/<entity>/<int:user_id>", methods=["POST"])
 @require_role(UserTypes.ADMIN)
 def unblacklist_user(entity: str, user_id: int):
-    model_map = {"doctor": Doctor, "patient": Patient}
-    model = model_map.get(entity)
+    model = ENTITY_MODELS.get(entity)
     if not model:
         return jsonify({"error": "Invalid entity."}), 400
 

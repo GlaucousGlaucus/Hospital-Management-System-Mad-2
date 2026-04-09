@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash
 
 from models.main_models import (
     SessionLocal, Department, Appointment, Doctor, Patient,
-    AppointmentStatus, DoctorAvailability, Medicine, Treatment, Admin, AvailabilitySlot
+    AppointmentStatus, DoctorAvailability, Medicine, Treatment, AvailabilitySlot
 )
 
 # ----------------------------------------------------------

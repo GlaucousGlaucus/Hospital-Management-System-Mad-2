@@ -1,20 +1,19 @@
 from __future__ import annotations
 
 import enum
-from datetime import date, time, datetime
+from datetime import date, datetime, time
 from typing import List, Optional
-from logging import getLogger
 
 from sqlalchemy import (
+    Boolean,
+    DateTime,
     Enum,
     ForeignKey,
+    Integer,
     String,
     Text,
-    create_engine,
-    Integer,
-    Boolean,
     UniqueConstraint,
-    DateTime,
+    create_engine,
     event,
 )
 from sqlalchemy.orm import (
@@ -23,19 +22,17 @@ from sqlalchemy.orm import (
     mapped_column,
     relationship,
     scoped_session,
-    sessionmaker
+    sessionmaker,
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from utils.constants import DB_PATH
 
-logger = getLogger(__name__)
-
 engine = create_engine(f"sqlite:///{DB_PATH}", echo=False)
 
-# Enable foreign keys on SQLite
+
 @event.listens_for(engine, "connect")
-def enable_sqlite_fk(dbapi_connection, connection_record):
+def enable_sqlite_fk(dbapi_connection, _connection_record):
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
@@ -84,7 +81,10 @@ class UserMixin:
 
     @classmethod
     def create_user(cls, session: SessionLocal, **kwargs):
-        user = cls(**kwargs)
+        user = cls(
+            password=generate_password_hash(kwargs.pop("password")),
+            **kwargs,
+        )
         session.add(user)
         session.commit()
         return user

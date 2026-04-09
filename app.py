@@ -1,12 +1,8 @@
-from logging import getLogger
-
 from flask import Flask, abort, render_template
 
 import models.main_models as db_util
 from config import get_config
 from utils.setup import setup_db
-
-logger = getLogger(__name__)
 
 
 def create_app() -> Flask:
@@ -16,25 +12,23 @@ def create_app() -> Flask:
     setup_db()
 
     from routes.auth import auth_api_bp, auth_login_bp, auth_signup_bp
-    from routes.dashboard import dashboard_bp, admin_bp, doctor_bp
+    from routes.dashboard import admin_bp, dashboard_bp, doctor_bp, patient_bp
     from routes.api_routes import api_bp
 
-    app.register_blueprint(auth_signup_bp)
-    app.register_blueprint(auth_login_bp)
-    app.register_blueprint(auth_api_bp)
-    app.register_blueprint(dashboard_bp)
-    app.register_blueprint(api_bp)
-    app.register_blueprint(admin_bp)
-    app.register_blueprint(doctor_bp)
-    from routes.dashboard import patient_bp
-    app.register_blueprint(patient_bp)
+    for blueprint in (
+        auth_signup_bp,
+        auth_login_bp,
+        auth_api_bp,
+        dashboard_bp,
+        api_bp,
+        admin_bp,
+        doctor_bp,
+        patient_bp,
+    ):
+        app.register_blueprint(blueprint)
 
     @app.teardown_appcontext
-    def shutdown_session(exception=None):
-        """
-        Ensure the session is closed after each request.
-        We don't want to leave any sessions open otherwise bad things can happen.
-        """
+    def shutdown_session(_exception=None):
         db_util.SessionLocal.remove()
 
     @app.route("/")

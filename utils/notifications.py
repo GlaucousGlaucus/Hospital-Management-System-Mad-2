@@ -36,6 +36,7 @@ def send_email(subject: str, recipients: Iterable[str], text_body: str, html_bod
         smtp.send_message(message)
     return True
 
+
 def ensure_exports_dir() -> Path:
     exports_dir = Path(current_app.config["EXPORTS_DIR"])
     if not exports_dir.is_absolute():
