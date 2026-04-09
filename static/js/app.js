@@ -602,7 +602,7 @@ const app = createApp({
             if (this.route.name === "dashboard") {
                 await this.loadDashboard();
                 if (this.appContext.user.user_type === "patient" && !this.patientSearch.results.length) {
-                    await this.runPatientSearch(false);
+                    await this.runPatientSearch();
                 }
                 return;
             }
@@ -684,7 +684,7 @@ const app = createApp({
         async runAdminSearch() {
             this.adminSearch.appliedQuery = this.adminSearch.q;
         },
-        async runPatientSearch(notify = true) {
+        async runPatientSearch() {
             try {
                 const params = new URLSearchParams({
                     q: this.patientSearch.q,
@@ -694,16 +694,13 @@ const app = createApp({
                 });
                 const result = await this.api(`/api/search?${params.toString()}`);
                 this.patientSearch.results = result.doctors || [];
-                if (notify) {
-                    this.pushAlert(`Found ${this.patientSearch.results.length} doctor(s).`, "info");
-                }
             } catch (error) {
                 this.handleError(error);
             }
         },
         resetPatientSearch() {
             this.patientSearch = { q: "", department: "", date: "", slot: "", results: [] };
-            this.runPatientSearch(false);
+            this.runPatientSearch();
         },
         async toggleBlacklist(entity, id, shouldBlacklist) {
             try {
