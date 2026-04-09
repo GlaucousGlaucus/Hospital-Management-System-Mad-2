@@ -207,11 +207,18 @@ def seed_availability(session, doctors):
 # ----------------------------------------------------------
 def seed_appointments(session, doctors, patients):
 
-    for _ in range(120):
+    SLOT_TO_TIME = {
+        AvailabilitySlot.MORNING: time(9, 0),
+        AvailabilitySlot.AFTERNOON: time(13, 0),
+        AvailabilitySlot.EVENING: time(17, 0),
+    }
+
+    used_slots = set()
+
+    for _ in range(200):  # slightly higher attempts to compensate skips
         patient = random.choice(patients)
         doctor = random.choice(doctors)
 
-        # 60% upcoming BOOKED, 40% past COMPLETED
         if random.random() < 0.6:
             appt_date = date.today() + timedelta(days=random.randint(1, 20))
             status = AppointmentStatus.BOOKED
@@ -219,10 +226,30 @@ def seed_appointments(session, doctors, patients):
             appt_date = date.today() - timedelta(days=random.randint(1, 30))
             status = AppointmentStatus.COMPLETED
 
-        appt_time = time(
-            hour=random.choice([9, 10, 11, 14, 15, 16]),
-            minute=random.choice([0, 15, 30, 45])
-        )
+        # Get enabled availability
+        available_slots = session.query(DoctorAvailability).filter_by(
+            doctor_id=doctor.id,
+            date=appt_date,
+            enabled=True
+        ).all()
+
+        if not available_slots:
+            continue
+
+        # Filter out already booked slots
+        free_slots = [
+            s.slot for s in available_slots
+            if (doctor.id, appt_date, s.slot) not in used_slots
+        ]
+
+        if not free_slots:
+            continue
+
+        chosen_slot = random.choice(free_slots)
+        appt_time = SLOT_TO_TIME[chosen_slot]
+
+        # mark slot as used
+        used_slots.add((doctor.id, appt_date, chosen_slot))
 
         appt = Appointment(
             patient_id=patient.id,
@@ -245,7 +272,9 @@ def seed_appointments(session, doctors, patients):
             treatment = Treatment(
                 appointment_id=appt.id,
                 diagnosis=diagnosis,
-                prescription=random.choice(MEDICINE_OPTIONS.get(diagnosis, ["Paracetamol 500mg"])),
+                prescription=random.choice(
+                    MEDICINE_OPTIONS.get(diagnosis, ["Paracetamol 500mg"])
+                ),
                 notes=random.choice([
                     "Follow-up required",
                     "Patient improving",
@@ -261,7 +290,9 @@ def seed_appointments(session, doctors, patients):
             for _ in range(random.randint(1, 3)):
                 session.add(Medicine(
                     treatment_id=treatment.id,
-                    name=random.choice(MEDICINE_OPTIONS.get(diagnosis, ["Paracetamol"])),
+                    name=random.choice(
+                        MEDICINE_OPTIONS.get(diagnosis, ["Paracetamol"])
+                    ),
                     morning=random.randint(0, 1),
                     afternoon=random.randint(0, 1),
                     night=random.randint(0, 1),
