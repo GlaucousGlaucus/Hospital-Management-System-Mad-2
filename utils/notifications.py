@@ -6,7 +6,6 @@ from email.message import EmailMessage
 from pathlib import Path
 from typing import Iterable
 
-import requests
 from flask import current_app
 
 
@@ -36,17 +35,6 @@ def send_email(subject: str, recipients: Iterable[str], text_body: str, html_bod
             smtp.login(username, password or "")
         smtp.send_message(message)
     return True
-
-
-def send_google_chat_message(message: str) -> bool:
-    webhook_url = current_app.config.get("GOOGLE_CHAT_WEBHOOK_URL")
-    if not webhook_url:
-        return False
-
-    response = requests.post(webhook_url, json={"text": message}, timeout=15)
-    response.raise_for_status()
-    return True
-
 
 def ensure_exports_dir() -> Path:
     exports_dir = Path(current_app.config["EXPORTS_DIR"])

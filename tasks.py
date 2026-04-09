@@ -155,15 +155,6 @@ def send_daily_patient_reminders():
                     delivered_channels.append("email")
             except Exception:
                 pass
-            chat_message = (
-                f"Patient reminder: {patient.name} has an appointment with Dr. {doctor.name} "
-                f"today at {_display_time(appointment.time)}."
-            )
-            try:
-                if send_google_chat_message(chat_message):
-                    delivered_channels.append("google_chat")
-            except Exception:
-                pass
 
             reminders.append({
                 "appointment_id": appointment.id,
