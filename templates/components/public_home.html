@@ -1,23 +1,26 @@
 <script type="text/x-template" id="public-home-template">
         <section class="hero-shell">
-            <div class="home-grid">
-                <div class="hero-copy">
-                    <h1 class="hero-title">Manage Less. Care More.</h1>
-                    <p class="hero-subtitle">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-7">
+                    <div class="hero-copy">
+                    <h1 class="hero-title">Manage Less.<br>Care More.</h1>
+                    <p class="hero-subtitle mb-0 fs-5">
                         Your complete hospital management solution.
                     </p>
                 </div>
-                <div class="auth-section hero-panel">
-                    <div class="role-selector">
+                </div>
+                <div class="col-lg-5">
+                <div class="auth-section hero-panel card">
+                    <div class="role-selector mb-4">
                         <button
-                            class="role-toggle"
+                            class="btn role-toggle flex-fill"
                             :class="{ active: authMode === 'login' }"
                             @click="setAuthMode('login')"
                         >
                             Login
                         </button>
                         <button
-                            class="role-toggle"
+                            class="btn role-toggle flex-fill"
                             :class="{ active: authMode === 'signup' }"
                             @click="setAuthMode('signup')"
                         >
@@ -25,158 +28,184 @@
                         </button>
                     </div>
 
-                    <form v-if="authMode === 'login'" @submit.prevent="submitLogin" class="auth-form">
+                    <form v-if="authMode === 'login'" @submit.prevent="submitLogin" class="d-flex flex-column gap-3">
                         <div class="role-selector">
-                            <div
-                                    class="role-toggle"
+                            <button
+                                    type="button"
+                                    class="btn role-toggle flex-fill"
                                     :class="{ active: authForm.user_type === 'patient' }"
                                     @click="authForm.user_type = 'patient'"
                             >
                                 Patient
-                            </div>
+                            </button>
 
-                            <div
-                                    class="role-toggle"
+                            <button
+                                    type="button"
+                                    class="btn role-toggle flex-fill"
                                     :class="{ active: authForm.user_type === 'doctor' }"
                                     @click="authForm.user_type = 'doctor'"
                             >
                                 Doctor
-                            </div>
+                            </button>
 
-                            <div
-                                    class="role-toggle"
+                            <button
+                                    type="button"
+                                    class="btn role-toggle flex-fill"
                                     :class="{ active: authForm.user_type === 'admin' }"
                                     @click="authForm.user_type = 'admin'"
                             >
                                 Admin
-                            </div>
+                            </button>
                         </div>
                         <div>
                             <label class="form-label">Email</label>
-                            <input class="field-control" type="email" v-model="authForm.email" required>
+                            <input class="form-control" type="email" v-model="authForm.email" required>
                         </div>
                         <div>
                             <label class="form-label">Password</label>
-                            <input class="field-control" type="password" v-model="authForm.password" required>
+                            <input class="form-control" type="password" v-model="authForm.password" required>
                         </div>
                         <button
-                                class="action-btn action-btn-solid action-btn-large"
+                                class="btn btn-theme-primary btn-lg"
                                 type="submit"
                                 v-text="authForm.user_type ? 'Login As ' + authForm.user_type.charAt(0).toUpperCase() + authForm.user_type.slice(1): 'Login'"
                         ></button>
                     </form>
 
-                    <form v-else @submit.prevent="submitSignup" class="auth-form">
+                    <form v-else @submit.prevent="submitSignup" class="d-flex flex-column gap-3">
                         <div>
                             <label class="form-label">Full Name</label>
-                            <input class="field-control" type="text" v-model="signupForm.name" required>
+                            <input class="form-control" type="text" v-model="signupForm.name" required>
                         </div>
                         <div>
                             <label class="form-label">Email</label>
-                            <input class="field-control" type="email" v-model="signupForm.email" required>
+                            <input class="form-control" type="email" v-model="signupForm.email" required>
                         </div>
                         <div>
                             <label class="form-label">Password</label>
-                            <input class="field-control" type="password" v-model="signupForm.password" required>
+                            <input class="form-control" type="password" v-model="signupForm.password" required>
                         </div>
-                        <div class="layout-grid layout-gap-md">
-                            <div class="span-md-6">
+                        <div class="row g-3">
+                            <div class="col-md-6">
                                 <label class="form-label">Date of Birth</label>
-                                <input class="field-control" type="date" v-model="signupForm.dob" required>
+                                <input class="form-control" type="date" v-model="signupForm.dob" required>
                             </div>
-                            <div class="span-md-6">
+                            <div class="col-md-6">
                                 <label class="form-label">Contact</label>
-                                <input class="field-control" type="text" v-model="signupForm.contact" required>
+                                <input class="form-control" type="text" v-model="signupForm.contact" required>
                             </div>
                         </div>
-                        <button class="action-btn action-btn-solid action-btn-large" type="submit">Create Account</button>
+                        <button class="btn btn-theme-primary btn-lg" type="submit">Create Account</button>
                     </form>
+                </div>
                 </div>
             </div>
         </section>
 
-        <section>
-            <h2 class="why-title section-title">Why Choose CliniTrak?</h2>
-            <p class="why-subtitle section-subtitle">A smarter, faster and more reliable way to manage hospital operations.</p>
+        <section class="mb-5">
+            <h2 class="section-title text-center">Why Choose CliniTrak?</h2>
+            <p class="section-subtitle text-center mb-4">A smarter, faster and more reliable way to manage hospital operations.</p>
 
-            <div class="home-features">
-                <div class="feature-panel">
+            <div class="row g-4">
+                <div class="col-md-6 col-xl-4">
+                <div class="feature-panel card h-100 text-center p-4">
                     <span class="material-symbols-outlined">
 speed
 </span>
                     <h3>Fast &amp; Efficient</h3>
                     <p>Reduce paperwork, avoid mistakes and speed up operations.</p>
                 </div>
+                </div>
 
-                <div class="feature-panel">
+                <div class="col-md-6 col-xl-4">
+                <div class="feature-panel card h-100 text-center p-4">
                     <span class="material-symbols-outlined">security</span>
                     <h3>Secure by Design</h3>
                     <p>Every role has controlled access to safeguard patient data.</p>
                 </div>
+                </div>
 
-                <div class="feature-panel">
+                <div class="col-md-6 col-xl-4">
+                <div class="feature-panel card h-100 text-center p-4">
                     <span class="material-symbols-outlined">check_circle</span>
                     <h3>User Friendly</h3>
                     <p>Clean, intuitive interface designed for all skill levels.</p>
                 </div>
+                </div>
             </div>
         </section>
 
-        <section class="home-features">
-            <div class="feature-panel">
+        <section class="mb-5">
+            <div class="row g-4">
+            <div class="col-md-6 col-xl-4">
+            <div class="feature-panel card h-100 text-center p-4">
                 <span class="material-symbols-outlined">local_hospital</span>
                 <h3>Smart Appointments</h3>
                 <p>Book, manage or reschedule appointments with ease.</p>
             </div>
+            </div>
 
-            <div class="feature-panel">
+            <div class="col-md-6 col-xl-4">
+            <div class="feature-panel card h-100 text-center p-4">
                 <span class="material-symbols-outlined">group</span>
                 <h3>Role-Based Dashboards</h3>
                 <p>Optimized workflows for Admins, Doctors &amp; Patients.</p>
             </div>
+            </div>
 
-            <div class="feature-panel">
+            <div class="col-md-6 col-xl-4">
+            <div class="feature-panel card h-100 text-center p-4">
                 <span class="material-symbols-outlined">monitor_heart</span>
                 <h3>Patient History</h3>
                 <p>Access entire medical history in one unified place.</p>
             </div>
+            </div>
+            </div>
         </section>
 
-        <section>
-            <h2 class="why-title section-title">How It Works</h2>
+        <section class="mb-5">
+            <h2 class="section-title text-center">How It Works</h2>
 
-            <div class="home-features">
-                <div class="feature-panel">
+            <div class="row g-4">
+                <div class="col-md-6 col-xl-4">
+                <div class="feature-panel card h-100 text-center p-4">
                     <span class="step-number">1</span>
                     <h3>Create Your Account</h3>
                     <p>Sign up as Admin, Doctor, or Patient to get started instantly.</p>
                 </div>
+                </div>
 
-                <div class="feature-panel">
+                <div class="col-md-6 col-xl-4">
+                <div class="feature-panel card h-100 text-center p-4">
                     <span class="step-number">2</span>
                     <h3>Access Your Dashboard</h3>
                     <p>Manage appointments, availability, patient records and more.</p>
                 </div>
+                </div>
 
-                <div class="feature-panel">
+                <div class="col-md-6 col-xl-4">
+                <div class="feature-panel card h-100 text-center p-4">
                     <span class="step-number">3</span>
                     <h3>Track &amp; Manage</h3>
                     <p>Let CliniTrak handle organization while you focus on care.</p>
+                </div>
                 </div>
             </div>
         </section>
 
         <section>
-            <h2 class="why-title section-title">What Our Users Say</h2>
+            <h2 class="section-title text-center">What Our Users Say</h2>
 
-            <div class="home-features" style="grid-template-columns: 1fr;">
-                <div class="feature-panel">
+            <div class="row">
+                <div class="col-12">
+                <div class="feature-panel card p-4 p-lg-5 text-center">
                     <p class="testimonial-text">
                         "CliniTrak has transformed our hospital workflow.
                         Doctors love the simplicity and patients appreciate the clear communication.
                         Admin work has become dramatically easier."
                     </p>
                     <p class="testimonial-author">- Dr. Mehra, CityCare Hospital</p>
+                </div>
                 </div>
             </div>
         </section>

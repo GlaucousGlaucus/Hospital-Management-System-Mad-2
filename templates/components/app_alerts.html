@@ -1,9 +1,9 @@
 <script type="text/x-template" id="app-alerts-template">
-    <div v-if="alerts.length" class="app-alert-stack" aria-live="polite" aria-atomic="true">
+    <div v-if="alerts.length" class="app-alert-stack d-flex flex-column gap-3" aria-live="polite" aria-atomic="true">
         <div
             v-for="alert in alerts"
             :key="alert.id"
-            class="app-alert"
+            class="app-alert alert d-flex align-items-start justify-content-between gap-3 mb-0 bg-white border-0"
             :class="'app-alert-' + alert.variant"
         >
             <span>[[ alert.message ]]</span>

@@ -18,7 +18,7 @@ from models.main_models import (
     SessionLocal,
     Treatment,
 )
-from utils.notifications import ensure_exports_dir, send_email, send_google_chat_message, write_csv
+from utils.notifications import ensure_exports_dir, send_email, write_csv
 
 
 def _display_time(value: time) -> str:

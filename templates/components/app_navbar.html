@@ -1,11 +1,11 @@
 <script type="text/x-template" id="app-navbar-template">
-    <nav class="topbar app-navbar">
-        <div class="topbar-shell">
-            <button class="topbar-logo app-brand-button" @click="goHome">CliniTrak</button>
-            <div class="topbar-actions">
+    <nav class="navbar navbar-expand-sm sticky-top app-navbar py-3">
+        <div class="container-fluid app-shell py-0">
+            <button class="navbar-brand app-brand-button" @click="goHome">CliniTrak</button>
+            <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                 <template v-if="appContext.user">
-                    <button class="action-btn action-btn-outline" @click="navigate('/dashboard/')">Dashboard</button>
-                    <button class="action-btn action-btn-filled" @click="logout">Logout</button>
+                    <button class="btn btn-theme-outline-secondary" @click="navigate('/dashboard/')">Dashboard</button>
+                    <button class="btn btn-light text-primary" @click="logout">Logout</button>
                 </template>
             </div>
         </div>

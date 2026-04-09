@@ -1,20 +1,20 @@
 <script type="text/x-template" id="department-details-template">
-    <section class="panel u-border-none surface-shadow-soft">
-        <div class="panel-body">
-            <div class="flex-row justify-between items-start space-b-4 space-gap-md">
+    <section class="card app-card">
+        <div class="card-body p-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-4">
                 <div>
-                    <h2 class="title-size-md space-b-1">[[ selectedDepartment.department.name ]]</h2>
-                    <p class="text-muted space-b-0">[[ selectedDepartment.department.description ]]</p>
+                    <h2 class="card-title h4 mb-1">[[ selectedDepartment.department.name ]]</h2>
+                    <p class="text-muted mb-0">[[ selectedDepartment.department.description ]]</p>
                 </div>
-                <button class="action-btn action-btn-ghost-primary" @click="navigate('/dashboard/')">Back to Dashboard</button>
+                <button class="btn btn-theme-outline-primary" @click="navigate('/dashboard/')">Back to Dashboard</button>
             </div>
-            <div class="layout-grid layout-gap-md">
-                <div class="span-lg-6" v-for="doctor in selectedDepartment.doctors" :key="'dept-doc-' + doctor.id">
-                    <div class="surface-outline surface-rounded-lg pad-3 u-full-height">
-                        <div class="text-strong">[[ doctor.name ]]</div>
+            <div class="row g-3">
+                <div class="col-lg-6" v-for="doctor in selectedDepartment.doctors" :key="'dept-doc-' + doctor.id">
+                    <div class="border rounded-4 p-3 h-100">
+                        <div class="fw-semibold">[[ doctor.name ]]</div>
                         <div class="text-muted">[[ doctor.specialization ]]</div>
-                        <div class="text-small text-muted space-b-3">[[ doctor.contact ]]</div>
-                        <button class="action-btn action-btn-ghost-primary action-btn-compact" @click="openAvailabilityModal(doctor.id, 'book')">Check Availability</button>
+                        <div class="small text-muted mb-3">[[ doctor.contact ]]</div>
+                        <button class="btn btn-sm btn-theme-outline-primary" @click="openAvailabilityModal(doctor.id, 'book')">Check Availability</button>
                     </div>
                 </div>
             </div>

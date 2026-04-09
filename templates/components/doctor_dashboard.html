@@ -1,46 +1,46 @@
 <script type="text/x-template" id="doctor-dashboard-template">
-        <section class="layout-grid layout-gap-lg space-b-4">
-            <div class="span-lg-4">
-                <div class="panel u-border-none surface-shadow-soft u-full-height">
-                    <div class="panel-body">
-                        <h2 class="title-size-sm">Profile</h2>
-                        <p class="space-b-1 text-strong">[[ dashboard.doctor.name ]]</p>
-                        <p class="text-muted space-b-1">[[ dashboard.doctor.specialization ]]</p>
-                        <p class="text-muted space-b-3">[[ dashboard.doctor.department_name ]]</p>
-                        <button class="action-btn action-btn-ghost-primary" @click="navigate('/doctor/edit')">Edit Profile</button>
+        <section class="row g-4 mb-4">
+            <div class="col-lg-4">
+                <div class="card app-card h-100">
+                    <div class="card-body">
+                        <h2 class="card-title h5">Profile</h2>
+                        <p class="mb-1 fw-semibold">[[ dashboard.doctor.name ]]</p>
+                        <p class="text-muted mb-1">[[ dashboard.doctor.specialization ]]</p>
+                        <p class="text-muted mb-3">[[ dashboard.doctor.department_name ]]</p>
+                        <button class="btn btn-theme-outline-primary" @click="navigate('/doctor/edit')">Edit Profile</button>
                     </div>
                 </div>
             </div>
-            <div class="span-lg-4">
-                <div class="panel u-border-none surface-shadow-soft u-full-height">
-                    <div class="panel-body">
-                        <div class="text-muted text-small">Upcoming Appointments</div>
-                        <div class="metric-value text-strong">[[ dashboard.upcoming_appointments.length ]]</div>
+            <div class="col-lg-4">
+                <div class="card app-card h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Upcoming Appointments</div>
+                        <div class="metric-value fw-semibold">[[ dashboard.upcoming_appointments.length ]]</div>
                     </div>
                 </div>
             </div>
-            <div class="span-lg-4">
-                <div class="panel u-border-none surface-shadow-soft u-full-height">
-                    <div class="panel-body">
-                        <div class="text-muted text-small">Assigned Patients</div>
-                        <div class="metric-value text-strong">[[ dashboard.patients.length ]]</div>
+            <div class="col-lg-4">
+                <div class="card app-card h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Assigned Patients</div>
+                        <div class="metric-value fw-semibold">[[ dashboard.patients.length ]]</div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="panel u-border-none surface-shadow-soft space-b-4">
-            <div class="panel-body">
-                <h2 class="title-size-sm space-b-3">Upcoming Appointments</h2>
-                <div class="table-scroll">
-                    <span class="hero-subtitle" v-if="dashboard.upcoming_appointments && dashboard.upcoming_appointments.length === 0">No Appointments Today</span>
-                    <table class="records-table cell-middle" v-if="dashboard.upcoming_appointments && dashboard.upcoming_appointments.length > 0">
+        <section class="card app-card mb-4">
+            <div class="card-body">
+                <h2 class="card-title h5 mb-3">Upcoming Appointments</h2>
+                <div v-if="dashboard.upcoming_appointments && dashboard.upcoming_appointments.length === 0" class="text-muted">No Appointments Today</div>
+                <div class="table-responsive" v-if="dashboard.upcoming_appointments && dashboard.upcoming_appointments.length > 0">
+                    <table class="table table-hover align-middle mb-0">
                         <thead>
                         <tr>
                             <th>Patient</th>
                             <th>Date</th>
                             <th>Time</th>
-                            <th class="text-right">Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -48,12 +48,12 @@
                             <td>[[ appt.patient.name ]]</td>
                             <td>[[ formatDate(appt.date) ]]</td>
                             <td>[[ formatTime(appt.time) ]]</td>
-                            <td class="text-right">
-                                <div class="flex-row justify-end flex-wrap space-gap-sm">
-                                    <button class="action-btn action-btn-compact action-btn-ghost-primary" @click="navigate('/doctor/update_history/' + appt.id)">Update History</button>
-                                    <button class="action-btn action-btn-compact action-btn-ghost-secondary" @click="openAvailabilityModal(appt.doctor.id, 'reschedule', appt.id)">Reschedule</button>
-                                    <button class="action-btn action-btn-compact action-btn-ghost-success" @click="markComplete(appt.id)">Complete</button>
-                                    <button class="action-btn action-btn-compact action-btn-ghost-danger" @click="cancelAppointment(appt.id)">Cancel</button>
+                            <td class="text-end">
+                                <div class="d-flex flex-wrap justify-content-end gap-2">
+                                    <button class="btn btn-sm btn-theme-outline-primary" @click="navigate('/doctor/update_history/' + appt.id)">Update History</button>
+                                    <button class="btn btn-sm btn-theme-outline-secondary" @click="openAvailabilityModal(appt.doctor.id, 'reschedule', appt.id)">Reschedule</button>
+                                    <button class="btn btn-sm btn-theme-outline-success" @click="markComplete(appt.id)">Complete</button>
+                                    <button class="btn btn-sm btn-theme-outline-danger" @click="cancelAppointment(appt.id)">Cancel</button>
                                 </div>
                             </td>
                         </tr>
@@ -63,26 +63,26 @@
             </div>
         </section>
 
-        <section class="panel u-border-none surface-shadow-soft space-b-4">
-            <div class="panel-body">
-                <h2 class="title-size-sm space-b-3">Assigned Patients</h2>
-                <div class="layout-grid layout-gap-md">
-                    <div class="span-md-6 span-xl-4" v-for="patient in dashboard.patients" :key="'doc-patient-' + patient.id">
-                        <div class="surface-outline surface-rounded-lg pad-3 u-full-height">
-                            <div class="text-strong">[[ patient.name ]]</div>
-                            <div class="text-muted space-b-3">[[ patient.email ]]</div>
-                            <button class="action-btn action-btn-ghost-primary action-btn-compact" @click="openPatientHistory(patient.id)">View History</button>
+        <section class="card app-card mb-4">
+            <div class="card-body">
+                <h2 class="card-title h5 mb-3">Assigned Patients</h2>
+                <div class="row g-3">
+                    <div class="col-md-6 col-xl-4" v-for="patient in dashboard.patients" :key="'doc-patient-' + patient.id">
+                        <div class="border rounded-4 p-3 h-100">
+                            <div class="fw-semibold">[[ patient.name ]]</div>
+                            <div class="text-muted mb-3">[[ patient.email ]]</div>
+                            <button class="btn btn-sm btn-theme-outline-primary" @click="openPatientHistory(patient.id)">View History</button>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="panel u-border-none surface-shadow-soft">
-            <div class="panel-body">
-                <h2 class="title-size-sm space-b-3">Weekly Availability</h2>
-                <div class="table-scroll">
-                    <table class="records-table cell-middle">
+        <section class="card app-card">
+            <div class="card-body">
+                <h2 class="card-title h5 mb-3">Weekly Availability</h2>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
                         <thead>
                         <tr>
                             <th>Date</th>
@@ -95,17 +95,17 @@
                         <tr v-for="slotRow in dashboard.availability" :key="'availability-' + slotRow.date">
                             <td>[[ slotRow.date_display ]]</td>
                             <td>
-                                <button class="action-btn action-btn-compact u-full-width" :class="doctorAvailabilityButtonClass(slotRow.morning)" @click="toggleAvailability(slotRow.date, 'morning', !slotRow.morning)">
+                                <button class="btn btn-sm w-100" :class="doctorAvailabilityButtonClass(slotRow.morning)" @click="toggleAvailability(slotRow.date, 'morning', !slotRow.morning)">
                                     [[ slotRow.morning ? 'Available' : 'Not available' ]]
                                 </button>
                             </td>
                             <td>
-                                <button class="action-btn action-btn-compact u-full-width" :class="doctorAvailabilityButtonClass(slotRow.afternoon)" @click="toggleAvailability(slotRow.date, 'afternoon', !slotRow.afternoon)">
+                                <button class="btn btn-sm w-100" :class="doctorAvailabilityButtonClass(slotRow.afternoon)" @click="toggleAvailability(slotRow.date, 'afternoon', !slotRow.afternoon)">
                                     [[ slotRow.afternoon ? 'Available' : 'Not available' ]]
                                 </button>
                             </td>
                             <td>
-                                <button class="action-btn action-btn-compact u-full-width" :class="doctorAvailabilityButtonClass(slotRow.evening)" @click="toggleAvailability(slotRow.date, 'evening', !slotRow.evening)">
+                                <button class="btn btn-sm w-100" :class="doctorAvailabilityButtonClass(slotRow.evening)" @click="toggleAvailability(slotRow.date, 'evening', !slotRow.evening)">
                                     [[ slotRow.evening ? 'Available' : 'Not available' ]]
                                 </button>
                             </td>
