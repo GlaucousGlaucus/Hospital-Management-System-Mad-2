@@ -226,6 +226,14 @@ def _slot_for_time(appt_time: datetime.time):
     return AvailabilitySlot.EVENING
 
 
+def _slot_time_bounds(slot: AvailabilitySlot):
+    if slot == AvailabilitySlot.MORNING:
+        return datetime.time(0, 0), datetime.time(12, 0)
+    if slot == AvailabilitySlot.AFTERNOON:
+        return datetime.time(12, 0), datetime.time(16, 0)
+    return datetime.time(16, 0), None
+
+
 def _build_history_payload(patient: Patient):
     visits = []
     doctor_names = []
@@ -809,6 +817,23 @@ def update_availability():
         return jsonify({"error": "Invalid slot."}), 400
 
     with SessionLocal() as db:
+        if not enabled:
+            slot_start, slot_end = _slot_time_bounds(slot_enum)
+            active_appointment_query = db.query(Appointment).filter(
+                Appointment.doctor_id == doctor_id,
+                Appointment.date == target_date,
+                Appointment.status == AppointmentStatus.BOOKED,
+                Appointment.time >= slot_start,
+            )
+            if slot_end is not None:
+                active_appointment_query = active_appointment_query.filter(Appointment.time < slot_end)
+
+            active_appointment = active_appointment_query.first()
+            if active_appointment:
+                return jsonify({
+                    "error": "You cannot mark this slot unavailable while you have an active appointment in it."
+                }), 409
+
         availability = db.query(DoctorAvailability).filter_by(
             doctor_id=doctor_id,
             date=target_date,
