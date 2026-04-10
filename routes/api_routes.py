@@ -23,10 +23,8 @@ from models.main_models import (
     SessionLocal,
     Treatment,
 )
-from services.doctor_service import create_doctor
 from utils.cache import delete_cache_pattern, get_cache, set_cache
 from utils.constants import SessionInfo, UserTypes
-from utils.helper_functions import update_session_if_self
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 ENTITY_MODELS = {"doctor": Doctor, "patient": Patient}
@@ -60,6 +58,10 @@ def _invalidate_app_cache():
     delete_cache_pattern("dashboard:*")
     delete_cache_pattern("search:*")
 
+def update_session_if_self(entity_obj, entity_type):
+    if session.get(SessionInfo.USER_ID) == entity_obj.id and session.get(SessionInfo.USER_TYPE) == entity_type:
+        session[SessionInfo.USER_NAME] = entity_obj.name
+        session[SessionInfo.USER_EMAIL] = entity_obj.email
 
 def _user_payload():
     user_id = session.get(SessionInfo.USER_ID)
@@ -688,16 +690,20 @@ def update_profile():
 def create_doctor_api():
     data = request.get_json(silent=True) or {}
     try:
-        with SessionLocal() as db:
-            doctor = create_doctor(
-                db,
+        with SessionLocal() as db_session:
+            dep_id = int(data["department_id"])
+            dep = db_session.get(Department, dep_id)
+            if not dep:
+                raise ValueError("Department does not exist")
+            doctor = Doctor.create_user(
+                db_session,
                 name=data["name"].strip(),
                 email=data["email"].strip(),
                 password=data["password"],
                 dob=datetime.date.fromisoformat(data["dob"]),
                 contact=data["contact"].strip(),
                 specialization=data["specialization"].strip(),
-                department_id=int(data["department_id"]),
+                department_id=dep_id,
             )
             payload = _serialize_doctor(doctor)
     except KeyError as exc:
@@ -1109,7 +1115,6 @@ def delete_patient(item_id: int):
 
 
 @api_bp.route("/exports", methods=["GET"])
-@api_bp.route("/patient/exports", methods=["GET"])
 @require_login
 def list_exports():
     patient_id = request.args.get("patient_id", type=int)
@@ -1132,7 +1137,6 @@ def list_exports():
 
 
 @api_bp.route("/exports/treatments", methods=["POST"])
-@api_bp.route("/patient/exports/treatments", methods=["POST"])
 @require_login
 def queue_treatment_export():
     from tasks import generate_patient_treatment_csv_export
@@ -1166,7 +1170,6 @@ def queue_treatment_export():
 
 
 @api_bp.route("/exports/<int:export_job_id>", methods=["GET"])
-@api_bp.route("/patient/exports/<int:export_job_id>", methods=["GET"])
 @require_login
 def get_export(export_job_id: int):
     with SessionLocal() as db:
@@ -1177,7 +1180,6 @@ def get_export(export_job_id: int):
 
 
 @api_bp.route("/exports/<int:export_job_id>/download", methods=["GET"])
-@api_bp.route("/patient/exports/<int:export_job_id>/download", methods=["GET"])
 @require_login
 def download_export(export_job_id: int):
     with SessionLocal() as db:

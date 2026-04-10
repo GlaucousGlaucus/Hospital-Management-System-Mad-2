@@ -11,19 +11,13 @@ def create_app() -> Flask:
 
     setup_db()
 
-    from routes.auth import auth_api_bp, auth_login_bp, auth_signup_bp
-    from routes.dashboard import admin_bp, dashboard_bp, doctor_bp, patient_bp
+    from routes.auth import auth_api_bp, auth_login_bp
     from routes.api_routes import api_bp
 
     for blueprint in (
-        auth_signup_bp,
         auth_login_bp,
         auth_api_bp,
-        dashboard_bp,
         api_bp,
-        admin_bp,
-        doctor_bp,
-        patient_bp,
     ):
         app.register_blueprint(blueprint)
 

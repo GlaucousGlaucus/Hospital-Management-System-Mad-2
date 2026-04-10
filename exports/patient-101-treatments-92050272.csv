@@ -1,0 +1,5 @@
+user_id,username,consulting_doctor,appointment_date,appointment_time,appointment_status,visit_type,diagnosis,treatment_given,doctor_notes,medicines,next_visit_suggested_date,next_visit_suggested_time
+101,Larry Moe Tol,Kabir Mishra,2026-04-10,09:00,Completed,Checkup,,,,,,
+101,Larry Moe Tol,Fatima Patel,2026-04-12,09:00,Booked,Checkup,,,,,2026-04-10,09:00
+101,Larry Moe Tol,Alex Nair,2026-04-12,09:00,Booked,Checkup,,,,,,
+101,Larry Moe Tol,Fatima Patel,2026-04-12,13:00,Completed,Checkup,Cold,Dolo,ICD S00,Dolo (1d),2026-04-09,09:00

@@ -14,9 +14,8 @@ CliniTrak is now structured as a Flask API with a Vue 3 single-page frontend mou
 
 - `templates/index.html`: the only active template entry point
 - `static/js/app.js`: Vue application for auth, dashboards, forms, history, and scheduling
-- `routes/auth.py`: SPA entry routes plus JSON auth endpoints
+- `routes/auth.py`: logout route plus JSON auth endpoints
 - `routes/api_routes.py`: API-first business endpoints for admin, doctor, and patient workflows
-- `routes/dashboard.py`: legacy page URLs mapped to the SPA entry for compatibility
 - `tasks.py`: Celery batch task for a daily operational summary
 - `tasks.py`: Celery beat schedules for reminders and monthly reports, plus async patient CSV exports
 - `utils/cache.py`: Redis-backed caching helpers with graceful fallback if Redis is unavailable
@@ -42,10 +41,10 @@ CliniTrak is now structured as a Flask API with a Vue 3 single-page frontend mou
 - `POST /api/batch/reports/daily-reminders`
 - `POST /api/batch/reports/monthly-activity`
 - `GET /api/batch/tasks/<task_id>`
-- `GET /api/patient/exports`
-- `POST /api/patient/exports/treatments`
-- `GET /api/patient/exports/<id>`
-- `GET /api/patient/exports/<id>/download`
+- `GET /api/exports`
+- `POST /api/exports/treatments`
+- `GET /api/exports/<id>`
+- `GET /api/exports/<id>/download`
 
 ## Run
 

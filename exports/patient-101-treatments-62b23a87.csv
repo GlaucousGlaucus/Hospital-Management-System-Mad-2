@@ -1,0 +1,2 @@
+user_id,username,consulting_doctor,appointment_date,appointment_time,appointment_status,visit_type,diagnosis,treatment_given,doctor_notes,medicines,next_visit_suggested_date,next_visit_suggested_time
+101,Arpit Benjamin,Fatima Mishra,2026-04-15,13:00,Booked,Checkup,Cold,,,Paracetamol (1d),2026-04-11,13:00

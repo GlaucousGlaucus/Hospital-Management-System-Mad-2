@@ -3,13 +3,22 @@
             <div class="col-lg-6">
                 <div class="card app-card h-100">
                     <div class="card-body">
-                        <h2 class="card-title h5">Profile</h2>
+                        <h2 class="card-title h5 dashboard-section-heading">
+                            <span class="material-symbols-outlined dashboard-section-heading-icon">badge</span>
+                            <span>Profile</span>
+                        </h2>
                         <p class="mb-1 fw-semibold">[[ dashboard.patient.name ]]</p>
                         <p class="text-muted mb-1">[[ dashboard.patient.email ]]</p>
                         <p class="text-muted mb-3">[[ dashboard.patient.contact ]]</p>
                         <div class="d-flex flex-wrap gap-2">
-                            <button class="btn btn-theme-outline-primary" @click="navigate('/patient/edit/profile')">Edit Profile</button>
-                            <button class="btn btn-theme-outline-secondary" @click="openPatientHistory(dashboard.patient.id)">Medical History</button>
+                            <button class="btn btn-theme-outline-primary dashboard-action-button" @click="navigate('/patient/edit/profile')">
+                                <span class="material-symbols-outlined dashboard-action-button-icon">edit</span>
+                                <span>Edit Profile</span>
+                            </button>
+                            <button class="btn btn-theme-outline-secondary dashboard-action-button" @click="openPatientHistory(dashboard.patient.id)">
+                                <span class="material-symbols-outlined dashboard-action-button-icon">history</span>
+                                <span>Medical History</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -17,11 +26,17 @@
             <div class="col-lg-6">
                 <div class="card app-card h-100">
                     <div class="card-body">
-                        <h2 class="card-title h5 mb-3">Treatment Export</h2>
+                        <h2 class="card-title h5 mb-3 dashboard-section-heading">
+                            <span class="material-symbols-outlined dashboard-section-heading-icon">download</span>
+                            <span>Treatment Export</span>
+                        </h2>
                         <p class="text-muted small mb-3">
                             Queue a CSV with all treatments, diagnosis, doctor details, and appointment history.
                         </p>
-                        <button class="btn btn-theme-outline-primary" @click="startTreatmentExport">Export as CSV</button>
+                        <button class="btn btn-theme-outline-primary dashboard-action-button" @click="startTreatmentExport">
+                            <span class="material-symbols-outlined dashboard-action-button-icon">download</span>
+                            <span>Export as CSV</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -29,7 +44,10 @@
 
         <section class="card app-card mb-4">
             <div class="card-body">
-                <h2 class="card-title h5 mb-3">Upcoming Appointments</h2>
+                <h2 class="card-title h5 mb-3 dashboard-section-heading">
+                    <span class="material-symbols-outlined dashboard-section-heading-icon">event_upcoming</span>
+                    <span>Upcoming Appointments</span>
+                </h2>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead>
@@ -49,8 +67,14 @@
                             <td>[[ formatTime(appt.time) ]]</td>
                             <td class="text-end">
                                 <div class="d-flex flex-wrap justify-content-end gap-2">
-                                    <button class="btn btn-sm btn-theme-outline-secondary" @click="openAvailabilityModal(appt.doctor.id, 'reschedule', appt.id)">Reschedule</button>
-                                    <button class="btn btn-sm btn-theme-outline-danger" @click="cancelAppointment(appt.id)">Cancel</button>
+                                    <button class="btn btn-sm btn-theme-outline-secondary dashboard-action-button" @click="openAvailabilityModal(appt.doctor.id, 'reschedule', appt.id)">
+                                        <span class="material-symbols-outlined dashboard-action-button-icon">event_repeat</span>
+                                        <span>Reschedule</span>
+                                    </button>
+                                    <button class="btn btn-sm btn-theme-outline-danger dashboard-action-button" @click="cancelAppointment(appt.id)">
+                                        <span class="material-symbols-outlined dashboard-action-button-icon">cancel</span>
+                                        <span>Cancel</span>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -63,8 +87,14 @@
         <section class="card app-card mb-4">
             <div class="card-body">
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-                    <h2 class="card-title h5 mb-0">CSV Export Jobs</h2>
-                    <button class="btn btn-sm btn-theme-outline-secondary" @click="loadExports()">Refresh</button>
+                    <h2 class="card-title h5 mb-0 dashboard-section-heading">
+                        <span class="material-symbols-outlined dashboard-section-heading-icon">folder_managed</span>
+                        <span>CSV Export Jobs</span>
+                    </h2>
+                    <button class="btn btn-sm btn-theme-outline-secondary dashboard-action-button" @click="loadExports()">
+                        <span class="material-symbols-outlined dashboard-action-button-icon">refresh</span>
+                        <span>Refresh</span>
+                    </button>
                 </div>
                 <div v-if="exportJobs.length" class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
@@ -84,7 +114,10 @@
                             </td>
                             <td>[[ exportJob.file_name || 'Pending generation' ]]</td>
                             <td class="text-end">
-                                <a v-if="exportJob.download_url" class="btn btn-sm btn-theme-outline-success" :href="exportJob.download_url">Download</a>
+                                <a v-if="exportJob.download_url" class="btn btn-sm btn-theme-outline-success dashboard-action-button" :href="exportJob.download_url">
+                                    <span class="material-symbols-outlined dashboard-action-button-icon">download</span>
+                                    <span>Download</span>
+                                </a>
                                 <span v-else class="text-muted small">Waiting for completion</span>
                             </td>
                         </tr>
@@ -97,10 +130,14 @@
 
         <section class="card app-card mb-4">
             <div class="card-body">
-                <h2 class="card-title h5 mb-3">Departments</h2>
+                <h2 class="card-title h5 mb-3 dashboard-section-heading">
+                    <span class="material-symbols-outlined dashboard-section-heading-icon">apartment</span>
+                    <span>Departments</span>
+                </h2>
                 <div class="row g-3">
                     <div class="col-md-6 col-xl-4" v-for="department in dashboard.departments" :key="'dept-' + department.id">
-                        <button class="btn btn-theme-surface department-tile w-100 h-100 p-3" @click="navigate('/patient/department/' + department.id)">
+                        <button class="btn btn-theme-surface department-tile w-100 h-100 p-3 dashboard-action-button" @click="navigate('/patient/department/' + department.id)">
+                            <span class="material-symbols-outlined dashboard-action-button-icon">apartment</span>
                             <span class="d-block fw-semibold">[[ department.name ]]</span>
                         </button>
                     </div>
@@ -110,7 +147,10 @@
 
         <section class="card app-card">
             <div class="card-body">
-                <h2 class="card-title h5 mb-3">Find Doctors</h2>
+                <h2 class="card-title h5 mb-3 dashboard-section-heading">
+                    <span class="material-symbols-outlined dashboard-section-heading-icon">stethoscope</span>
+                    <span>Find Doctors</span>
+                </h2>
                 <div class="row g-3 mb-4">
                     <div class="col-lg-4">
                         <input class="form-control" type="text" v-model="patientSearch.q" placeholder="Name, specialization, or department" @keyup="runPatientSearch">
@@ -150,7 +190,10 @@
                                 </div>
                             </div>
                             <div class="mt-3">
-                                <button class="btn btn-sm btn-theme-outline-primary" @click="openAvailabilityModal(doctor.id, 'book')">Check Availability</button>
+                                <button class="btn btn-sm btn-theme-outline-primary dashboard-action-button" @click="openAvailabilityModal(doctor.id, 'book')">
+                                    <span class="material-symbols-outlined dashboard-action-button-icon">calendar_clock</span>
+                                    <span>Check Availability</span>
+                                </button>
                             </div>
                         </div>
                     </div>

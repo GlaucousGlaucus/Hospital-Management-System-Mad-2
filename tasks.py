@@ -151,11 +151,10 @@ def send_daily_patient_reminders():
                 "<p>Please arrive on time.</p>"
             )
 
-            delivered_channels = []
             try:
                 logger.info(f"Sending reminder for appointment: {patient.name}")
                 if send_email(subject, [patient.email], text_body, html_body):
-                    delivered_channels.append("email")
+                    sent_count += 1
             except Exception as e:
                 logger.exception(e)
 
@@ -163,10 +162,7 @@ def send_daily_patient_reminders():
                 "appointment_id": appointment.id,
                 "patient_id": patient.id,
                 "patient_name": patient.name,
-                "channels": delivered_channels or ["none_configured"],
             })
-            if delivered_channels:
-                sent_count += 1
 
     return {
         "date": today.isoformat(),

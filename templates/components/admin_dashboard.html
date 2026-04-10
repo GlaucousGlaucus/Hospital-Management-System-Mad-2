@@ -2,33 +2,46 @@
         <section class="row g-4 mb-4">
             <div class="col-md-3">
                 <div class="card app-card h-100">
-                    <div class="card-body">
-                        <div class="text-muted small">Doctors</div>
-                        <div class="metric-value fw-semibold">[[ dashboard.doctors.length ]]</div>
+                    <div class="card-body d-flex align-items-center">
+                        <span class="material-symbols-outlined admin-dashboard-metric-icon">stethoscope</span>
+
+                        <div>
+                            <div class="text-muted small">Doctors</div>
+                            <div class="metric-value fw-semibold">[[ dashboard.doctors.length ]]</div>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card app-card h-100">
-                    <div class="card-body">
-                        <div class="text-muted small">Patients</div>
-                        <div class="metric-value fw-semibold">[[ dashboard.patients.length ]]</div>
+                    <div class="card-body d-flex align-items-center">
+                        <span class="material-symbols-outlined admin-dashboard-metric-icon">group</span>
+                        <div>
+                            <div class="text-muted small">Patients</div>
+                            <div class="metric-value fw-semibold">[[ dashboard.patients.length ]]</div>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card app-card h-100">
-                    <div class="card-body">
-                        <div class="text-muted small">Total Appointments</div>
-                        <div class="metric-value fw-semibold">[[ dashboard.total_appointments ]]</div>
+                    <div class="card-body d-flex align-items-center">
+                        <span class="material-symbols-outlined admin-dashboard-metric-icon">calendar_month</span>
+                        <div>
+                            <div class="text-muted small">Total Appointments</div>
+                            <div class="metric-value fw-semibold">[[ dashboard.total_appointments ]]</div>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card app-card h-100">
-                    <div class="card-body">
-                        <div class="text-muted small">Upcoming Appointments</div>
-                        <div class="metric-value fw-semibold">[[ dashboard.upcoming_appointments.length ]]</div>
+                    <div class="card-body d-flex align-items-center">
+                        <span class="material-symbols-outlined admin-dashboard-metric-icon">event_upcoming</span>
+                        <div>
+                            <div class="text-muted small">Upcoming Appointments</div>
+                            <div class="metric-value fw-semibold">[[ dashboard.upcoming_appointments.length ]]</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -38,9 +51,18 @@
             <div class="card-body">
                 <label class="form-label">Tools</label>
                 <div class="d-flex flex-wrap gap-2">
-                    <button class="btn btn-theme-outline-secondary" @click="startBatchReport">Run Daily Batch Summary</button>
-                    <button class="btn btn-theme-outline-secondary" @click="startDailyReminders">Run Daily Reminders</button>
-                    <button class="btn btn-theme-outline-secondary" @click="startMonthlyActivityReport">Run Monthly Reports</button>
+                    <button class="btn btn-theme-outline-secondary dashboard-action-button" @click="startBatchReport">
+                        <span class="material-symbols-outlined dashboard-action-button-icon">analytics</span>
+                        <span>Run Daily Batch Summary</span>
+                    </button>
+                    <button class="btn btn-theme-outline-secondary dashboard-action-button" @click="startDailyReminders">
+                        <span class="material-symbols-outlined dashboard-action-button-icon">notifications_active</span>
+                        <span>Run Daily Reminders</span>
+                    </button>
+                    <button class="btn btn-theme-outline-secondary dashboard-action-button" @click="startMonthlyActivityReport">
+                        <span class="material-symbols-outlined dashboard-action-button-icon">assessment</span>
+                        <span>Run Monthly Reports</span>
+                    </button>
                 </div>
 
                 <div v-if="batchTask" class="mt-4 border rounded-4 p-3 surface-tint">
@@ -67,14 +89,12 @@
                                 <tr>
                                     <th>Appointment</th>
                                     <th>Patient</th>
-                                    <th>Channels</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 <tr v-for="(taskRow, index) in batchTaskRows(batchTask)" :key="batchTaskRowKey(batchTask, taskRow, index)">
                                     <td>[[ taskRow.appointment_id ]]</td>
                                     <td>[[ taskRow.patient_name || taskRow.patient_id ]]</td>
-                                    <td>[[ (taskRow.channels || []).join(', ') ]]</td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -109,7 +129,7 @@
                 <div class="row g-3 align-items-end">
                     <div class="col-lg-5">
                         <label class="form-label">Search doctors, patients, or appointments</label>
-                        <input class="form-control" type="text" v-model="adminSearch.q" @keyup="runAdminSearch">
+                        <input class="form-control" type="text" v-model="adminSearch.q" @keyup="runAdminSearch" placeholder="Search doctors, patients, departments, or appointments">
                     </div>
                 </div>
             </div>
@@ -118,14 +138,20 @@
         <section class="card app-card mb-4">
             <details class="admin-section-toggle" open>
                 <summary class="admin-section-summary">
-                    <div>
+                    <div class="admin-section-summary-content">
+                        <span class="material-symbols-outlined admin-dashboard-section-icon">stethoscope</span>
+                        <div>
                         <h2 class="card-title h5 mb-0">Doctors</h2>
                         <div class="small text-muted">Manage doctor accounts</div>
+                        </div>
                     </div>
                 </summary>
                 <div class="card-body pt-0">
                     <div class="d-flex justify-content-end mb-3">
-                        <button class="btn btn-sm btn-theme-outline-primary" @click="navigate('/admin/new/doctor')">New Doctor</button>
+                        <button class="btn btn-sm btn-theme-outline-primary dashboard-action-button" @click="navigate('/admin/new/doctor')">
+                            <span class="material-symbols-outlined dashboard-action-button-icon">person_add</span>
+                            <span>New Doctor</span>
+                        </button>
                     </div>
                     <div v-if="filteredAdminDoctors.length" class="admin-entity-grid">
                         <article
@@ -144,11 +170,18 @@
                             <div class="admin-entity-meta">[[ doctor.department_name || 'Unassigned' ]]</div>
                             <div class="admin-entity-meta">[[ doctor.contact || 'No contact provided' ]]</div>
                             <div class="admin-entity-actions">
-                                <button class="btn btn-sm btn-theme-outline-primary" @click="navigate('/admin/edit/doctor/' + doctor.id + '/')">Edit</button>
-                                <button class="btn btn-sm btn-theme-outline-warning" @click="toggleBlacklist('doctor', doctor.id, !doctor.is_blacklisted)">
-                                    [[ doctor.is_blacklisted ? 'Restore' : 'Blacklist' ]]
+                                <button class="btn btn-sm btn-theme-outline-primary dashboard-action-button" @click="navigate('/admin/edit/doctor/' + doctor.id + '/')">
+                                    <span class="material-symbols-outlined dashboard-action-button-icon">edit</span>
+                                    <span>Edit</span>
                                 </button>
-                                <button class="btn btn-sm btn-theme-outline-danger" @click="deleteEntity('doctor', doctor.id)">Delete</button>
+                                <button class="btn btn-sm btn-theme-outline-warning dashboard-action-button" @click="toggleBlacklist('doctor', doctor.id, !doctor.is_blacklisted)">
+                                    <span class="material-symbols-outlined dashboard-action-button-icon">block</span>
+                                    <span>[[ doctor.is_blacklisted ? 'Restore' : 'Blacklist' ]]</span>
+                                </button>
+                                <button class="btn btn-sm btn-theme-outline-danger dashboard-action-button" @click="deleteEntity('doctor', doctor.id)">
+                                    <span class="material-symbols-outlined dashboard-action-button-icon">delete</span>
+                                    <span>Delete</span>
+                                </button>
                             </div>
                         </article>
                     </div>
@@ -162,14 +195,20 @@
         <section class="card app-card mb-4">
             <details class="admin-section-toggle" open>
                 <summary class="admin-section-summary">
-                    <div>
+                    <div class="admin-section-summary-content">
+                        <span class="material-symbols-outlined admin-dashboard-section-icon">group</span>
+                        <div>
                         <h2 class="card-title h5 mb-0">Patients</h2>
                         <div class="small text-muted">Manage patient accounts</div>
+                        </div>
                     </div>
                 </summary>
                 <div class="card-body pt-0">
                     <div class="d-flex justify-content-end mb-3">
-                        <button class="btn btn-sm btn-theme-outline-primary" @click="navigate('/admin/new/patient')">New Patient</button>
+                        <button class="btn btn-sm btn-theme-outline-primary dashboard-action-button" @click="navigate('/admin/new/patient')">
+                            <span class="material-symbols-outlined dashboard-action-button-icon">person_add</span>
+                            <span>New Patient</span>
+                        </button>
                     </div>
                     <div v-if="filteredAdminPatients.length" class="admin-entity-grid">
                         <article
@@ -187,12 +226,22 @@
                             <div class="admin-entity-name">[[ patient.name ]]</div>
                             <div class="admin-entity-meta">[[ patient.email || 'No email provided' ]]</div>
                             <div class="admin-entity-actions">
-                                <button class="btn btn-sm btn-theme-outline-primary" @click="navigate('/admin/edit/patient/' + patient.id)">Edit</button>
-                                <button class="btn btn-sm btn-theme-outline-secondary" @click="openPatientHistory(patient.id)">History</button>
-                                <button class="btn btn-sm btn-theme-outline-warning" @click="toggleBlacklist('patient', patient.id, !patient.is_blacklisted)">
-                                    [[ patient.is_blacklisted ? 'Restore' : 'Blacklist' ]]
+                                <button class="btn btn-sm btn-theme-outline-primary dashboard-action-button" @click="navigate('/admin/edit/patient/' + patient.id)">
+                                    <span class="material-symbols-outlined dashboard-action-button-icon">edit</span>
+                                    <span>Edit</span>
                                 </button>
-                                <button class="btn btn-sm btn-theme-outline-danger" @click="deleteEntity('patient', patient.id)">Delete</button>
+                                <button class="btn btn-sm btn-theme-outline-secondary dashboard-action-button" @click="openPatientHistory(patient.id)">
+                                    <span class="material-symbols-outlined dashboard-action-button-icon">history</span>
+                                    <span>History</span>
+                                </button>
+                                <button class="btn btn-sm btn-theme-outline-warning dashboard-action-button" @click="toggleBlacklist('patient', patient.id, !patient.is_blacklisted)">
+                                    <span class="material-symbols-outlined dashboard-action-button-icon">block</span>
+                                    <span>[[ patient.is_blacklisted ? 'Restore' : 'Blacklist' ]]</span>
+                                </button>
+                                <button class="btn btn-sm btn-theme-outline-danger dashboard-action-button" @click="deleteEntity('patient', patient.id)">
+                                    <span class="material-symbols-outlined dashboard-action-button-icon">delete</span>
+                                    <span>Delete</span>
+                                </button>
                             </div>
                         </article>
                     </div>
@@ -206,9 +255,12 @@
         <section class="card app-card mb-4">
             <details class="admin-section-toggle" open>
                 <summary class="admin-section-summary">
-                    <div>
+                    <div class="admin-section-summary-content">
+                        <span class="material-symbols-outlined admin-dashboard-section-icon">event_upcoming</span>
+                        <div>
                         <h2 class="card-title h5 mb-0">Upcoming Appointments</h2>
                         <div class="small text-muted">Review scheduled appointments</div>
+                        </div>
                     </div>
                 </summary>
                 <div class="card-body pt-0">
@@ -235,9 +287,18 @@
                                 <td>[[ appt.status ]]</td>
                                 <td class="text-end">
                                     <div class="d-flex flex-wrap justify-content-end gap-2">
-                                        <button class="btn btn-sm btn-theme-outline-secondary" @click="openAvailabilityModal(appt.doctor.id, 'reschedule', appt.id)">Reschedule</button>
-                                        <button class="btn btn-sm btn-theme-outline-success" @click="markComplete(appt.id)">Complete</button>
-                                        <button class="btn btn-sm btn-theme-outline-danger" @click="cancelAppointment(appt.id)">Cancel</button>
+                                        <button class="btn btn-sm btn-theme-outline-secondary dashboard-action-button" @click="openAvailabilityModal(appt.doctor.id, 'reschedule', appt.id)">
+                                            <span class="material-symbols-outlined dashboard-action-button-icon">event_repeat</span>
+                                            <span>Reschedule</span>
+                                        </button>
+                                        <button class="btn btn-sm btn-theme-outline-success dashboard-action-button" @click="markComplete(appt.id)">
+                                            <span class="material-symbols-outlined dashboard-action-button-icon">task_alt</span>
+                                            <span>Complete</span>
+                                        </button>
+                                        <button class="btn btn-sm btn-theme-outline-danger dashboard-action-button" @click="cancelAppointment(appt.id)">
+                                            <span class="material-symbols-outlined dashboard-action-button-icon">cancel</span>
+                                            <span>Cancel</span>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -254,9 +315,12 @@
         <section class="card app-card">
             <details class="admin-section-toggle" open>
                 <summary class="admin-section-summary">
-                    <div>
+                    <div class="admin-section-summary-content">
+                        <span class="material-symbols-outlined admin-dashboard-section-icon">history</span>
+                        <div>
                         <h2 class="card-title h5 mb-0">Past Appointments</h2>
                         <div class="small text-muted">Review completed and previous appointments</div>
+                        </div>
                     </div>
                 </summary>
                 <div class="card-body pt-0">

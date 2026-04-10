@@ -1,0 +1,4 @@
+user_id,username,consulting_doctor,appointment_date,appointment_time,appointment_status,visit_type,diagnosis,treatment_given,doctor_notes,medicines,next_visit_suggested_date,next_visit_suggested_time
+26,Zoya Singh,Sarah Mishra,2026-04-11,09:00,Booked,Checkup,,,,,,
+26,Zoya Singh,Anika Iyer,2026-04-11,13:00,Cancelled,Checkup,,,,,,
+26,Zoya Singh,Vivaan Singh,2026-04-11,17:00,Completed,Checkup,,,,,,

@@ -102,6 +102,36 @@ textarea {
     color: var(--primary-color);
 }
 
+.admin-dashboard-metric-icon {
+    margin-right: 1rem;
+    font-size: 2.4rem;
+    line-height: 1;
+    color: var(--bs-secondary-color);
+}
+
+.dashboard-action-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.dashboard-action-button-icon {
+    font-size: 1.15em;
+    line-height: 1;
+}
+
+.dashboard-section-heading {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.dashboard-section-heading-icon {
+    font-size: 1.35rem;
+    line-height: 1;
+    color: var(--bs-secondary-color);
+}
+
 .app-card,
 .feature-panel,
 .hero-panel {
@@ -283,6 +313,18 @@ textarea {
     padding: 1.25rem;
     cursor: pointer;
     list-style: none;
+}
+
+.admin-section-summary-content {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.admin-dashboard-section-icon {
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--bs-secondary-color);
 }
 
 .admin-section-summary::-webkit-details-marker {

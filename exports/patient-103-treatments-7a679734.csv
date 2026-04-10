@@ -1,0 +1,2 @@
+user_id,username,consulting_doctor,appointment_date,appointment_time,appointment_status,visit_type,diagnosis,treatment_given,doctor_notes,medicines,next_visit_suggested_date,next_visit_suggested_time
+103,Test Patient,Kabir Mishra,2026-04-11,17:00,Booked,Checkup,,,,,2026-04-11,09:00

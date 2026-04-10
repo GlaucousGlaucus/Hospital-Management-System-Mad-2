@@ -1,0 +1,4 @@
+user_id,username,consulting_doctor,appointment_date,appointment_time,appointment_status,visit_type,diagnosis,treatment_given,doctor_notes,medicines,next_visit_suggested_date,next_visit_suggested_time
+23,Arjun Verma,Neha Gupta,2026-04-11,09:00,Completed,Checkup,,,,,2026-04-12,09:00
+23,Arjun Verma,Vivaan Nair,2026-04-11,13:00,Booked,Checkup,,,,GH (1d),2026-04-12,13:00
+23,Arjun Verma,Priya Das,2026-04-12,17:00,Booked,Checkup,,,,,,

@@ -1,29 +1,37 @@
 <script type="text/x-template" id="doctor-dashboard-template">
         <section class="row g-4 mb-4">
-            <div class="col-lg-4">
+            <div class="col-lg-6">
                 <div class="card app-card h-100">
                     <div class="card-body">
-                        <h2 class="card-title h5">Profile</h2>
+                        <h2 class="card-title h5 dashboard-section-heading">
+                            <span class="material-symbols-outlined dashboard-section-heading-icon">badge</span>
+                            <span>Profile</span>
+                        </h2>
                         <p class="mb-1 fw-semibold">[[ dashboard.doctor.name ]]</p>
                         <p class="text-muted mb-1">[[ dashboard.doctor.specialization ]]</p>
                         <p class="text-muted mb-3">[[ dashboard.doctor.department_name ]]</p>
-                        <button class="btn btn-theme-outline-primary" @click="navigate('/doctor/edit')">Edit Profile</button>
+                        <button class="btn btn-theme-outline-primary dashboard-action-button" @click="navigate('/doctor/edit')">
+                            <span class="material-symbols-outlined dashboard-action-button-icon">edit</span>
+                            <span>Edit Profile</span>
+                        </button>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4">
+            <div class="col-lg-6">
                 <div class="card app-card h-100">
-                    <div class="card-body">
-                        <div class="text-muted small">Upcoming Appointments</div>
-                        <div class="metric-value fw-semibold">[[ dashboard.upcoming_appointments.length ]]</div>
+                    <div class="card-body d-flex align-items-center">
+                        <span class="material-symbols-outlined admin-dashboard-metric-icon">event_upcoming</span>
+                        <div>
+                            <div class="text-muted small">Upcoming Appointments</div>
+                            <div class="metric-value fw-semibold">[[ dashboard.upcoming_appointments.length ]]</div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-lg-4">
-                <div class="card app-card h-100">
-                    <div class="card-body">
-                        <div class="text-muted small">Assigned Patients</div>
-                        <div class="metric-value fw-semibold">[[ dashboard.patients.length ]]</div>
+                    <div class="card-body d-flex align-items-center">
+                        <span class="material-symbols-outlined admin-dashboard-metric-icon">group</span>
+                        <div>
+                            <div class="text-muted small">Assigned Patients</div>
+                            <div class="metric-value fw-semibold">[[ dashboard.patients.length ]]</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -31,7 +39,10 @@
 
         <section class="card app-card mb-4">
             <div class="card-body">
-                <h2 class="card-title h5 mb-3">Upcoming Appointments</h2>
+                <h2 class="card-title h5 mb-3 dashboard-section-heading">
+                    <span class="material-symbols-outlined dashboard-section-heading-icon">event_upcoming</span>
+                    <span>Upcoming Appointments</span>
+                </h2>
                 <div v-if="dashboard.upcoming_appointments && dashboard.upcoming_appointments.length === 0" class="text-muted">No Appointments Today</div>
                 <div class="table-responsive" v-if="dashboard.upcoming_appointments && dashboard.upcoming_appointments.length > 0">
                     <table class="table table-hover align-middle mb-0">
@@ -50,10 +61,22 @@
                             <td>[[ formatTime(appt.time) ]]</td>
                             <td class="text-end">
                                 <div class="d-flex flex-wrap justify-content-end gap-2">
-                                    <button class="btn btn-sm btn-theme-outline-primary" @click="navigate('/doctor/update_history/' + appt.id)">Update History</button>
-                                    <button class="btn btn-sm btn-theme-outline-secondary" @click="openAvailabilityModal(appt.doctor.id, 'reschedule', appt.id)">Reschedule</button>
-                                    <button class="btn btn-sm btn-theme-outline-success" @click="markComplete(appt.id)">Complete</button>
-                                    <button class="btn btn-sm btn-theme-outline-danger" @click="cancelAppointment(appt.id)">Cancel</button>
+                                    <button class="btn btn-sm btn-theme-outline-primary dashboard-action-button" @click="navigate('/doctor/update_history/' + appt.id)">
+                                        <span class="material-symbols-outlined dashboard-action-button-icon">note_add</span>
+                                        <span>Update History</span>
+                                    </button>
+                                    <button class="btn btn-sm btn-theme-outline-secondary dashboard-action-button" @click="openAvailabilityModal(appt.doctor.id, 'reschedule', appt.id)">
+                                        <span class="material-symbols-outlined dashboard-action-button-icon">event_repeat</span>
+                                        <span>Reschedule</span>
+                                    </button>
+                                    <button class="btn btn-sm btn-theme-outline-success dashboard-action-button" @click="markComplete(appt.id)">
+                                        <span class="material-symbols-outlined dashboard-action-button-icon">task_alt</span>
+                                        <span>Complete</span>
+                                    </button>
+                                    <button class="btn btn-sm btn-theme-outline-danger dashboard-action-button" @click="cancelAppointment(appt.id)">
+                                        <span class="material-symbols-outlined dashboard-action-button-icon">cancel</span>
+                                        <span>Cancel</span>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -65,13 +88,19 @@
 
         <section class="card app-card mb-4">
             <div class="card-body">
-                <h2 class="card-title h5 mb-3">Assigned Patients</h2>
+                <h2 class="card-title h5 mb-3 dashboard-section-heading">
+                    <span class="material-symbols-outlined dashboard-section-heading-icon">group</span>
+                    <span>Assigned Patients</span>
+                </h2>
                 <div class="row g-3">
                     <div class="col-md-6 col-xl-4" v-for="patient in dashboard.patients" :key="'doc-patient-' + patient.id">
                         <div class="border rounded-4 p-3 h-100">
                             <div class="fw-semibold">[[ patient.name ]]</div>
                             <div class="text-muted mb-3">[[ patient.email ]]</div>
-                            <button class="btn btn-sm btn-theme-outline-primary" @click="openPatientHistory(patient.id)">View History</button>
+                            <button class="btn btn-sm btn-theme-outline-primary dashboard-action-button" @click="openPatientHistory(patient.id)">
+                                <span class="material-symbols-outlined dashboard-action-button-icon">history</span>
+                                <span>View History</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -80,7 +109,10 @@
 
         <section class="card app-card">
             <div class="card-body">
-                <h2 class="card-title h5 mb-3">Weekly Availability</h2>
+                <h2 class="card-title h5 mb-3 dashboard-section-heading">
+                    <span class="material-symbols-outlined dashboard-section-heading-icon">calendar_clock</span>
+                    <span>Weekly Availability</span>
+                </h2>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead>

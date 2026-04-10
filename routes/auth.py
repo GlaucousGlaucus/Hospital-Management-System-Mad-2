@@ -7,7 +7,6 @@ from flask import Blueprint, jsonify, render_template, request, session
 from models.main_models import Admin, Patient, Doctor, SessionLocal
 from utils.constants import SessionInfo, UserTypes
 
-auth_signup_bp = Blueprint("auth_signup", __name__, url_prefix="/signup")
 auth_login_bp = Blueprint("auth_login", __name__, url_prefix="/login")
 auth_api_bp = Blueprint("auth_api", __name__, url_prefix="/api/auth")
 
@@ -44,16 +43,6 @@ def _set_session_for(user, user_type: str):
     session[SessionInfo.USER_NAME] = user.name
     session[SessionInfo.USER_EMAIL] = user.email
     session[SessionInfo.USER_TYPE] = user_type
-
-
-@auth_login_bp.route("/", methods=["GET"])
-def login():
-    return render_template("index.html")
-
-
-@auth_signup_bp.route("/", methods=["GET"])
-def signup():
-    return render_template("index.html")
 
 
 @auth_login_bp.route("/logout", methods=["GET"])

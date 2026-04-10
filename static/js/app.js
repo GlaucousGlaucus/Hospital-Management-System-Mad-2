@@ -1,171 +1,256 @@
 const { createApp } = Vue;
 
-const AppAlerts = {
-    template: "#app-alerts-template",
-    props: {
-        alerts: { type: Array, required: true },
-        dismissAlert: { type: Function, required: true },
+const required = (type) => ({ type, required: true });
+const component = (template, props) => ({ template, props });
+const emptySignupForm = () => ({ name: "", email: "", password: "", dob: "", contact: "" });
+const emptyPatientSearch = () => ({ q: "", department: "", date: "", slot: "", results: [] });
+const emptyTreatmentForm = () => ({
+    appointment: null,
+    visit_type: "",
+    test_done: "",
+    diagnosis: "",
+    prescription: "",
+    notes: "",
+    medicines: [],
+});
+const emptyMedicineRow = () => ({
+    name: "",
+    morning: 0,
+    afternoon: 0,
+    night: 0,
+    duration_days: 1,
+    instructions: "",
+});
+const createUserForm = (extra = {}) => ({
+    id: null,
+    name: "",
+    email: "",
+    password: "",
+    dob: "",
+    contact: "",
+    ...extra,
+});
+const createFormMeta = (entity) => ({
+    title: entity.id ? `Edit ${entity.label}` : `Create ${entity.label}`,
+    submitLabel: entity.id ? `Update ${entity.label}` : `Create ${entity.label}`,
+});
+const createAvailabilityModal = (overrides = {}) => ({
+    open: false,
+    doctorId: null,
+    action: "book",
+    appointmentId: null,
+    schedule: [],
+    selectedDate: "",
+    selectedSlot: "",
+    visitType: "Checkup",
+    ...overrides,
+});
+const statusClassMap = {
+    Completed: "status-pill-success",
+    Failed: "status-pill-danger",
+    Processing: "status-pill-primary",
+    SUCCESS: "status-pill-success",
+    FAILURE: "status-pill-danger",
+    STARTED: "status-pill-primary",
+    PROGRESS: "status-pill-primary",
+};
+const slotTimeMap = {
+    morning: "09:00",
+    afternoon: "13:00",
+    evening: "17:00",
+};
+const batchTaskConfig = {
+    "daily-summary": {
+        summary: (result) => [
+            { label: "Doctors", value: result.totals?.doctors ?? 0 },
+            { label: "Patients", value: result.totals?.patients ?? 0 },
+            { label: "Appointments Today", value: result.totals?.appointments_today ?? 0 },
+            { label: "Booked", value: result.statuses?.booked ?? 0 },
+            { label: "Completed", value: result.statuses?.completed ?? 0 },
+            { label: "Cancelled", value: result.statuses?.cancelled ?? 0 },
+        ],
+    },
+    "daily-reminders": {
+        summary: (result) => [
+            { label: "Date", value: result.date || "N/A" },
+            { label: "Appointments Considered", value: result.appointments_considered ?? 0 },
+            { label: "Notifications Sent", value: result.notifications_sent ?? 0 },
+        ],
+        rows: (result) => result.reminders || [],
+        rowKey: (row, index) => row.appointment_id || index,
+    },
+    "monthly-activity": {
+        summary: (result) => [
+            { label: "Period Start", value: result.period_start || "N/A" },
+            { label: "Period End", value: result.period_end || "N/A" },
+            { label: "Reports Generated", value: result.reports_generated ?? 0 },
+            { label: "Reports Delivered", value: result.reports_delivered ?? 0 },
+        ],
+        rows: (result) => result.items || [],
+        rowKey: (row, index) => row.doctor_id || index,
     },
 };
-
-const AppNavbar = {
-    template: "#app-navbar-template",
-    props: {
-        appContext: { type: Object, required: true },
-        goHome: { type: Function, required: true },
-        navigate: { type: Function, required: true },
-        logout: { type: Function, required: true },
-    },
+const adminSearchFields = {
+    doctors: (doctor) => [
+        doctor.name,
+        doctor.email,
+        doctor.contact,
+        doctor.specialization,
+        doctor.department_name,
+        doctor.is_blacklisted ? "blacklisted" : "active",
+    ],
+    patients: (patient) => [
+        patient.name,
+        patient.email,
+        patient.contact,
+        patient.is_blacklisted ? "blacklisted" : "active",
+    ],
+    appointments: (appointment) => [
+        appointment.patient?.name,
+        appointment.patient?.email,
+        appointment.doctor?.name,
+        appointment.doctor?.email,
+        appointment.doctor?.specialization,
+        appointment.doctor?.department_name,
+        appointment.visit_type,
+        appointment.status,
+        appointment.date,
+        appointment.time,
+    ],
 };
-
-const PublicHome = {
-    template: "#public-home-template",
-    props: {
-        authMode: { type: String, required: true },
-        authForm: { type: Object, required: true },
-        signupForm: { type: Object, required: true },
-        setAuthMode: { type: Function, required: true },
-        submitLogin: { type: Function, required: true },
-        submitSignup: { type: Function, required: true },
-    },
-};
-
-const WorkspaceHeader = {
-    template: "#workspace-header-template",
-    props: {
-        user: { type: Object, required: true },
-        viewTitle: { type: String, required: true },
-        viewSubtitle: { type: String, required: true },
-    },
-};
-
-const AdminDashboard = {
-    template: "#admin-dashboard-template",
-    props: {
-        dashboard: { type: Object, required: true },
-        adminSearch: { type: Object, required: true },
-        filteredAdminDoctors: { type: Array, required: true },
-        filteredAdminPatients: { type: Array, required: true },
-        filteredAdminAppointments: { type: Array, required: true },
-        filteredAdminPastAppointments: { type: Array, required: true },
-        batchTask: { type: Object, default: null },
-        runAdminSearch: { type: Function, required: true },
-        navigate: { type: Function, required: true },
-        startBatchReport: { type: Function, required: true },
-        startDailyReminders: { type: Function, required: true },
-        startMonthlyActivityReport: { type: Function, required: true },
-        batchTaskStateClass: { type: Function, required: true },
-        batchTaskSummary: { type: Function, required: true },
-        batchTaskRows: { type: Function, required: true },
-        batchTaskRowKey: { type: Function, required: true },
-        toggleBlacklist: { type: Function, required: true },
-        deleteEntity: { type: Function, required: true },
-        openPatientHistory: { type: Function, required: true },
-        openAvailabilityModal: { type: Function, required: true },
-        markComplete: { type: Function, required: true },
-        cancelAppointment: { type: Function, required: true },
-        formatDate: { type: Function, required: true },
-        formatTime: { type: Function, required: true },
-    },
-};
-
-const DoctorDashboard = {
-    template: "#doctor-dashboard-template",
-    props: {
-        dashboard: { type: Object, required: true },
-        navigate: { type: Function, required: true },
-        formatDate: { type: Function, required: true },
-        formatTime: { type: Function, required: true },
-        openPatientHistory: { type: Function, required: true },
-        openAvailabilityModal: { type: Function, required: true },
-        markComplete: { type: Function, required: true },
-        cancelAppointment: { type: Function, required: true },
-        doctorAvailabilityButtonClass: { type: Function, required: true },
-        toggleAvailability: { type: Function, required: true },
-    },
-};
-
-const PatientDashboard = {
-    template: "#patient-dashboard-template",
-    props: {
-        dashboard: { type: Object, required: true },
-        departments: { type: Array, required: true },
-        patientSearch: { type: Object, required: true },
-        exportJobs: { type: Array, required: true },
-        navigate: { type: Function, required: true },
-        openPatientHistory: { type: Function, required: true },
-        startTreatmentExport: { type: Function, required: true },
-        loadExports: { type: Function, required: true },
-        formatDate: { type: Function, required: true },
-        formatTime: { type: Function, required: true },
-        formatDateTime: { type: Function, required: true },
-        exportStatusClass: { type: Function, required: true },
-        runPatientSearch: { type: Function, required: true },
-        resetPatientSearch: { type: Function, required: true },
-        openAvailabilityModal: { type: Function, required: true },
-        cancelAppointment: { type: Function, required: true },
-    },
-};
-
-const DepartmentDetails = {
-    template: "#department-details-template",
-    props: {
-        selectedDepartment: { type: Object, required: true },
-        navigate: { type: Function, required: true },
-        openAvailabilityModal: { type: Function, required: true },
-    },
-};
-
-const PatientHistory = {
-    template: "#patient-history-template",
-    props: {
-        patientHistory: { type: Object, required: true },
-        exportJobs: { type: Array, required: true },
-        navigate: { type: Function, required: true },
-        startTreatmentExport: { type: Function, required: true },
-        canQueueTreatmentExport: { type: Function, required: true },
-        loadExports: { type: Function, required: true },
-        historyPatientId: { type: Function, required: true },
-        formatDate: { type: Function, required: true },
-        formatDateTime: { type: Function, required: true },
-        exportStatusClass: { type: Function, required: true },
-    },
-};
-
-const UserForm = {
-    template: "#user-form-template",
-    props: {
-        activeForm: { type: Object, required: true },
-        formMeta: { type: Object, required: true },
-        departments: { type: Array, required: true },
-        showDoctorFields: { type: Boolean, required: true },
-        routeName: { type: String, required: true },
-        navigate: { type: Function, required: true },
-        submitActiveForm: { type: Function, required: true },
-    },
-};
-
-const TreatmentForm = {
-    template: "#treatment-form-template",
-    props: {
-        treatmentForm: { type: Object, required: true },
-        navigate: { type: Function, required: true },
-        submitTreatmentForm: { type: Function, required: true },
-        addMedicineRow: { type: Function, required: true },
-        removeMedicineRow: { type: Function, required: true },
-    },
-};
-
-const AvailabilityModal = {
-    template: "#availability-modal-template",
-    props: {
-        availabilityModal: { type: Object, required: true },
-        closeAvailabilityModal: { type: Function, required: true },
-        availabilityButtonClass: { type: Function, required: true },
-        selectAvailability: { type: Function, required: true },
-        confirmAvailabilityAction: { type: Function, required: true },
-    },
-};
+const routePatterns = [
+    { regex: /^\/login$/, name: "home", authMode: "login" },
+    { regex: /^\/signup$/, name: "home", authMode: "signup" },
+    { regex: /^\/dashboard$/, name: "dashboard" },
+    { regex: /^\/admin\/new\/doctor$/, name: "doctorForm" },
+    { regex: /^\/admin\/edit\/doctor\/(\d+)$/, name: "doctorForm", params: ["id"] },
+    { regex: /^\/admin\/new\/patient$/, name: "patientForm" },
+    { regex: /^\/admin\/edit\/patient\/(\d+)$/, name: "patientForm", params: ["id"] },
+    { regex: /^\/doctor\/update_history\/(\d+)$/, name: "treatmentForm", params: ["appointmentId"] },
+    { regex: /^\/doctor\/edit$/, name: "profileForm" },
+    { regex: /^\/patient\/edit\/profile$/, name: "profileForm" },
+    { regex: /^\/patient\/department\/(\d+)$/, name: "department", params: ["departmentId"] },
+    { regex: /^\/history\/patient\/(\d+)$/, name: "history", params: ["patientId"] },
+];
+const AppAlerts = component("#app-alerts-template", {
+    alerts: required(Array),
+    dismissAlert: required(Function),
+});
+const AppNavbar = component("#app-navbar-template", {
+    appContext: required(Object),
+    goHome: required(Function),
+    navigate: required(Function),
+    logout: required(Function),
+});
+const PublicHome = component("#public-home-template", {
+    authMode: required(String),
+    authForm: required(Object),
+    signupForm: required(Object),
+    setAuthMode: required(Function),
+    submitLogin: required(Function),
+    submitSignup: required(Function),
+});
+const WorkspaceHeader = component("#workspace-header-template", {
+    user: required(Object),
+    viewTitle: required(String),
+    viewSubtitle: required(String),
+});
+const AdminDashboard = component("#admin-dashboard-template", {
+    dashboard: required(Object),
+    adminSearch: required(Object),
+    filteredAdminDoctors: required(Array),
+    filteredAdminPatients: required(Array),
+    filteredAdminAppointments: required(Array),
+    filteredAdminPastAppointments: required(Array),
+    batchTask: { type: Object, default: null },
+    runAdminSearch: required(Function),
+    navigate: required(Function),
+    startBatchReport: required(Function),
+    startDailyReminders: required(Function),
+    startMonthlyActivityReport: required(Function),
+    batchTaskStateClass: required(Function),
+    batchTaskSummary: required(Function),
+    batchTaskRows: required(Function),
+    batchTaskRowKey: required(Function),
+    toggleBlacklist: required(Function),
+    deleteEntity: required(Function),
+    openPatientHistory: required(Function),
+    openAvailabilityModal: required(Function),
+    markComplete: required(Function),
+    cancelAppointment: required(Function),
+    formatDate: required(Function),
+    formatTime: required(Function),
+});
+const DoctorDashboard = component("#doctor-dashboard-template", {
+    dashboard: required(Object),
+    navigate: required(Function),
+    formatDate: required(Function),
+    formatTime: required(Function),
+    openPatientHistory: required(Function),
+    openAvailabilityModal: required(Function),
+    markComplete: required(Function),
+    cancelAppointment: required(Function),
+    doctorAvailabilityButtonClass: required(Function),
+    toggleAvailability: required(Function),
+});
+const PatientDashboard = component("#patient-dashboard-template", {
+    dashboard: required(Object),
+    departments: required(Array),
+    patientSearch: required(Object),
+    exportJobs: required(Array),
+    navigate: required(Function),
+    openPatientHistory: required(Function),
+    startTreatmentExport: required(Function),
+    loadExports: required(Function),
+    formatDate: required(Function),
+    formatTime: required(Function),
+    formatDateTime: required(Function),
+    exportStatusClass: required(Function),
+    runPatientSearch: required(Function),
+    resetPatientSearch: required(Function),
+    openAvailabilityModal: required(Function),
+    cancelAppointment: required(Function),
+});
+const DepartmentDetails = component("#department-details-template", {
+    selectedDepartment: required(Object),
+    navigate: required(Function),
+    openAvailabilityModal: required(Function),
+});
+const PatientHistory = component("#patient-history-template", {
+    patientHistory: required(Object),
+    exportJobs: required(Array),
+    navigate: required(Function),
+    startTreatmentExport: required(Function),
+    canQueueTreatmentExport: required(Function),
+    loadExports: required(Function),
+    historyPatientId: required(Function),
+    formatDate: required(Function),
+    formatDateTime: required(Function),
+    exportStatusClass: required(Function),
+});
+const UserForm = component("#user-form-template", {
+    activeForm: required(Object),
+    formMeta: required(Object),
+    departments: required(Array),
+    showDoctorFields: required(Boolean),
+    routeName: required(String),
+    navigate: required(Function),
+    submitActiveForm: required(Function),
+});
+const TreatmentForm = component("#treatment-form-template", {
+    treatmentForm: required(Object),
+    navigate: required(Function),
+    submitTreatmentForm: required(Function),
+    addMedicineRow: required(Function),
+    removeMedicineRow: required(Function),
+});
+const AvailabilityModal = component("#availability-modal-template", {
+    availabilityModal: required(Object),
+    closeAvailabilityModal: required(Function),
+    availabilityButtonClass: required(Function),
+    selectAvailability: required(Function),
+    confirmAvailabilityAction: required(Function),
+});
 
 const app = createApp({
     delimiters: ["[[", "]]"],
@@ -184,16 +269,6 @@ const app = createApp({
         AvailabilityModal,
     },
     data() {
-        const emptyTreatmentForm = () => ({
-            appointment: null,
-            visit_type: "",
-            test_done: "",
-            diagnosis: "",
-            prescription: "",
-            notes: "",
-            medicines: [],
-        });
-
         return {
             loading: true,
             appContext: {
@@ -209,24 +284,12 @@ const app = createApp({
                 password: "",
                 user_type: "patient",
             },
-            signupForm: {
-                name: "",
-                email: "",
-                password: "",
-                dob: "",
-                contact: "",
-            },
+            signupForm: emptySignupForm(),
             adminSearch: {
                 q: "",
                 appliedQuery: "",
             },
-            patientSearch: {
-                q: "",
-                department: "",
-                date: "",
-                slot: "",
-                results: [],
-            },
+            patientSearch: emptyPatientSearch(),
             activeForm: null,
             formMeta: {
                 title: "",
@@ -235,16 +298,7 @@ const app = createApp({
             selectedDepartment: null,
             patientHistory: null,
             treatmentForm: emptyTreatmentForm(),
-            availabilityModal: {
-                open: false,
-                doctorId: null,
-                action: "book",
-                appointmentId: null,
-                schedule: [],
-                selectedDate: "",
-                selectedSlot: "",
-                visitType: "Checkup",
-            },
+            availabilityModal: createAvailabilityModal(),
             batchTask: null,
             pollHandle: null,
             exportJobs: [],
@@ -293,58 +347,16 @@ const app = createApp({
             return (this.adminSearch.appliedQuery || "").trim().toLowerCase();
         },
         filteredAdminDoctors() {
-            const doctors = this.dashboard?.doctors || [];
-            if (!this.adminSearchTerm) return doctors;
-            return doctors.filter((doctor) => this.matchesAdminSearch(doctor, [
-                doctor.name,
-                doctor.email,
-                doctor.contact,
-                doctor.specialization,
-                doctor.department_name,
-                doctor.is_blacklisted ? "blacklisted" : "active",
-            ]));
+            return this.filterAdminCollection(this.dashboard?.doctors, adminSearchFields.doctors);
         },
         filteredAdminPatients() {
-            const patients = this.dashboard?.patients || [];
-            if (!this.adminSearchTerm) return patients;
-            return patients.filter((patient) => this.matchesAdminSearch(patient, [
-                patient.name,
-                patient.email,
-                patient.contact,
-                patient.is_blacklisted ? "blacklisted" : "active",
-            ]));
+            return this.filterAdminCollection(this.dashboard?.patients, adminSearchFields.patients);
         },
         filteredAdminAppointments() {
-            const appointments = this.dashboard?.upcoming_appointments || [];
-            if (!this.adminSearchTerm) return appointments;
-            return appointments.filter((appointment) => this.matchesAdminSearch(appointment, [
-                appointment.patient?.name,
-                appointment.patient?.email,
-                appointment.doctor?.name,
-                appointment.doctor?.email,
-                appointment.doctor?.specialization,
-                appointment.doctor?.department_name,
-                appointment.visit_type,
-                appointment.status,
-                appointment.date,
-                appointment.time,
-            ]));
+            return this.filterAdminCollection(this.dashboard?.upcoming_appointments, adminSearchFields.appointments);
         },
         filteredAdminPastAppointments() {
-            const appointments = this.dashboard?.past_appointments || [];
-            if (!this.adminSearchTerm) return appointments;
-            return appointments.filter((appointment) => this.matchesAdminSearch(appointment, [
-                appointment.patient?.name,
-                appointment.patient?.email,
-                appointment.doctor?.name,
-                appointment.doctor?.email,
-                appointment.doctor?.specialization,
-                appointment.doctor?.department_name,
-                appointment.visit_type,
-                appointment.status,
-                appointment.date,
-                appointment.time,
-            ]));
+            return this.filterAdminCollection(this.dashboard?.past_appointments, adminSearchFields.appointments);
         },
     },
     mounted() {
@@ -399,8 +411,20 @@ const app = createApp({
         matchesAdminSearch(_, fields) {
             return fields.some((field) => String(field || "").toLowerCase().includes(this.adminSearchTerm));
         },
+        filterAdminCollection(collection = [], getFields) {
+            if (!this.adminSearchTerm) return collection || [];
+            return (collection || []).filter((item) => this.matchesAdminSearch(item, getFields(item)));
+        },
         handleError(error) {
             this.pushAlert(error.message || "Unexpected error.", "danger");
+        },
+        async attempt(action) {
+            try {
+                return await action();
+            } catch (error) {
+                this.handleError(error);
+                return null;
+            }
         },
         setAuthMode(mode) {
             this.authMode = mode;
@@ -408,22 +432,7 @@ const app = createApp({
         },
         resolveRoute(pathname) {
             const clean = pathname.length > 1 ? pathname.replace(/\/$/, "") : pathname;
-            const patterns = [
-                { regex: /^\/login$/, name: "home", authMode: "login" },
-                { regex: /^\/signup$/, name: "home", authMode: "signup" },
-                { regex: /^\/dashboard$/, name: "dashboard" },
-                { regex: /^\/admin\/new\/doctor$/, name: "doctorForm" },
-                { regex: /^\/admin\/edit\/doctor\/(\d+)$/, name: "doctorForm", params: ["id"] },
-                { regex: /^\/admin\/new\/patient$/, name: "patientForm" },
-                { regex: /^\/admin\/edit\/patient\/(\d+)$/, name: "patientForm", params: ["id"] },
-                { regex: /^\/doctor\/update_history\/(\d+)$/, name: "treatmentForm", params: ["appointmentId"] },
-                { regex: /^\/doctor\/edit$/, name: "profileForm" },
-                { regex: /^\/patient\/edit\/profile$/, name: "profileForm" },
-                { regex: /^\/patient\/department\/(\d+)$/, name: "department", params: ["departmentId"] },
-                { regex: /^\/history\/patient\/(\d+)$/, name: "history", params: ["patientId"] },
-            ];
-
-            for (const pattern of patterns) {
+            for (const pattern of routePatterns) {
                 const match = clean.match(pattern.regex);
                 if (!match) continue;
                 const params = {};
@@ -466,9 +475,7 @@ const app = createApp({
             return new Date(value).toLocaleString();
         },
         timeForSlot(slot) {
-            if (slot === "morning") return "09:00";
-            if (slot === "afternoon") return "13:00";
-            return "17:00";
+            return slotTimeMap[slot] || slotTimeMap.evening;
         },
         historyPatientId() {
             return this.patientHistory?.patient?.id || null;
@@ -481,64 +488,19 @@ const app = createApp({
             return Boolean(this.currentExportPatientId());
         },
         exportStatusClass(status) {
-            if (status === "Completed") return "status-pill-success";
-            if (status === "Failed") return "status-pill-danger";
-            if (status === "Processing") return "status-pill-primary";
-            return "status-pill-secondary";
+            return statusClassMap[status] || "status-pill-secondary";
         },
         batchTaskStateClass(state) {
-            if (state === "SUCCESS") return "status-pill-success";
-            if (state === "FAILURE") return "status-pill-danger";
-            if (state === "STARTED" || state === "PROGRESS") return "status-pill-primary";
-            return "status-pill-secondary";
+            return statusClassMap[state] || "status-pill-secondary";
         },
         batchTaskSummary(task) {
-            if (!task?.result) return [];
-            if (task.kind === "daily-summary") {
-                return [
-                    { label: "Doctors", value: task.result.totals?.doctors ?? 0 },
-                    { label: "Patients", value: task.result.totals?.patients ?? 0 },
-                    { label: "Appointments Today", value: task.result.totals?.appointments_today ?? 0 },
-                    { label: "Booked", value: task.result.statuses?.booked ?? 0 },
-                    { label: "Completed", value: task.result.statuses?.completed ?? 0 },
-                    { label: "Cancelled", value: task.result.statuses?.cancelled ?? 0 },
-                ];
-            }
-            if (task.kind === "daily-reminders") {
-                return [
-                    { label: "Date", value: task.result.date || "N/A" },
-                    { label: "Appointments Considered", value: task.result.appointments_considered ?? 0 },
-                    { label: "Notifications Sent", value: task.result.notifications_sent ?? 0 },
-                ];
-            }
-            if (task.kind === "monthly-activity") {
-                return [
-                    { label: "Period Start", value: task.result.period_start || "N/A" },
-                    { label: "Period End", value: task.result.period_end || "N/A" },
-                    { label: "Reports Generated", value: task.result.reports_generated ?? 0 },
-                    { label: "Reports Delivered", value: task.result.reports_delivered ?? 0 },
-                ];
-            }
-            return [];
+            return batchTaskConfig[task?.kind]?.summary?.(task?.result) || [];
         },
         batchTaskRows(task) {
-            if (!task?.result) return [];
-            if (task.kind === "daily-reminders") {
-                return task.result.reminders || [];
-            }
-            if (task.kind === "monthly-activity") {
-                return task.result.items || [];
-            }
-            return [];
+            return batchTaskConfig[task?.kind]?.rows?.(task?.result) || [];
         },
         batchTaskRowKey(task, taskRow, index) {
-            if (task.kind === "daily-reminders") {
-                return taskRow.appointment_id || index;
-            }
-            if (task.kind === "monthly-activity") {
-                return taskRow.doctor_id || index;
-            }
-            return index;
+            return batchTaskConfig[task?.kind]?.rowKey?.(taskRow, index) || index;
         },
         async queueBatchTask(url, kind, label, queuedMessage) {
             const payload = await this.api(url, { method: "POST" });
@@ -560,16 +522,13 @@ const app = createApp({
         },
         async initializeAppContext() {
             this.loading = true;
-            try {
+            await this.attempt(async () => {
                 const data = await this.api("/api/app-context");
                 this.appContext = data;
                 this.route = this.resolveRoute(window.location.pathname);
                 await this.loadRouteData();
-            } catch (error) {
-                this.handleError(error);
-            } finally {
-                this.loading = false;
-            }
+            });
+            this.loading = false;
         },
         async loadDashboard() {
             this.dashboard = await this.api("/api/dashboard");
@@ -579,54 +538,33 @@ const app = createApp({
         },
         async loadRouteData() {
             this.resetTransientState();
-            if (!this.appContext.user) {
-                return;
-            }
+            if (!this.appContext.user) return;
 
-            if (this.route.name === "dashboard") {
-                await this.loadDashboard();
-                if (this.appContext.user.user_type === "patient" && !this.patientSearch.results.length) {
-                    await this.runPatientSearch();
-                }
-                return;
-            }
+            const loaders = {
+                dashboard: async () => {
+                    await this.loadDashboard();
+                    if (this.appContext.user.user_type === "patient" && !this.patientSearch.results.length) {
+                        await this.runPatientSearch();
+                    }
+                },
+                department: async () => {
+                    this.selectedDepartment = await this.api(`/api/departments/${this.route.params.departmentId}`);
+                },
+                history: async () => {
+                    this.patientHistory = await this.api(`/api/patients/${this.route.params.patientId}/history`);
+                    await this.loadExports(this.route.params.patientId);
+                },
+                doctorForm: () => this.loadDoctorForm(this.route.params.id),
+                patientForm: () => this.loadPatientForm(this.route.params.id),
+                profileForm: () => this.loadProfileForm(),
+                treatmentForm: () => this.loadTreatmentForm(this.route.params.appointmentId),
+            };
 
-            if (this.route.name === "department") {
-                const payload = await this.api(`/api/departments/${this.route.params.departmentId}`);
-                this.selectedDepartment = payload;
-                return;
-            }
-
-            if (this.route.name === "history") {
-                this.patientHistory = await this.api(`/api/patients/${this.route.params.patientId}/history`);
-                await this.loadExports(this.route.params.patientId);
-                return;
-            }
-
-            if (this.route.name === "doctorForm") {
-                await this.loadDoctorForm(this.route.params.id);
-                return;
-            }
-
-            if (this.route.name === "patientForm") {
-                await this.loadPatientForm(this.route.params.id);
-                return;
-            }
-
-            if (this.route.name === "profileForm") {
-                await this.loadProfileForm();
-                return;
-            }
-
-            if (this.route.name === "treatmentForm") {
-                await this.loadTreatmentForm(this.route.params.appointmentId);
-                return;
-            }
-
-            await this.loadDashboard();
+            const load = loaders[this.route.name] || (() => this.loadDashboard());
+            await load();
         },
         async submitLogin() {
-            try {
+            await this.attempt(async () => {
                 await this.api("/api/auth/login", {
                     method: "POST",
                     body: this.authForm,
@@ -635,41 +573,35 @@ const app = createApp({
                 await this.initializeAppContext();
                 this.pushAlert("Logged in successfully.");
                 this.navigate("/dashboard/");
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         async submitSignup() {
-            try {
+            await this.attempt(async () => {
                 await this.api("/api/auth/signup", {
                     method: "POST",
                     body: this.signupForm,
                 });
-                this.signupForm = { name: "", email: "", password: "", dob: "", contact: "" };
+                this.signupForm = emptySignupForm();
                 await this.initializeAppContext();
                 this.pushAlert("Account created successfully.");
                 this.navigate("/dashboard/");
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         async logout() {
-            try {
+            await this.attempt(async () => {
                 await this.api("/api/auth/logout", { method: "POST" });
                 this.appContext = { user: null, departments: this.appContext.departments };
                 this.dashboard = null;
                 this.patientSearch.results = [];
                 this.pushAlert("Logged out successfully.");
                 this.navigate("/");
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         runAdminSearch() {
             this.adminSearch.appliedQuery = this.adminSearch.q;
         },
         async runPatientSearch() {
-            try {
+            await this.attempt(async () => {
                 const params = new URLSearchParams({
                     q: this.patientSearch.q,
                     department: this.patientSearch.department,
@@ -678,51 +610,33 @@ const app = createApp({
                 });
                 const result = await this.api(`/api/search?${params.toString()}`);
                 this.patientSearch.results = result.doctors || [];
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         resetPatientSearch() {
-            this.patientSearch = { q: "", department: "", date: "", slot: "", results: [] };
+            this.patientSearch = emptyPatientSearch();
             this.runPatientSearch();
         },
         async toggleBlacklist(entity, id, shouldBlacklist) {
-            try {
+            await this.attempt(async () => {
                 await this.api(`/api/${shouldBlacklist ? "blacklist" : "unblacklist"}/${entity}/${id}`, {
                     method: "POST",
                 });
                 this.pushAlert(`User ${shouldBlacklist ? "blacklisted" : "restored"} successfully.`);
                 await this.loadDashboard();
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         async deleteEntity(entity, id) {
             if (!window.confirm(`Delete this ${entity}?`)) return;
-            try {
+            await this.attempt(async () => {
                 await this.api(`/api/${entity}/${id}`, { method: "DELETE" });
                 this.pushAlert(`${entity} deleted successfully.`);
                 await this.loadDashboard();
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         async loadDoctorForm(id) {
-            this.formMeta = {
-                title: id ? "Edit Doctor" : "Create Doctor",
-                submitLabel: id ? "Update Doctor" : "Create Doctor",
-            };
+            this.formMeta = createFormMeta({ id, label: "Doctor" });
             if (!id) {
-                this.activeForm = {
-                    id: null,
-                    name: "",
-                    email: "",
-                    password: "",
-                    dob: "",
-                    contact: "",
-                    specialization: "",
-                    department_id: "",
-                };
+                this.activeForm = createUserForm({ specialization: "", department_id: "" });
                 return;
             }
             const payload = await this.api(`/api/admin/doctors/${id}`);
@@ -732,19 +646,9 @@ const app = createApp({
             };
         },
         async loadPatientForm(id) {
-            this.formMeta = {
-                title: id ? "Edit Patient" : "Create Patient",
-                submitLabel: id ? "Update Patient" : "Create Patient",
-            };
+            this.formMeta = createFormMeta({ id, label: "Patient" });
             if (!id) {
-                this.activeForm = {
-                    id: null,
-                    name: "",
-                    email: "",
-                    password: "",
-                    dob: "",
-                    contact: "",
-                };
+                this.activeForm = createUserForm();
                 return;
             }
             const payload = await this.api(`/api/admin/patients/${id}`);
@@ -768,13 +672,14 @@ const app = createApp({
             };
         },
         async submitActiveForm() {
-            try {
-                if (this.route.name === "doctorForm") {
-                    const url = this.activeForm.id ? `/api/admin/doctors/${this.activeForm.id}` : "/api/admin/doctors";
-                    const method = this.activeForm.id ? "PUT" : "POST";
-                    await this.api(url, { method, body: this.activeForm });
-                } else if (this.route.name === "patientForm") {
-                    const url = this.activeForm.id ? `/api/admin/patients/${this.activeForm.id}` : "/api/admin/patients";
+            await this.attempt(async () => {
+                const resource = {
+                    doctorForm: "doctors",
+                    patientForm: "patients",
+                }[this.route.name];
+                if (resource) {
+                    const baseUrl = `/api/admin/${resource}`;
+                    const url = this.activeForm.id ? `${baseUrl}/${this.activeForm.id}` : baseUrl;
                     const method = this.activeForm.id ? "PUT" : "POST";
                     await this.api(url, { method, body: this.activeForm });
                 } else {
@@ -783,9 +688,7 @@ const app = createApp({
                 this.pushAlert("Saved successfully.");
                 await this.initializeAppContext();
                 this.navigate("/dashboard/");
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         async loadTreatmentForm(appointmentId) {
             const payload = await this.api(`/api/appointments/${appointmentId}/history`);
@@ -800,20 +703,13 @@ const app = createApp({
             };
         },
         addMedicineRow() {
-            this.treatmentForm.medicines.push({
-                name: "",
-                morning: 0,
-                afternoon: 0,
-                night: 0,
-                duration_days: 1,
-                instructions: "",
-            });
+            this.treatmentForm.medicines.push(emptyMedicineRow());
         },
         removeMedicineRow(index) {
             this.treatmentForm.medicines.splice(index, 1);
         },
         async submitTreatmentForm() {
-            try {
+            await this.attempt(async () => {
                 await this.api(`/api/appointments/${this.treatmentForm.appointment.id}/history`, {
                     method: "PUT",
                     body: {
@@ -827,15 +723,13 @@ const app = createApp({
                 });
                 this.pushAlert("Patient history updated successfully.");
                 this.navigate("/dashboard/");
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         openPatientHistory(patientId) {
             this.navigate(`/history/patient/${patientId}`);
         },
         async toggleAvailability(date, slot, enabled) {
-            try {
+            await this.attempt(async () => {
                 await this.api("/api/doctor/update_availability", {
                     method: "POST",
                     body: {
@@ -844,26 +738,19 @@ const app = createApp({
                     },
                 });
                 await this.loadDashboard();
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         async openAvailabilityModal(doctorId, action, appointmentId = null) {
-            try {
+            await this.attempt(async () => {
                 const schedule = await this.api(`/api/doctor/${doctorId}/availability_json`);
-                this.availabilityModal = {
+                this.availabilityModal = createAvailabilityModal({
                     open: true,
                     doctorId,
                     action,
                     appointmentId,
                     schedule,
-                    selectedDate: "",
-                    selectedSlot: "",
-                    visitType: "Checkup",
-                };
-            } catch (error) {
-                this.handleError(error);
-            }
+                });
+            });
         },
         closeAvailabilityModal() {
             this.availabilityModal.open = false;
@@ -881,7 +768,7 @@ const app = createApp({
             this.availabilityModal.selectedSlot = slot;
         },
         async confirmAvailabilityAction() {
-            try {
+            await this.attempt(async () => {
                 const body = {
                     new_date: this.availabilityModal.selectedDate,
                     new_time: this.timeForSlot(this.availabilityModal.selectedSlot),
@@ -906,63 +793,51 @@ const app = createApp({
                 }
                 this.closeAvailabilityModal();
                 await this.loadDashboard();
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         async cancelAppointment(appointmentId) {
-            try {
+            await this.attempt(async () => {
                 await this.api(`/api/appointment/${appointmentId}/cancel`, { method: "POST" });
                 this.pushAlert("Appointment cancelled.", "info");
                 await this.loadDashboard();
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         async markComplete(appointmentId) {
-            try {
+            await this.attempt(async () => {
                 await this.api(`/api/doctor/appointment/${appointmentId}/complete`, { method: "POST" });
                 this.pushAlert("Appointment marked as completed.");
                 await this.loadDashboard();
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         async startBatchReport() {
-            try {
+            await this.attempt(async () => {
                 await this.queueBatchTask(
                     "/api/batch/reports/daily-summary",
                     "daily-summary",
                     "Daily Summary",
                     "Batch report queued.",
                 );
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         async startDailyReminders() {
-            try {
+            await this.attempt(async () => {
                 await this.queueBatchTask(
                     "/api/batch/reports/daily-reminders",
                     "daily-reminders",
                     "Daily Reminders",
                     "Daily reminders queued.",
                 );
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         async startMonthlyActivityReport() {
-            try {
+            await this.attempt(async () => {
                 await this.queueBatchTask(
                     "/api/batch/reports/monthly-activity",
                     "monthly-activity",
                     "Monthly Activity Reports",
                     "Monthly activity reports queued.",
                 );
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         async pollBatchTask(taskId) {
             if (this.pollHandle) {
@@ -990,7 +865,7 @@ const app = createApp({
             }
         },
         async loadExports(patientId = null) {
-            try {
+            await this.attempt(async () => {
                 const params = new URLSearchParams();
                 if (patientId) {
                     params.set("patient_id", patientId);
@@ -998,12 +873,10 @@ const app = createApp({
                 const url = params.toString() ? `/api/exports?${params.toString()}` : "/api/exports";
                 const payload = await this.api(url);
                 this.exportJobs = payload.exports || [];
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         async startTreatmentExport() {
-            try {
+            await this.attempt(async () => {
                 const patientId = this.currentExportPatientId();
                 const body = patientId ? { patient_id: patientId } : undefined;
                 const payload = await this.api("/api/exports/treatments", { method: "POST", body });
@@ -1011,9 +884,7 @@ const app = createApp({
                 this.upsertExportJob(payload.export);
                 await this.loadExports(patientId);
                 this.pollPatientExport(payload.export.id);
-            } catch (error) {
-                this.handleError(error);
-            }
+            });
         },
         async pollPatientExport(exportId) {
             if (this.exportPollHandle) {
