@@ -5,6 +5,7 @@ from pathlib import Path
 from functools import wraps
 
 from flask import Blueprint, jsonify, request, send_file, session
+from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 from werkzeug.security import generate_password_hash
 
@@ -420,7 +421,12 @@ def dashboard_data():
                     joinedload(Appointment.patient),
                     joinedload(Appointment.doctor).joinedload(Doctor.department),
                 )
-                .filter(Appointment.status == AppointmentStatus.COMPLETED)
+                .filter(
+                    or_(
+                        Appointment.status == AppointmentStatus.COMPLETED,
+                        Appointment.status == AppointmentStatus.CANCELLED,
+                    )
+                )
                 .order_by(Appointment.date.desc(), Appointment.time.desc())
                 .all()
             )
@@ -947,13 +953,22 @@ def reschedule_appointment(appointment_id: int):
         if not availability:
             return jsonify({"error": "Doctor is unavailable for that slot."}), 409
 
-        conflict = db.query(Appointment).filter_by(
+        doctor_conflict = db.query(Appointment).filter_by(
             doctor_id=appt.doctor_id,
             date=new_date,
             time=new_time,
             status=AppointmentStatus.BOOKED,
         ).first()
-        if conflict and conflict.id != appt.id:
+        patient_conflict = db.query(Appointment).filter_by(
+            patient_id=appt.patient_id,
+            date=new_date,
+            time=new_time,
+            status=AppointmentStatus.BOOKED,
+        ).first()
+        if (
+            (doctor_conflict and doctor_conflict.id != appt.id)
+            or (patient_conflict and patient_conflict.id != appt.id)
+        ):
             return jsonify({"error": "That slot is already booked."}), 409
 
         if appt.reschedule_count == 0:

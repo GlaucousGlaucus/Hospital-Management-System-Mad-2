@@ -221,6 +221,8 @@
                                 <th>Department</th>
                                 <th>Date</th>
                                 <th>Time</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -230,9 +232,17 @@
                                 <td>[[ appt.doctor.department_name ]]</td>
                                 <td>[[ formatDate(appt.date) ]]</td>
                                 <td>[[ formatTime(appt.time) ]]</td>
+                                <td>[[ appt.status ]]</td>
+                                <td class="text-end">
+                                    <div class="d-flex flex-wrap justify-content-end gap-2">
+                                        <button class="btn btn-sm btn-theme-outline-secondary" @click="openAvailabilityModal(appt.doctor.id, 'reschedule', appt.id)">Reschedule</button>
+                                        <button class="btn btn-sm btn-theme-outline-success" @click="markComplete(appt.id)">Complete</button>
+                                        <button class="btn btn-sm btn-theme-outline-danger" @click="cancelAppointment(appt.id)">Cancel</button>
+                                    </div>
+                                </td>
                             </tr>
                             <tr v-if="!filteredAdminAppointments.length">
-                                <td colspan="5" class="text-center text-muted py-4">No appointments match the current search.</td>
+                                <td colspan="7" class="text-center text-muted py-4">No appointments match the current search.</td>
                             </tr>
                             </tbody>
                         </table>
